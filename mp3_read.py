@@ -4,22 +4,33 @@
 # as there is no Python library for it, we need to use external tools (mpg123, lame, ffmpeg)
 
 import os # for calling external program for mp3 decoding
+import tempfile
 from scipy.io import wavfile
 
 
 def mp3_read(filename):
+
+    temp = tempfile.NamedTemporaryFile(suffix='.wav')
+    # print 'gettempdir():', tempfile.gettempdir()
+
     cmd = 'mpg123'
-    tempfile = "temp.wav" # TODO: use system temp dir
-    args = '-q -w "' + tempfile + '" "' + filename + '"'
-    print 'Decoding mp3 ...'
+    args = '-q -w "' + temp.name + '" "' + filename + '"'
+    print 'Decoding mp3: ', cmd, args
 
-    # execute external command:
-    # import subprocess
-    #return_code = call('mpg123') # does work
-    #return_code = call(['mpg123',args]) # did not work
-    #print return_code
+    try:
+        # execute external command:
+        # import subprocess
+        #return_code = call('mpg123') # does work
+        #return_code = call(['mpg123',args]) # did not work
+        #print return_code
 
-    os.popen(cmd + ' ' + args)
-    fs, data = wavfile.read(tempfile)
-    os.remove(tempfile)
+        os.popen(cmd + ' ' + args)
+        fs, data = wavfile.read(temp.name)
+        #os.remove(tempfile) # now done by finally part after temp.close() automtacally be tempfile class
+
+    finally:
+        # Automatically cleans up (deletes) the temp file
+        temp.close()
+        # print 'Exists after close:', os.path.exists(temp.name)
+
     return (fs, data)
