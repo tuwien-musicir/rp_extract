@@ -4,6 +4,13 @@ Created on 03.01.2014
 @author: SchindlerA
 '''
 
+# RP_extract: Rhythm Patterns Audio Feature Extractor
+
+# Re-implementation by Alexander Schindler of RP_extract for Matlab
+# Matlab version originally by Thomas Lidy, based on Musik Analysis Toolbox by Elias Pampalk
+# see http://ifs.tuwien.ac.at/mir/downloads.html
+
+
 # All required functions are provided by the two main scientific libraries scipy and numpy.
 
 import numpy as np
@@ -443,9 +450,12 @@ def rp_extract( data,                          # pcm signal data
 
 if __name__ == '__main__':
     
+    # READ WAV FILES
     #fs, data = wavfile.read("D:/test/rp_python/Another One Bites the Dust.wav")
     
     #print fs
+
+    # READ MP3 FILES (Windows)
     
     #import sys
     #sys.path.append('D:/Work/PhD/Eclipse/MVIR')
@@ -455,7 +465,11 @@ if __name__ == '__main__':
     ffmpeg = FFmpeg("D:/Research/Tools/ffmpeg/bin/ffmpeg.exe")
     
     fs, data = ffmpeg.convertAndRead("D:/Research/Data/MIR/ISMIR_Genre/audio\classical\classical_18-tamerlano_act_ii_track_18.mp3")
-    #data = data / float(32768)
+
+    # READ MP3 FILES (Linux)
+
+    # from mp3_read import *
+    # fs, data = mp3_read(filename)
     
     np.set_printoptions(suppress=True)
     
@@ -464,7 +478,7 @@ if __name__ == '__main__':
     
     feat = rp_extract(data,
                       fs / 1,
-                      extract_sh=True,
+                      extract_rp=True,
                       spectral_masking=True,
                       transform_db=True,
                       transform_phon=True,
@@ -473,4 +487,15 @@ if __name__ == '__main__':
                       skip_leadin_fadeout=1,
                       step_width=1)
     
-    print feat
+    # feat is a dict containing arrays for different feature sets
+    # print feat
+    print feat["rp"].shape
+
+    # store features in CSV
+    import pandas as pd
+
+    filename = "/home/lidy/exp/features.rp.csv"
+    
+    rp = pd.DataFrame(feat["rp"].reshape([1,feat["rp"].shape[0]]))
+    rp.to_csv(filename)
+    print rp.to_json()
