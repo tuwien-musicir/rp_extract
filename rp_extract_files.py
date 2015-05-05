@@ -39,18 +39,36 @@ def mp3_read(filename):
     return (fs, data)
 
 
-def extract_all_files_in_path(path,out_file,feature_types):
-
-    ext = feature_types
-
+def initialize_feature_files(base_filename,ext):
     files = {}  # files is a dict of one file handle per extension
     writer = {} # files is a dict of one file writer per extension
 
     for e in ext:
-        filename = out_file + '.' + e
+        filename = base_filename + '.' + e
         files[e] = open(filename, 'w') # or 'a' to append
         writer[e] = unicsv.UnicodeCSVWriter(files[e]) #, quoting=csv.QUOTE_ALL)
 
+    return (files,writer)
+
+def write_feature_files(id,feat,writer):
+    # id: string id (e.g. filename) of extracted file
+    # feat: dict containing 1 entry per feature type (must match file extensions)
+
+    for e in feat.keys():
+        f=feat[e].tolist()
+        f.insert(0,id)        # add filename before vector (to include path, change fil to filename)
+        writer[e].writerow(f)
+
+def close_feature_files(files,ext):
+    for e in ext:
+        files[e].close()
+
+
+def extract_all_files_in_path(path,out_file,feature_types):
+
+    ext = feature_types
+
+    files, writer = initialize_feature_files(out_file,ext)
 
     # iterate through all files
 
@@ -124,10 +142,8 @@ def extract_all_files_in_path(path,out_file,feature_types):
 
             start = time.time()
 
-            for e in ext: # or feat.keys()
-                f=feat[e].tolist()
-                f.insert(0,fil)        # add filename before vector (to include path, change fil to filename)
-                writer[e].writerow(f)
+            # id = fil -> add filename before vector (to include path, change fil to filename)
+            write_feature_files(fil,feat,writer)
 
             end = time.time()
 
@@ -135,8 +151,7 @@ def extract_all_files_in_path(path,out_file,feature_types):
 
     # close all output files
 
-    for e in ext:
-        files[e].close()
+    close_feature_files(files,ext)
 
     end = time.time()
 
@@ -152,7 +167,7 @@ if __name__ == '__main__':
 
     # SET PATH WITH AUDIO FILES (INPUT)
 
-    in_path = "/home/lidy/Code/soundcloud_comments/mp3/House" #/Rock"
+    in_path = "/home/lidy/Code/soundcloud_comments/mp3/Metal"
 
     # OUTPUT FEATURE FILES
 
@@ -160,7 +175,7 @@ if __name__ == '__main__':
     if not os.path.exists(out_path):
         os.mkdir(out_path)
 
-    out_file = 'features_4genres'
+    out_file = 'features_Metal'
 
     out_filename = out_path + os.sep + out_file
 
