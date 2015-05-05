@@ -3,10 +3,11 @@
 # 2015-04 by Thomas Lidy
 
 import matplotlib.pyplot as plt
-# from scipy.io import wavfile
+
 import pylab
 #from pylab import pcolor, show, colorbar, xticks, yticks
-from numpy import corrcoef, sum, log, arange
+
+# from numpy import corrcoef, sum, log, arange
 
 # there is a pre-packaged namespace that contains the whole Numpy-Scipy-Matplotlib stack in one piece:
 # from pylab import *
@@ -18,29 +19,41 @@ from numpy import corrcoef, sum, log, arange
 #np.set_printoptions(suppress=True)
 
 # enable inline graphics / plots in ipython notebook
-get_ipython().magic(u'pylab inline')
+#get_ipython().magic(u'pylab inline')
 
-def plotmatrix(matrix):
+
+def plotmatrix(features):
     pylab.figure()
-    pylab.imshow(matrix, origin='lower', aspect='auto',interpolation='nearest')
+    pylab.imshow(features, origin='lower', aspect='auto',interpolation='nearest')
     plt.xlabel('Mod. Frequency Index')
     pylab.ylabel('Frequency [Bark]')
     pylab.show()
 
 # alternate version using pcolor 
-def plotmatrix2(matrix):
-    pcolor(matrix)
-    #colorbar()
-    #yticks(arange(0.5,10.5),range(0,10))
-    #xticks(arange(0.5,10.5),range(0,10))
-    show()
+#def plotmatrix2(features):
+    #pcolor(features)
+   # #colorbar()
+   # #yticks(arange(0.5,10.5),range(0,10))
+  #  #xticks(arange(0.5,10.5),range(0,10))
+    #show()
     
-def plotrp(matrix):
-    plotmatrix(matrix)
-    
-def plotssd(matrix):
+def plotrp(features, reshape=True):
+
+    if reshape:
+        features = features.reshape(24,60,order='F')
+
+    print features.shape
+
+    plotmatrix(features)
+
+
+def plotssd(features, reshape=True):
+
+    if reshape:
+        features = features.reshape(24,7,order='F')
+
     pylab.figure()
-    pylab.imshow(matrix, origin='lower', aspect='auto',interpolation='nearest')
+    pylab.imshow(features, origin='lower', aspect='auto',interpolation='nearest')
     pylab.xticks(range(0,7), ['mean', 'var', 'skew', 'kurt', 'median', 'min', 'max'])
     pylab.ylabel('Frequency [Bark]')
     pylab.show()
@@ -66,4 +79,3 @@ def plotrh(hist):
 # plotssd(ssd)
 
 # plotrh(feat["rh"])
-
