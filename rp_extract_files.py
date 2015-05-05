@@ -39,133 +39,129 @@ def mp3_read(filename):
     return (fs, data)
 
 
-# SET WHICH FEATURES TO EXTRACT
+def extract_all_files_in_path(path,out_file,feature_types):
 
-ext = ['rp','ssd','rh','mvd'] # sh, tssd, trh   # must be lower case due to check below
-#ext = ['rh'] # testing
+    ext = feature_types
 
-# INITIALIZE OUTPUT FILES
+    files = {}  # files is a dict of one file handle per extension
+    writer = {} # files is a dict of one file writer per extension
 
-out_path = 'feat'
-if not os.path.exists(out_path):
-    os.mkdir(out_path)
-
-out_file = 'features'
-files = {}  # files is a dict of one file handle per extension
-writer = {} # files is a dict of one file writer per extension
-
-for e in ext:
-    filename = out_path + os.sep + out_file + '.' + e
-    files[e] = open(filename, 'w') # or 'a' to append
-    writer[e] = unicsv.UnicodeCSVWriter(files[e]) #, quoting=csv.QUOTE_ALL)
+    for e in ext:
+        filename = out_file + '.' + e
+        files[e] = open(filename, 'w') # or 'a' to append
+        writer[e] = unicsv.UnicodeCSVWriter(files[e]) #, quoting=csv.QUOTE_ALL)
 
 
-# iterate through all files
+    # iterate through all files
 
-start_abs = time.time()
+    start_abs = time.time()
 
-# TODO: restrict to *.mp3
+    n = 0
 
-main_dir = "./mp3" #/Rock"
-n=0
+    # TODO: restrict to *.mp3 (or other extension)
 
-for d in os.walk(main_dir):    # finds all subdirectories and gets a list of files therein
-    path = d[0]
-    # dir_list = d[1]
-    filelist = d[2]
-    print path, len(filelist), "files"
-    
-
-    for fil in filelist:  # iterate over all files in a dir
-        n += 1
-        filename = path + os.sep + fil
-        print '#',n,':', filename
-
-        start = time.time()
-
-        # read MP3
-        fs, data = mp3_read(filename)
-
-        end = time.time()
-        print end - start
-
-        # audio file info
-        print fs, "Hz,", data.shape[1], "channels,", data.shape[0], "length"
-
-        start = time.time()
-
-        # convert data space to MATLAB value range
-        data = data / float(32768)
-
-        # extract features
-        # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)
-
-        feat = rp.rp_extract(data,
-                          fs, # / 1,
-                          extract_rp   = ('rp' in ext),          # extract Rhythm Patterns features
-                          extract_ssd  = ('ssd' in ext),           # extract Statistical Spectrum Descriptor
-                          extract_sh   = ('sh' in ext),          # extract Statistical Histograms
-                          extract_tssd = ('tssd' in ext),          # extract temporal Statistical Spectrum Descriptor
-                          extract_rh   = ('rh' in ext),           # extract Rhythm Histogram features
-                          extract_trh  = ('trh' in ext),          # extract temporal Rhythm Histogram features
-                          extract_mvd  = ('mvd' in ext),        # extract Modulation Frequency Variance Descriptor 
-                          spectral_masking=True,
-                          transform_db=True,
-                          transform_phon=True,
-                          transform_sone=True,
-                          fluctuation_strength_weighting=True,
-                          skip_leadin_fadeout=1,
-                          step_width=1)
-
-        end = time.time()
-
-        print "Features extracted:", feat.keys(), end - start
-
-        #type(feat["rp"])
-        #numpy.ndarray
-
-        #print feat["rp"].shape
-        #(1440,)
-
-        # WRITE each features to a CSV
-
-        # TODO check if ext and feat.keys are consistent
-
-        start = time.time()
-
-        for e in ext: # or feat.keys()
-            f=feat[e].tolist()  
-            f.insert(0,fil)        # add filename before vector (to include path, change fil to filename)
-            writer[e].writerow(f)
-
-        end = time.time()
-
-        print "Data written", end-start
+    for d in os.walk(path):    # finds all subdirectories and gets a list of files therein
+        subpath = d[0]
+        # dir_list = d[1]
+        filelist = d[2]
+        print subpath, len(filelist), "files"
 
 
+        for fil in filelist:  # iterate over all files in a dir
+            n += 1
+            filename = subpath + os.sep + fil
+            print '#',n,':', filename
 
-# OPTIONAL PLOTTING
+            start = time.time()
 
-## This is how to RESHAPE in case needed
-# rpf = feat["rp"].reshape(24,60,order='F')  # order='F' means Fortran compatible; Alex uses it in rp_extract flatten() to be Matlab compatible
-# print rpf.shape
-# plotmatrix(rpf)
+            # read MP3
+            fs, data = mp3_read(filename)
 
-# ssd = feat["ssd"].reshape(24,7,order='F')  # order='F' means Fortran compatible; Alex uses it in rp_extract flatten() to be Matlab compatible
-# print ssd.shape
+            end = time.time()
+            print end - start
 
-# plotssd(ssd)
+            # audio file info
+            print fs, "Hz,", data.shape[1], "channels,", data.shape[0], "length"
 
-# plotrh(feat["rh"])
+            start = time.time()
+
+            # convert data space to MATLAB value range
+            data = data / float(32768)
+
+            # extract features
+            # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)
+
+            feat = rp.rp_extract(data,
+                              fs, # / 1,
+                              extract_rp   = ('rp' in ext),          # extract Rhythm Patterns features
+                              extract_ssd  = ('ssd' in ext),           # extract Statistical Spectrum Descriptor
+                              extract_sh   = ('sh' in ext),          # extract Statistical Histograms
+                              extract_tssd = ('tssd' in ext),          # extract temporal Statistical Spectrum Descriptor
+                              extract_rh   = ('rh' in ext),           # extract Rhythm Histogram features
+                              extract_trh  = ('trh' in ext),          # extract temporal Rhythm Histogram features
+                              extract_mvd  = ('mvd' in ext),        # extract Modulation Frequency Variance Descriptor
+                              spectral_masking=True,
+                              transform_db=True,
+                              transform_phon=True,
+                              transform_sone=True,
+                              fluctuation_strength_weighting=True,
+                              skip_leadin_fadeout=1,
+                              step_width=1)
+
+            end = time.time()
+
+            print "Features extracted:", feat.keys(), end - start
+
+            #type(feat["rp"])
+            #numpy.ndarray
+
+            #print feat["rp"].shape
+            #(1440,)
+
+            # WRITE each features to a CSV
+
+            # TODO check if ext and feat.keys are consistent
+
+            start = time.time()
+
+            for e in ext: # or feat.keys()
+                f=feat[e].tolist()
+                f.insert(0,fil)        # add filename before vector (to include path, change fil to filename)
+                writer[e].writerow(f)
+
+            end = time.time()
+
+            print "Data written", end-start
+
+    # close all output files
+
+    for e in ext:
+        files[e].close()
+
+    end = time.time()
+
+    print "FEATURE EXTRACTION FINISHED.", end-start_abs
 
 
-# close all output files
 
-for e in ext:
-    files[e].close()
+if __name__ == '__main__':
 
-    
-end = time.time()
-    
-print "FEATURE EXTRACTION FINISHED.", end-start_abs
+    # SET WHICH FEATURES TO EXTRACT (must be lower case)
 
+    feature_types = ['rp','ssd','rh','mvd'] # sh, tssd, trh
+
+    # SET PATH WITH AUDIO FILES (INPUT)
+
+    in_path = "/home/lidy/Code/soundcloud_comments/mp3/House" #/Rock"
+
+    # OUTPUT FEATURE FILES
+
+    out_path = '/home/lidy/Code/soundcloud_comments/feat'
+    if not os.path.exists(out_path):
+        os.mkdir(out_path)
+
+    out_file = 'features_4genres'
+
+    out_filename = out_path + os.sep + out_file
+
+    extract_all_files_in_path(in_path,out_filename,feature_types)
