@@ -50,13 +50,15 @@ def initialize_feature_files(base_filename,ext):
 
     return (files,writer)
 
-def write_feature_files(id,feat,writer):
+def write_feature_files(id,feat,writer,id2=None):
     # id: string id (e.g. filename) of extracted file
     # feat: dict containing 1 entry per feature type (must match file extensions)
 
     for e in feat.keys():
         f=feat[e].tolist()
         f.insert(0,id)        # add filename before vector (to include path, change fil to filename)
+        if not id2==None:
+            f.insert(1,id2)
         writer[e].writerow(f)
 
 def close_feature_files(files,ext):
