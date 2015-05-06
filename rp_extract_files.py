@@ -39,13 +39,18 @@ def mp3_read(filename):
     return (fs, data)
 
 
-def initialize_feature_files(base_filename,ext):
+def initialize_feature_files(base_filename,ext,append=False):
     files = {}  # files is a dict of one file handle per extension
     writer = {} # files is a dict of one file writer per extension
 
+    if append:
+        mode = 'a' # append
+    else:
+        mode = 'w' # write new (will overwrite)
+
     for e in ext:
         filename = base_filename + '.' + e
-        files[e] = open(filename, 'w') # or 'a' to append
+        files[e] = open(filename, mode)
         writer[e] = unicsv.UnicodeCSVWriter(files[e]) #, quoting=csv.QUOTE_ALL)
 
     return (files,writer)
