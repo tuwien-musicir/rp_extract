@@ -72,12 +72,17 @@ def plotmono_waveform(samples, plot_width=6, plot_height=4):
 
     fig = plt.figure(num=None, figsize=(plot_width, plot_height), dpi=72, facecolor='w', edgecolor='k')
 
+    if samples.shape[1] == 2:
+        samples_to_plot = samples.copy().mean(axis=1)
+    else:
+        samples_to_plot = samples
+
     channel_1 = fig.add_subplot(111)
     channel_1.set_ylabel('Channel 1')
     #channel_1.set_xlim(0,song_length) # todo
     channel_1.set_ylim(-32768,32768)
 
-    channel_1.plot(samples)
+    channel_1.plot(samples_to_plot)
 
     plt.show();
     plt.clf();
