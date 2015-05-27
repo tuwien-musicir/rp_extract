@@ -233,11 +233,14 @@ def rp_extract( data,                          # pcm signal data
     for seg_id in range(n_segments):
         
         # extract wave segment that will be processed
-        wavsegment = data[seg_pos[0]-1:seg_pos[1],:] # verified
         
         # Combine separate channels
-        if wavsegment.shape[1] > 1:
+        if len(data.shape) > 1:
+            wavsegment = data[seg_pos[0]-1:seg_pos[1],:] # verified
             wavsegment = np.mean(wavsegment, 1) # verified
+        else:
+            # mono
+            wavsegment = data[seg_pos[0]-1:seg_pos[1]] # verified
     
         # adjust hearing threshold
         wavsegment = 0.0875 * wavsegment * (2**15) # verified
@@ -255,7 +258,7 @@ def rp_extract( data,                          # pcm signal data
     
         for i in range(n_iter): # stepping through the wave segment, building spectrum for each window        
             
-            spectrogr[:,i] = periodogram(x=wavsegment[idx], win=han_window)
+            spectrogr[:,i] = periodogram(x=wavsegment[idx], win=han_window,nfft=fft_window_size)
             idx            = idx + fft_window_size/2
     
         spectrogr = np.abs(spectrogr)
@@ -450,21 +453,12 @@ def rp_extract( data,                          # pcm signal data
 
 if __name__ == '__main__':
     
-    # READ WAV FILES
-    #fs, data = wavfile.read("D:/test/rp_python/Another One Bites the Dust.wav")
     
-    #print fs
-
-    # READ MP3 FILES (Windows)
-    
-    #import sys
-    #sys.path.append('D:/Work/PhD/Eclipse/MVIR')
-    
-    from Tools.external.FFmpeg import FFmpeg
+    from FFmpeg import FFmpeg
     
     ffmpeg = FFmpeg("D:/Research/Tools/ffmpeg/bin/ffmpeg.exe")
     
-    fs, data = ffmpeg.convertAndRead("D:/Research/Data/MIR/ISMIR_Genre/audio\classical\classical_18-tamerlano_act_ii_track_18.mp3")
+    fs, data = ffmpeg.convertAndRead("E:/Data/MIR/EU_SOUNDS/09301/0029BD22350AE42D6D494AE0543A1F38C555C6CB.mp3")
 
     # READ MP3 FILES (Linux)
 
