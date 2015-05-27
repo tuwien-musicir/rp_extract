@@ -22,18 +22,23 @@ class FFmpeg(object):
         
         
         cmd = ["-i", input, output]
-
+        
         so, se = self.call_binary(cmd)
         
     def convertAndRead(self, input):
         
-        tmp_file_name = "{0}.wav".format(self.make_temp_file(suffix="wav"))
+        tmp_file_name = "{0}.wav".format(self.make_temp_file(suffix="wav")).replace("\\","/")
         
-        self.convert(input, tmp_file_name)
+        try:
         
-        fs, dat = self.read_wave_file(tmp_file_name)
+            self.convert(input, tmp_file_name)
         
-        self.remove_temp_file(tmp_file_name)
+            fs, dat = self.read_wave_file(tmp_file_name)
+            
+        except Exception as e:
+            raise e
+        finally:
+            self.remove_temp_file(tmp_file_name)
         
         return fs, dat
     
