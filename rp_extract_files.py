@@ -100,6 +100,8 @@ def extract_all_files_in_path(path,out_file,feature_types):
             start = time.time()
 
             # read MP3
+			# TODO adapt mp3_read to use:
+			# samplerate, sample_width, wavedata = wavio.readwav(audio_file)
             fs, data = mp3_read(filename)
 
             end = time.time()
@@ -108,10 +110,17 @@ def extract_all_files_in_path(path,out_file,feature_types):
             # audio file info
             print fs, "Hz,", data.shape[1], "channels,", data.shape[0], "length"
 
-            start = time.time()
+			# pre-process: normalize the data to (-1,1) range (= convert data space to MATLAB value range)
+			# NORMALIZATION for scipy.io.wavfile.read
+			# divisor will be 32768 for int16 data and 2^32/2 for int32 data (which is used for 24 and 32 bit wav)
+			# divisor = np.iinfo(wavedata.dtype).max + 1
+			
+			# NORMALIZATION for wavio
+			divisor = 2**(8*sample_width)/2
+			
+			wavedata = wavedata / float(divisor)
 
-            # convert data space to MATLAB value range
-            data = data / float(32768)
+			start = time.time()
 
             # extract features
             # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)

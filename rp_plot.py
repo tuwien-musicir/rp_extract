@@ -67,7 +67,8 @@ def plotrh(hist):
     #plt.ylabel('Probability')
     plt.title('Rhythm Histogram')
     plt.show()
-    
+
+
 def plotmono_waveform(samples, plot_width=6, plot_height=4):
 
     fig = plt.figure(num=None, figsize=(plot_width, plot_height), dpi=72, facecolor='w', edgecolor='k')
@@ -81,7 +82,7 @@ def plotmono_waveform(samples, plot_width=6, plot_height=4):
     channel_1 = fig.add_subplot(111)
     channel_1.set_ylabel('Channel 1')
     #channel_1.set_xlim(0,song_length) # todo
-    channel_1.set_ylim(-32768,32768)
+    channel_1.set_ylim(-1,1)
 
     channel_1.plot(samples_to_plot)
 
@@ -96,18 +97,28 @@ def plotstereo_waveform(samples, plot_width=6, plot_height=5):
     channel_1 = fig.add_subplot(211)
     channel_1.set_ylabel('Channel 1')
     #channel_1.set_xlim(0,song_length) # todo
-    channel_1.set_ylim(-32768,32768)
+    channel_1.set_ylim(-1,1)
     channel_1.plot(samples[:,0])
 
     channel_2 = fig.add_subplot(212)
     channel_2.set_ylabel('Channel 2')
     channel_2.set_xlabel('Time (s)')
-    channel_2.set_ylim(-32768,32768)
+    channel_2.set_ylim(-1,1)
     #channel_2.set_xlim(0,song_length) # todo
     channel_2.plot(samples[:,1])
 
     plt.show();
     plt.clf();
+
+
+
+#def plot_waveform(samples, plot_width=6, plot_height=4):
+#   if len(samples.shape) > 1:
+#		plotstereo_waveform(samples, plot_width, plot_height)
+#	else:
+#		plotmono_waveform(samples, plot_width, plot_height)
+
+
 
 """ scale frequency axis logarithmically """    
 def logscale_spec(spec, sr=44100, factor=20.):
