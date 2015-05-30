@@ -72,7 +72,8 @@ def plotmono_waveform(samples, plot_width=6, plot_height=4):
 
     fig = plt.figure(num=None, figsize=(plot_width, plot_height), dpi=72, facecolor='w', edgecolor='k')
 
-    if samples.shape[1] == 2:
+    if len(samples.shape) > 1:
+		# if we have more than 1 channel, build the average
         samples_to_plot = samples.copy().mean(axis=1)
     else:
         samples_to_plot = samples
