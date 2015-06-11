@@ -29,8 +29,8 @@ def mp3_read(filename):
     cmd.append('mpg123')
     args.append ('-q -w "' + temp.name + '" "' + filename + '"')
 
-    cmd.append('lame')
-    args.append ('--quiet --decode "' + filename + '" "' + temp.name + '"')
+    #cmd.append('lame')
+    #args.append ('--quiet --decode "' + filename + '" "' + temp.name + '"')
 
     cmd.append('ffmpeg')
     args.append ('-i "' + filename + '" "' + temp.name + '"')
@@ -55,6 +55,10 @@ def mp3_read(filename):
                 #os.remove(tempfile) # now done automatically by finally part after temp.close() by tempfile class
                 success = True
 
+            except: # catch *all* exceptions
+                print "Problem appeared during decoding."
+                raise
+
             finally:
                 # Automatically cleans up (deletes) the temp file
                 temp.close()
@@ -62,13 +66,20 @@ def mp3_read(filename):
         if success:
             break  # no need to loop further
 
-    # TODO:
-    # if not success:
-    # print error message: no decoder found
-    #        raise NameError("File not existing:" + input)
-
+    if not success:
+        raise OSError("No MP3 decoder found. Check if any of these is on your system path: " + ", ".join(cmd) + \
+                       " and if not add the path to one of these binaries with sys.path.append().")
 
     return (fs, data)
+
+
+def audiofile_read(filename):
+
+    # check if file exists
+    if not os.path.exists(filename):
+        raise NameError("File not existing:" + filename)
+
+
 
 
 # main routine: to test if decoding works properly
