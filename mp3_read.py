@@ -4,6 +4,7 @@
 # as there is no Python library for it, we need to use external tools (mpg123, lame, ffmpeg)
 
 import os # for calling external program for mp3 decoding
+import sys # for sys.path.append
 import subprocess # for subprocess calls
 import tempfile
 from scipy.io import wavfile
@@ -31,9 +32,13 @@ def mp3_read(filename):
 
     #cmd.append('lame')
     #args.append ('--quiet --decode "' + filename + '" "' + temp.name + '"')
+    path = '/Users/Tom/Downloads/SnowLeopard_Lion_Mountain_Lion_Mavericks_Yosemite_23'
+    sys.path.append(path)
 
     cmd.append('ffmpeg')
-    args.append ('-i "' + filename + '" "' + temp.name + '"')
+    #cmd.append(path + "/" + 'ffmpeg')
+    args.append ('-y -v 1 -i "' + filename + '" "' + temp.name + '"')
+    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
 
     success = False
 
@@ -56,8 +61,7 @@ def mp3_read(filename):
                 success = True
 
             except: # catch *all* exceptions
-                print "Problem appeared during decoding."
-                raise
+                raise OSError("Problem appeared during decoding.")
 
             finally:
                 # Automatically cleans up (deletes) the temp file
