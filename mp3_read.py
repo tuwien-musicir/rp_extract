@@ -16,6 +16,7 @@ def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
+
 # convert mp3 to wav and read from wav file
 # returns fs (sampling rate) and data (wave data)
 def mp3_read(filename):
@@ -30,13 +31,10 @@ def mp3_read(filename):
     cmd.append('mpg123')
     args.append ('-q -w "' + temp.name + '" "' + filename + '"')
 
-    #cmd.append('lame')
-    #args.append ('--quiet --decode "' + filename + '" "' + temp.name + '"')
-    path = '/Users/Tom/Downloads/SnowLeopard_Lion_Mountain_Lion_Mavericks_Yosemite_23'
-    sys.path.append(path)
+    cmd.append('lame')
+    args.append ('--quiet --decode "' + filename + '" "' + temp.name + '"')
 
     cmd.append('ffmpeg')
-    #cmd.append(path + "/" + 'ffmpeg')
     args.append ('-y -v 1 -i "' + filename + '" "' + temp.name + '"')
     # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
 
@@ -72,10 +70,12 @@ def mp3_read(filename):
 
     if not success:
         raise OSError("No MP3 decoder found. Check if any of these is on your system path: " + ", ".join(cmd) + \
-                       " and if not add the path to one of these binaries with sys.path.append().")
+                       " and if not add the path using os.environ['PATH'] += os.pathsep + path.")
 
     return (fs, data)
 
+
+# uncompleted
 
 def audiofile_read(filename):
 
@@ -91,6 +91,10 @@ def audiofile_read(filename):
 if __name__ == '__main__':
 
     file = "Lamb - Five.mp3"
+
+    # if your MP3 decoder is not on the system PATH, add it like this:
+    path = '/Users/Tom/Downloads/SnowLeopard_Lion_Mountain_Lion_Mavericks_Yosemite_23'
+    os.environ['PATH'] += os.pathsep + path
 
     fs, data = mp3_read(file)
 
