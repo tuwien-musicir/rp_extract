@@ -10,10 +10,13 @@ from scipy.io import wavfile
 
 
 # check if a command exists on the system (without knowing the path, i.e. like Linux 'which')
+
 def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
+# convert mp3 to wav and read from wav file
+# returns fs (sampling rate) and data (wave data)
 def mp3_read(filename):
 
     temp = tempfile.NamedTemporaryFile(suffix='.wav')
@@ -29,7 +32,8 @@ def mp3_read(filename):
     cmd.append('lame')
     args.append ('--quiet --decode "' + filename + '" "' + temp.name + '"')
 
-    # TODO ADD ffmpeg
+    cmd.append('ffmpeg')
+    args.append ('-i "' + filename + '" "' + temp.name + '"')
 
     success = False
 
@@ -48,18 +52,32 @@ def mp3_read(filename):
 
                 os.popen(cmd[i] + ' ' + args[i])
                 fs, data = wavfile.read(temp.name)
-                #os.remove(tempfile) # now done by finally part after temp.close() automtacally be tempfile class
+                #os.remove(tempfile) # now done automatically by finally part after temp.close() by tempfile class
                 success = True
 
             finally:
                 # Automatically cleans up (deletes) the temp file
                 temp.close()
-                # print 'Exists after close:', os.path.exists(temp.name)
+
         if success:
-            break
+            break  # no need to loop further
 
     # TODO:
     # if not success:
     # print error message: no decoder found
+    #        raise NameError("File not existing:" + input)
+
 
     return (fs, data)
+
+
+# main routine: to test if decoding works properly
+
+if __name__ == '__main__':
+
+    file = "Lamb - Five.mp3"
+
+    fs, data = mp3_read(file)
+
+    print "Successfully read audio file:"
+    print fs, "Hz,", data.shape[1], "channels,", data.shape[0], "samples"

@@ -108,7 +108,7 @@ def extract_all_files_in_path(path,out_file,feature_types):
             print end - start
 
             # audio file info
-            print fs, "Hz,", data.shape[1], "channels,", data.shape[0], "length"
+            print fs, "Hz,", data.shape[1], "channels,", data.shape[0], "samples"
 
 			# pre-process: normalize the data to (-1,1) range (= convert data space to MATLAB value range)
 			# NORMALIZATION for scipy.io.wavfile.read
