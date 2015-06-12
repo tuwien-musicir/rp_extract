@@ -21,11 +21,22 @@ def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
+# Normalize integer WAV data to float in range (-1,1)
+# Note that this works fine with Wav files read with Wavio
+# when using scipy.io.wavfile to read Wav files, use divisor = np.iinfo(wavedata.dtype).max + 1
+# but in this case it will not work with 24 bit files due to scipy scaling 24 bit up to 32bit
+def normalize_wav(wavedata,samplewidth):
+
+    # samplewidth in byte (i.e.: 1 = 8bit, 2 = 16bit, 3 = 24bit, 4 = 32bit)
+    divisor = 2**(8*samplewidth)/2
+    wavedata = wavedata / float(divisor)
+    return (wavedata)
+
 
 # read wav files
 # returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
-def wav_read(filename):
+def wav_read(filename,normalize=True):
 
     # check if file exists
     if not os.path.exists(filename):
@@ -33,13 +44,16 @@ def wav_read(filename):
 
     samplerate, samplewidth, wavedata = wavio.readwav(filename)
 
+    if (normalize):
+        wavedata = normalize_wav(wavedata,samplewidth)
+
     return (samplerate, samplewidth, wavedata)
 
 
 # convert mp3 to wav and read from wav file
 # returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
-def mp3_read(filename):
+def mp3_read(filename,normalize=True):
 
     temp = tempfile.NamedTemporaryFile(suffix='.wav')
     # print 'gettempdir():', tempfile.gettempdir()
@@ -75,7 +89,7 @@ def mp3_read(filename):
 
                 os.popen(cmd[i] + ' ' + args[i])
 
-                samplerate, samplewidth, wavedata = wav_read(temp.name)
+                samplerate, samplewidth, wavedata = wav_read(temp.name,normalize)
 
                 #os.remove(tempfile) # now done automatically by finally part after temp.close() by tempfile class
                 success = True
@@ -100,7 +114,7 @@ def mp3_read(filename):
 # generic function capable of reading both .wav and .mp3 files
 # returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
-def audiofile_read(filename):
+def audiofile_read(filename,normalize=True):
 
     # check if file exists
     if not os.path.exists(filename):
@@ -109,9 +123,9 @@ def audiofile_read(filename):
     basename, ext = os.path.splitext(filename)
 
     if ext.lower() == '.wav':
-        return(wav_read(filename))
+        return(wav_read(filename,normalize))
     elif ext.lower() == '.mp3':
-        return(mp3_read(filename))
+        return(mp3_read(filename,normalize))
     else:
         raise NameError("File name extension must be either .wav or .mp3 when using audiofile_read. Extension found: " + ext)
 
@@ -124,9 +138,8 @@ if __name__ == '__main__':
     # path = '/path/to/ffmpeg/'
     # os.environ['PATH'] += os.pathsep + path
 
-
-    file = "Lamb - Five.mp3"
-    #file = "Acrassicauda_-_02_-_Garden_Of_Stones.wav"
+    #file = "Lamb - Five.mp3"
+    file = "Acrassicauda_-_02_-_Garden_Of_Stones.wav"
     samplerate, samplewidth, wavedata = audiofile_read(file)
 
     print "Successfully read audio file:"
