@@ -4,39 +4,10 @@
 
 # 2015-04 by Thomas Lidy
 
-import csv
-import unicsv # unicode csv library (installed via pip)
-import sys
-import os # for mp3 decoding
-# import pandas as pd
-from scipy.io import wavfile
+import unicsv # unicode csv library (installed via pip install unicsv)
 import time # for time measuring
-
-#sys.path.append('../RP_extract_python')
-import rp_extract_python as rp
-
-#np.set_printoptions(suppress=True)
-
-
-# MP3 DECODING:
-# as there is no Python library for it, we need to use external tools (mpg123, lame, ffmpeg)
-
-def mp3_read(filename):
-    cmd = 'mpg123'
-    tempfile = "temp.wav"
-    args = '-q -w "' + tempfile + '" "' + filename + '"'
-    print 'Decoding mp3 ...'
-
-    # execute external command:
-    # import subprocess 
-    #return_code = call('mpg123') # does work
-    #return_code = call(['mpg123',args]) # did not work
-    #print return_code
-
-    os.popen(cmd + ' ' + args)
-    fs, data = wavfile.read(tempfile)
-    os.remove(tempfile)
-    return (fs, data)
+from audiofile_read import * # reading wav and mp3 files
+import rp_extract_python as rp # Rhythm Pattern extractor
 
 
 def initialize_feature_files(base_filename,ext,append=False):
@@ -55,6 +26,7 @@ def initialize_feature_files(base_filename,ext,append=False):
 
     return (files,writer)
 
+
 def write_feature_files(id,feat,writer,id2=None):
     # id: string id (e.g. filename) of extracted file
     # feat: dict containing 1 entry per feature type (must match file extensions)
@@ -65,6 +37,7 @@ def write_feature_files(id,feat,writer,id2=None):
         if not id2==None:
             f.insert(1,id2)
         writer[e].writerow(f)
+
 
 def close_feature_files(files,ext):
     for e in ext:
@@ -99,34 +72,22 @@ def extract_all_files_in_path(path,out_file,feature_types):
 
             start = time.time()
 
-            # read MP3
-			# TODO adapt mp3_read to use:
-			# samplerate, sample_width, wavedata = wavio.readwav(audio_file)
-            fs, data = mp3_read(filename)
+            # read audio file (wav or mp3)
+            samplerate, samplewidth, data = audiofile_read(filename)
 
             end = time.time()
-            print end - start
+            print end - start, "sec"
 
             # audio file info
-            print fs, "Hz,", data.shape[1], "channels,", data.shape[0], "samples"
-
-			# pre-process: normalize the data to (-1,1) range (= convert data space to MATLAB value range)
-			# NORMALIZATION for scipy.io.wavfile.read
-			# divisor will be 32768 for int16 data and 2^32/2 for int32 data (which is used for 24 and 32 bit wav)
-			# divisor = np.iinfo(wavedata.dtype).max + 1
-			
-			# NORMALIZATION for wavio
-			divisor = 2**(8*sample_width)/2
-			
-			wavedata = wavedata / float(divisor)
-
-			start = time.time()
+            print samplerate, "Hz,", data.shape[1], "channels,", data.shape[0], "samples"
 
             # extract features
             # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)
 
+            start = time.time()
+
             feat = rp.rp_extract(data,
-                              fs, # / 1,
+                              samplerate,
                               extract_rp   = ('rp' in ext),          # extract Rhythm Patterns features
                               extract_ssd  = ('ssd' in ext),           # extract Statistical Spectrum Descriptor
                               extract_sh   = ('sh' in ext),          # extract Statistical Histograms
@@ -144,7 +105,7 @@ def extract_all_files_in_path(path,out_file,feature_types):
 
             end = time.time()
 
-            print "Features extracted:", feat.keys(), end - start
+            print "Features extracted:", feat.keys(), end - start, "sec"
 
             #type(feat["rp"])
             #numpy.ndarray
@@ -163,7 +124,7 @@ def extract_all_files_in_path(path,out_file,feature_types):
 
             end = time.time()
 
-            print "Data written", end-start
+            print "Data written." #, end-start
 
     # close all output files
 
@@ -171,7 +132,7 @@ def extract_all_files_in_path(path,out_file,feature_types):
 
     end = time.time()
 
-    print "FEATURE EXTRACTION FINISHED.", end-start_abs
+    print "FEATURE EXTRACTION FINISHED.", n, "files,", end-start_abs, "sec"
 
 
 
@@ -183,15 +144,15 @@ if __name__ == '__main__':
 
     # SET PATH WITH AUDIO FILES (INPUT)
 
-    in_path = "/home/lidy/Code/soundcloud_comments/mp3/Metal"
+    in_path = "./music"
 
     # OUTPUT FEATURE FILES
 
-    out_path = '/home/lidy/Code/soundcloud_comments/feat'
+    out_path = './features'
     if not os.path.exists(out_path):
         os.mkdir(out_path)
 
-    out_file = 'features_Metal'
+    out_file = 'features'
 
     out_filename = out_path + os.sep + out_file
 
