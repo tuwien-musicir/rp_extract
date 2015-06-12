@@ -452,26 +452,17 @@ def rp_extract( data,                          # pcm signal data
 
 
 if __name__ == '__main__':
-    
-    
-    from FFmpeg import FFmpeg
-    
-    ffmpeg = FFmpeg("D:/Research/Tools/ffmpeg/bin/ffmpeg.exe")
-    
-    fs, data = ffmpeg.convertAndRead("E:/Data/MIR/EU_SOUNDS/09301/0029BD22350AE42D6D494AE0543A1F38C555C6CB.mp3")
 
-    # READ MP3 FILES (Linux)
+    # IMPORT our library for reading wav and mp3 files
+    from audiofile_read import *
 
-    # from mp3_read import *
-    # fs, data = mp3_read(filename)
-    
+    audiofile = "music/Acrassicauda_-_02_-_Garden_Of_Stones.wav"
+    samplerate, samplewidth, wavedata = audiofile_read(audiofile)
+
     np.set_printoptions(suppress=True)
-    
-    # convert data space to MATLAB value range
-    data = data / float(32768)
-    
-    feat = rp_extract(data,
-                      fs / 1,
+
+    feat = rp_extract(wavedata,
+                      samplerate,
                       extract_rp=True,
                       spectral_masking=True,
                       transform_db=True,
@@ -485,11 +476,10 @@ if __name__ == '__main__':
     # print feat
     print feat["rp"].shape
 
-    # store features in CSV
+    # store RP features in CSV file
     import pandas as pd
 
-    filename = "/home/lidy/exp/features.rp.csv"
-    
+    filename = "features.rp.csv"
     rp = pd.DataFrame(feat["rp"].reshape([1,feat["rp"].shape[0]]))
     rp.to_csv(filename)
     print rp.to_json()
