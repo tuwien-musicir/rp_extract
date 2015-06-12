@@ -6,6 +6,7 @@ Institute of Software Technology and Interactive Systems, Vienna University of T
 
 Main Authors: Alexander Schindler, Thomas Lidy
 
-For a step-by-step tutorial open „RP_extract Tutorial.ipynb“ in iPython Notebook.
+For a step-by-step tutorial open „RP_extract Tutorial.ipynb“ in iPython Notebook or view the tutorial here:
+http://nbviewer.ipython.org/github/tuwien-musicir/rp_extract/blob/master/RP_extract%20Tutorial.ipynb
 
 More information: http://ifs.tuwien.ac.at/mir
