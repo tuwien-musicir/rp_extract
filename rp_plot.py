@@ -107,12 +107,13 @@ def plotstereo_waveform(samples, plot_width=6, plot_height=5):
 
 def plot_waveform(samples, plot_width=6, plot_height=4):
 
-    if samples.shape[1] > 1:
-        print "Plotting Stereo"
-        plotstereo_waveform(samples, plot_width, plot_height)
-    else:
+    # mono wave data is either only 1dim in shape or has a 2dim shape with 1 channel only
+    if (len(samples.shape) == 1) or (samples.shape[1] == 1):
         print "Plotting Mono"
         plotmono_waveform(samples, plot_width, plot_height)
+    else:
+        print "Plotting Stereo"
+        plotstereo_waveform(samples, plot_width, plot_height)
 
 
 """ scale frequency axis logarithmically """
