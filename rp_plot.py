@@ -41,7 +41,7 @@ def plotrp(features, reshape=True):
     if reshape:
         features = features.reshape(24, 60, order='F')
 
-    print features.shape
+    #print features.shape
 
     plotmatrix(features)
 
