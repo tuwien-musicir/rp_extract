@@ -483,7 +483,7 @@ def rp_extract( data,                          # pcm (wav) signal data
     if return_segment_features:
         # also include the segment positions in the result
         features["segpos"] = np.array(seg_pos_list)
-
+        features["timepos"] = features["segpos"] / (samplerate * 1.0)
 
     return features
 
