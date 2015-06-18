@@ -172,7 +172,9 @@ def rp_extract( data,                          # pcm (wav) signal data
                 fluctuation_strength_weighting = False,  # [R2] Fluctuation Strength weighting curve
                 
                 # not translated yet
-                #blurring                       = True  # [R3] Gradient+Gauss filter 
+                #blurring                       = True  # [R3] Gradient+Gauss filter
+
+                return_segment_features = False      # this will return features per each analyzed segment instead of aggregated ones
 
                 ):
     
@@ -401,16 +403,24 @@ def rp_extract( data,                          # pcm (wav) signal data
         seg_pos = seg_pos + segment_size * step_width
         
         
-    if extract_rp: 
-        features["rp"]   = np.median(np.asarray(rp_list), axis=0)
-    if extract_ssd:   
-        features["ssd"]  = np.mean(np.asarray(ssd_list), axis=0)
-    if extract_sh:   
+    if extract_rp:
+        if return_segment_features:
+            features["rp"] = rp_list
+        else:
+            features["rp"] = np.median(np.asarray(rp_list), axis=0)
+
+    if extract_ssd:
+        if return_segment_features:
+            features["ssd"] = ssd_list
+        else:
+            features["ssd"]  = np.mean(np.asarray(ssd_list), axis=0)
+
+
+    if extract_sh:
 
         if len(sh_list) > 1:
             
             sh_list = np.asarray(sh_list) / 511.0
-            
             
             sh = []
             
@@ -432,20 +442,33 @@ def rp_extract( data,                          # pcm (wav) signal data
                 
                 sh.append(new_t)
             
-                
-            features["sh"] = np.asarray(sh).flatten('C')
+            if return_segment_features:
+                features["sh"] = sh   # TODO check Alex: sh or sh_list here?
+            else:
+                features["sh"] = np.asarray(sh).flatten('C')
         
         else:
-            
             features["sh"] = []
         
-    if extract_rh:   
-        features["rh"]   = np.median(np.asarray(rh_list), axis=0)
-    if extract_mvd:   
-        features["mvd"]  = np.mean(np.asarray(mvd_list), axis=0)
-    if extract_tssd:   
+    if extract_rh:
+        if return_segment_features:
+            features["rh"] = rh_list
+        else:
+            features["rh"] = np.median(np.asarray(rh_list), axis=0)
+
+
+    if extract_mvd:
+        if return_segment_features:
+            features["mvd"] = mvd_list
+        else:
+            features["mvd"]  = np.mean(np.asarray(mvd_list), axis=0)
+
+    # NOTE: no return_segment_features for temporal features as they measure variation of features over time
+
+    if extract_tssd:
         features["tssd"] = calc_statistical_features(np.asarray(ssd_list).transpose()).flatten(1)
-    if extract_trh:   
+
+    if extract_trh:
         features["trh"]  = calc_statistical_features(np.asarray(rh_list).transpose()).flatten(1)
 
 
