@@ -2,7 +2,7 @@
 
 # wrapper around rp_extract_python.py to sequentially extract features from all files in a given directory
 
-# 2015-04 by Thomas Lidy
+# 2015-04, 2015-06 by Thomas Lidy
 
 from audiofile_read import * # reading wav and mp3 files
 import rp_extract_python as rp # Rhythm Pattern extractor
@@ -46,16 +46,50 @@ def close_feature_files(files,ext):
         files[e].close()
 
 
-def read_feature_files(filenamestub,ext)
+# read_feature_files:
+# reads pre-analyzed features from CSV files
+# in write_feature_files we use unicsv to store the features
+# it will quote strings containing , and other characters if needed only (automatically)
+# here we use pandas to import CSV as a pandas dataframe,
+# because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
 
+# parameters:
+# filenamestub: full path to feature file name WITHOUT .extension
+# ext: a list of file .extensions (e.g. 'rh','ssd','rp') to be read in
+# separate_ids: if False, it will return a single matrix containing the id column
+#               if True, it will return a tuple: (ids, features) separating the id column from the features
+# id_column: which of the CSV columns contains the ids (default = 0, i.e. first column)
+#
+# returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
+#          each of them is a python dict containing an entry per feature extension (ext)
+
+def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
+
+    import numpy as np
     import pandas as pd
 
-    feat = []
+    # initialize empty dicts
+    feat = {}
+    ids = {}
 
-    # import CSV as pandas dataframe
-    feat[e] = pd.read_csv(filename, sep=',',header=None,index_col=0) # index_col=0 makes 1st column the rowname (index)
+    for e in ext:
+        filename = filenamestub + "." + e
 
-    print e,":\t", feat[e].shape[0], "items", feat[e].shape[1], "dimensions"
+        # we use pandas to import CSV as pandas dataframe,
+        # because it handles quoted filnames (containing ,) well (by contrast to other CSV readers)
+        dataframe = pd.read_csv(filename, sep=',',header=None)
+
+        # convert to numpy matrix/array
+        feat[e] = dataframe.as_matrix(columns=None)
+        print "Read:", e,":\t", feat[e].shape[0], "items", feat[e].shape[1], "dimensions"
+
+
+    if separate_ids == False:
+        return feat
+    else:
+       ids[e] = feat[e][:,id_column]
+       feat[e] = np.delete(feat[e],id_column,1)
+       return(ids,feat)
 
 
 
@@ -165,11 +199,11 @@ if __name__ == '__main__':
     feature_types = ['rp','ssd','rh'] # sh, tssd, trh
     # SET PATH WITH AUDIO FILES (INPUT)
 
-    in_path = "/Users/jjb/Music/mp3/1972"
+    in_path = "./music"
 
     # OUTPUT FEATURE FILES
 
-    out_path = '/Users/jjb/Music/mp3/1972/features'
+    out_path = './features'
     if not os.path.exists(out_path):
         os.mkdir(out_path)
 
@@ -178,3 +212,11 @@ if __name__ == '__main__':
     out_filename = out_path + os.sep + out_file
 
     extract_all_files_in_path(in_path,out_filename,feature_types)
+
+    # EXAMPLE ON HOW TO READ THE FEATURE FILES
+
+    # filenamestub = out_filename
+    # filenamestub = 'features'
+    # ext = ['rh']
+    # ids, features = read_feature_files(filenamestub,ext)
+
