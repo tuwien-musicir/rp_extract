@@ -81,7 +81,7 @@ def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
 
         # convert to numpy matrix/array
         feat[e] = dataframe.as_matrix(columns=None)
-        print "Read:", e,":\t", feat[e].shape[0], "items", feat[e].shape[1], "dimensions"
+        print "Read:", e,":\t", feat[e].shape[0], "vectors", feat[e].shape[1], "dimensions (incl. id)"
 
 
     if separate_ids == False:
