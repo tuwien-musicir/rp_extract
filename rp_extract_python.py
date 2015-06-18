@@ -19,6 +19,9 @@ from scipy import stats
 from scipy.fftpack import fft
 from scipy import interpolate
 
+# suppress numpy warnings (divide by 0 etc.)
+np.set_printoptions(suppress=True)
+
 
 
 # Mappings & Initialization of Constants
@@ -213,6 +216,8 @@ def rp_extract( data,                          # pcm (wav) signal data
     
     skip_seg = skip_leadin_fadeout
     seg_pos  = np.array([1, segment_size])
+
+    seg_pos_list = []  # list to store all the individual segment positions (only when return_segment_features == True)
     
     if ((skip_leadin_fadeout > 0) or (step_width > 1)):
         
@@ -237,8 +242,12 @@ def rp_extract( data,                          # pcm (wav) signal data
     
     
     for seg_id in range(n_segments):
+
+        # keep track of segment position
+        if return_segment_features:
+            seg_pos_list.append(seg_pos)
         
-        # extract wave segment that will be processed
+        # EXTRACT WAVE SEGMENT that will be processed
         
         # Combine separate channels
         if len(data.shape) > 1:
@@ -405,13 +414,13 @@ def rp_extract( data,                          # pcm (wav) signal data
         
     if extract_rp:
         if return_segment_features:
-            features["rp"] = rp_list
+            features["rp"] = np.array(rp_list)
         else:
             features["rp"] = np.median(np.asarray(rp_list), axis=0)
 
     if extract_ssd:
         if return_segment_features:
-            features["ssd"] = ssd_list
+            features["ssd"] = np.array(ssd_list)
         else:
             features["ssd"]  = np.mean(np.asarray(ssd_list), axis=0)
 
@@ -443,7 +452,7 @@ def rp_extract( data,                          # pcm (wav) signal data
                 sh.append(new_t)
             
             if return_segment_features:
-                features["sh"] = sh   # TODO check Alex: sh or sh_list here?
+                features["sh"] = np.array(sh)   # TODO check Alex: sh or sh_list here?
             else:
                 features["sh"] = np.asarray(sh).flatten('C')
         
@@ -452,14 +461,14 @@ def rp_extract( data,                          # pcm (wav) signal data
         
     if extract_rh:
         if return_segment_features:
-            features["rh"] = rh_list
+            features["rh"] = np.array(rh_list)
         else:
             features["rh"] = np.median(np.asarray(rh_list), axis=0)
 
 
     if extract_mvd:
         if return_segment_features:
-            features["mvd"] = mvd_list
+            features["mvd"] = np.array(mvd_list)
         else:
             features["mvd"]  = np.mean(np.asarray(mvd_list), axis=0)
 
@@ -470,6 +479,10 @@ def rp_extract( data,                          # pcm (wav) signal data
 
     if extract_trh:
         features["trh"]  = calc_statistical_features(np.asarray(rh_list).transpose()).flatten(1)
+
+    if return_segment_features:
+        # also include the segment positions in the result
+        features["segpos"] = np.array(seg_pos_list)
 
 
     return features
