@@ -21,7 +21,7 @@ from scipy import interpolate
 
 
 
-# Mappings
+# Mappings & Initialization of Constants
 
 bark = [100, 200, 300, 400, 510, 630, 770, 920, 1080, 1270, 1480, 1720, 2000, 2320, 2700, 3150, 3700, 4400, 5300, 6400, 7700, 9500, 12000, 15500]
 
@@ -114,6 +114,7 @@ def periodogram(x,win,Fs=None,nfft=1024):
 
     return P
 
+
 def calc_spectral_histograms(mat):
 
     result = []
@@ -122,6 +123,7 @@ def calc_spectral_histograms(mat):
         result.append(np.histogram(np.clip(mat[i,:],0,10), np.arange(0,11, 2), density=False)[0])
     
     return np.asarray(result)
+
 
 def calc_statistical_features(mat):
 
@@ -140,8 +142,9 @@ def calc_statistical_features(mat):
     return result
 
 
+# Main Rhythm Pattern Extraction Function
 
-def rp_extract( data,                          # pcm signal data
+def rp_extract( data,                          # pcm (wav) signal data
                 samplerate,                    # signal sampling rate
                 
                 extract_rp   = False,          # extract Rhythm Patterns features
@@ -161,7 +164,7 @@ def rp_extract( data,                          # pcm signal data
                 n_bark_bands        = 24,      # 15 or 20 or 24 (for 11, 22 and 44 kHz audio respectively)
                 mod_ampl_limit      = 60,
                 
-                # enable/disable parts of feature extraction 
+                # enable/disable parts of feature extraction  (transform_* functions not yet used)
                 spectral_masking               = False,  # [S3]
                 transform_db                   = False,  # [S4] advisable only to turn off when [S5] and [S6] are turned off too
                 transform_phon                 = False,  # [S5] if disabled, sone_transform will be disabled too
@@ -181,16 +184,19 @@ def rp_extract( data,                          # pcm signal data
     duration =  data.shape[0]/samplerate
     
     # segment_size should always be ~6 sec, fft_window_size should always be ~ 23ms
-    
-    if (samplerate <= 11025):
+
+    if (samplerate == 11025):
         segment_size    = 2**16
         fft_window_size = 256
-    elif (samplerate <= 22050):
+    elif (samplerate == 22050):
         segment_size    = 2**17
-        fft_window_size = 512;
-    else:
+        fft_window_size = 512
+    elif (samplerate == 44100):
         segment_size    = 2**18
-        fft_window_size = 1024;  # assume 44100 Hz
+        fft_window_size = 1024
+    else:
+        # throw error not supported
+        raise ValueError('A sample rate of' + samplerate + "is not supported (only 11, 22 and 44 kHz).")
     
     # calculate frequency values on y-axis (for bark scale calculation)
     freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
@@ -215,11 +221,11 @@ def rp_extract( data,                          # pcm signal data
             skip_seg   = 0
         
         else:
-            seg_pos = seg_pos + segment_size * skip_seg;             # advance by number of skip_seg segments (i.e. skip lead_in)
-            
+            # advance by number of skip_seg segments (i.e. skip lead_in)
+            seg_pos = seg_pos + segment_size * skip_seg
     
     # calculate number of segments
-    n_segments =  int(np.floor( (np.floor( (data.shape[0] - (skip_seg*2*segment_size)) / segment_size ) - 1 ) / step_width ) + 1)
+    n_segments = int(np.floor( (np.floor( (data.shape[0] - (skip_seg*2*segment_size)) / segment_size ) - 1 ) / step_width ) + 1)
     
     ssd_list = []
     sh_list = []
