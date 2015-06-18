@@ -364,7 +364,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         
             rhythm_patterns[b,:] = fft(matrix[b,:], fft_size)
         
-        rhythm_patterns = rhythm_patterns / 256
+        rhythm_patterns = rhythm_patterns / 256  # TODO check don't we need / 256.0 here ?
         
         rp = np.abs(rhythm_patterns[:,feature_part_xaxis_rp]) # verified
     
@@ -389,7 +389,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         
         # Gradient+Gauss filter
         
-        # todo
+        # TODO Gradient+Gauss filter
         
         #for i in range(1,rp.shape[1]):
         #    rp[:,i-1] = np.abs(rp[:,i] - rp[:,i-1]);
