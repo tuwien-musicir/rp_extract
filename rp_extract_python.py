@@ -165,11 +165,11 @@ def rp_extract( data,                          # pcm (wav) signal data
                 mod_ampl_limit      = 60,
                 
                 # enable/disable parts of feature extraction  (transform_* functions not yet used)
-                spectral_masking               = False,  # [S3]
-                transform_db                   = False,  # [S4] advisable only to turn off when [S5] and [S6] are turned off too
-                transform_phon                 = False,  # [S5] if disabled, sone_transform will be disabled too
-                transform_sone                 = False,  # [S6] only applies if opts.transform_phon = 1
-                fluctuation_strength_weighting = False,  # [R2] Fluctuation Strength weighting curve
+                spectral_masking               = True,  # [S3]
+                transform_db                   = True,  # [S4] advisable only to turn off when [S5] and [S6] are turned off too
+                transform_phon                 = True,  # [S5] if disabled, sone_transform will be disabled too
+                transform_sone                 = True,  # [S6] only applies if opts.transform_phon = 1
+                fluctuation_strength_weighting = True,  # [R2] Fluctuation Strength weighting curve
                 
                 # not translated yet
                 #blurring                       = True  # [R3] Gradient+Gauss filter
