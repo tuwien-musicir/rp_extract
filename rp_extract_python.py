@@ -15,10 +15,8 @@ Created on 03.01.2014
 
 import numpy as np
 
-from scipy.io import wavfile
 from scipy import stats
 from scipy.fftpack import fft
-
 from scipy import interpolate
 
 
