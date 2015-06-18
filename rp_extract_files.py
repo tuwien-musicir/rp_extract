@@ -4,10 +4,12 @@
 
 # 2015-04 by Thomas Lidy
 
-import unicsv # unicode csv library (installed via pip install unicsv)
-import time # for time measuring
 from audiofile_read import * # reading wav and mp3 files
 import rp_extract_python as rp # Rhythm Pattern extractor
+
+import unicsv # unicode csv library (installed via pip install unicsv)
+import time # for time measuring
+# import pandas as pd # only needed in read_feature_files -> import has been moved there
 
 
 def initialize_feature_files(base_filename,ext,append=False):
@@ -42,6 +44,19 @@ def write_feature_files(id,feat,writer,id2=None):
 def close_feature_files(files,ext):
     for e in ext:
         files[e].close()
+
+
+def read_feature_files(filenamestub,ext)
+
+    import pandas as pd
+
+    feat = []
+
+    # import CSV as pandas dataframe
+    feat[e] = pd.read_csv(filename, sep=',',header=None,index_col=0) # index_col=0 makes 1st column the rowname (index)
+
+    print e,":\t", feat[e].shape[0], "items", feat[e].shape[1], "dimensions"
+
 
 
 def extract_all_files_in_path(path,out_file,feature_types):
@@ -123,7 +138,8 @@ def extract_all_files_in_path(path,out_file,feature_types):
                     start = time.time()
 
                     # id = fil -> add filename before vector (to include path, change fil to filename)
-                    write_feature_files(fil,feat,writer)
+                    id = fil # filename
+                    write_feature_files(id,feat,writer)
 
                     end = time.time()
 
