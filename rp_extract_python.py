@@ -237,7 +237,8 @@ def rp_extract( data,                          # pcm (wav) signal data
 
     if n_segments == 0:
         raise ValueError("Not enough data to analyze! Minumum sample length needs to be " +
-                         str(segment_size) + " (5.94 seconds) but it is " + str(data.shape[0]))
+                         str(segment_size) + " (5.94 seconds) but it is " + str(data.shape[0]) +
+                         " (" + str(round(data.shape[0] * 1.0 / samplerate,2)) + " seconds)")
 
 
     ssd_list = []
