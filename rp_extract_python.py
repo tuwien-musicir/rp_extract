@@ -233,7 +233,13 @@ def rp_extract( data,                          # pcm (wav) signal data
     
     # calculate number of segments
     n_segments = int(np.floor( (np.floor( (data.shape[0] - (skip_seg*2*segment_size)) / segment_size ) - 1 ) / step_width ) + 1)
-    
+    print "Analyzing", n_segments, "segments"
+
+    if n_segments == 0:
+        raise ValueError("Not enough data to analyze! Minumum sample length needs to be " +
+                         str(segment_size) + " (5.94 seconds) but it is " + str(data.shape[0]))
+
+
     ssd_list = []
     sh_list = []
     rh_list  = []
@@ -496,27 +502,32 @@ if __name__ == '__main__':
     # IMPORT our library for reading wav and mp3 files
     from audiofile_read import *
 
-    audiofile = "music/Acrassicauda_-_02_-_Garden_Of_Stones.wav"
-    samplerate, samplewidth, wavedata = audiofile_read(audiofile)
+    try:
+        #audiofile = "music/Acrassicauda_-_02_-_Garden_Of_Stones.wav"
+        audiofile = "music/24bit_4seconds.wav"
+        samplerate, samplewidth, wavedata = audiofile_read(audiofile)
 
-    np.set_printoptions(suppress=True)
+        np.set_printoptions(suppress=True)
 
-    feat = rp_extract(wavedata,
-                      samplerate,
-                      extract_rp=True,
-                      spectral_masking=True,
-                      transform_db=True,
-                      transform_phon=True,
-                      transform_sone=True,
-                      fluctuation_strength_weighting=True,
-                      skip_leadin_fadeout=1,
-                      step_width=1)
-    
-    # feat is a dict containing arrays for different feature sets
-    # print feat
-    print feat["rp"].shape
+        feat = rp_extract(wavedata,
+                          samplerate,
+                          extract_rp=True,
+                          spectral_masking=True,
+                          transform_db=True,
+                          transform_phon=True,
+                          transform_sone=True,
+                          fluctuation_strength_weighting=True,
+                          skip_leadin_fadeout=1,
+                          step_width=1)
 
-    # store RP features in CSV file
+        # feat is a dict containing arrays for different feature sets
+        # print feat
+        print feat["rp"].shape
+
+    except ValueError, e:
+        print e
+
+    # EXAMPLE ON how to store RP features in CSV file
     import pandas as pd
 
     filename = "features.rp.csv"
