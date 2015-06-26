@@ -528,9 +528,9 @@ if __name__ == '__main__':
         print e
 
     # EXAMPLE ON how to store RP features in CSV file
-    import pandas as pd
+    # import pandas as pd
 
-    filename = "features.rp.csv"
-    rp = pd.DataFrame(feat["rp"].reshape([1,feat["rp"].shape[0]]))
-    rp.to_csv(filename)
-    print rp.to_json()
+    # filename = "features.rp.csv"
+    # rp = pd.DataFrame(feat["rp"].reshape([1,feat["rp"].shape[0]]))
+    # rp.to_csv(filename)
+    # print rp.to_json()
