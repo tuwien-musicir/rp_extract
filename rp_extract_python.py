@@ -207,11 +207,10 @@ def rp_extract( data,                          # pcm (wav) signal data
     freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
     
     # modulation frequency x-axis (after 2nd fft)
-    mod_freq_res  = 1 / (float(segment_size) / samplerate)           # resolution of modulation frequency axis (0.17 Hz)             
-    mod_freq_axis = mod_freq_res * np.arange(257)                    # modulation frequencies along x-axis from index 1 to 257)
-  
-    fluct_curve = 1 / (mod_freq_axis/4 + 4/mod_freq_axis)
-    
+    # mod_freq_res = resolution of modulation frequency axis (0.17 Hz)
+    # also see mod_freq_axis in fluctuation strength weighting below
+    mod_freq_res  = 1 / (float(segment_size) / samplerate)
+
     # find position of wave segment
     
     skip_seg = skip_leadin_fadeout
@@ -394,10 +393,15 @@ def rp_extract( data,                          # pcm (wav) signal data
             rh = np.sum(np.abs(rhythm_patterns[:,feature_part_xaxis2]),axis=0) # verified
             rh_list.append(rh.flatten(1))
     
-    
+        # TODO shall this be done before RH?
         # Fluctuation Strength weighting curve
         if fluctuation_strength_weighting:
-            
+            #  modulation frequencies along x-axis from index 1 to 257)
+            mod_freq_axis = mod_freq_res * np.arange(257)
+
+            #  fluctuation strength curve
+            fluct_curve = 1 / (mod_freq_axis/4 + 4/mod_freq_axis)
+
             for b in range(rp.shape[0]):
                 rp[b,:] = rp[b,:] * fluct_curve[feature_part_xaxis_rp]
                 
@@ -504,8 +508,8 @@ if __name__ == '__main__':
     from audiofile_read import *
 
     try:
-        #audiofile = "music/Acrassicauda_-_02_-_Garden_Of_Stones.wav"
-        audiofile = "music/24bit_4seconds.wav"
+        #audiofile = "music/Simon_Mathewson_-_01_-_Tomatoes_and_Peas.mp3"
+        audiofile = "music/24bit_audio.wav"
         samplerate, samplewidth, wavedata = audiofile_read(audiofile)
 
         np.set_printoptions(suppress=True)
@@ -522,6 +526,8 @@ if __name__ == '__main__':
                           step_width=1)
 
         # feat is a dict containing arrays for different feature sets
+        print "Successfully extracted features:", feat.keys()
+
         # print feat
         print feat["rp"].shape
 
