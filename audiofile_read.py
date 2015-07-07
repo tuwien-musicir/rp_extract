@@ -3,7 +3,7 @@
 # MP3 READ: mini function to decode mp3 using external program
 # as there is no Python library for it, we need to use external tools (mpg123, lame, ffmpeg)
 
-import os # for calling external program for mp3 decoding
+import os         # for calling external program for mp3 decoding
 import subprocess # for subprocess calls
 import tempfile
 
@@ -15,12 +15,6 @@ import tempfile
 import wavio
 
 
-# check if a command exists on the system (without knowing the path, i.e. like Linux 'which')
-
-def cmd_exists(cmd):
-    return subprocess.call("type " + cmd, shell=True,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
-
 # Normalize integer WAV data to float in range (-1,1)
 # Note that this works fine with Wav files read with Wavio
 # when using scipy.io.wavfile to read Wav files, use divisor = np.iinfo(wavedata.dtype).max + 1
@@ -28,7 +22,7 @@ def cmd_exists(cmd):
 def normalize_wav(wavedata,samplewidth):
 
     # samplewidth in byte (i.e.: 1 = 8bit, 2 = 16bit, 3 = 24bit, 4 = 32bit)
-    divisor = 2**(8*samplewidth)/2
+    divisor  = 2**(8*samplewidth)/2
     wavedata = wavedata / float(divisor)
     return (wavedata)
 
@@ -56,11 +50,10 @@ def wav_read(filename,normalize=True):
 def mp3_read(filename,normalize=True):
 
     temp = tempfile.NamedTemporaryFile(suffix='.wav')
-    # print 'gettempdir():', tempfile.gettempdir()
 
     # check a number of MP3 Decoder tools if they are available
-    cmd=[]
-    args=[]
+    cmd  = []
+    args = []
 
     cmd.append('mpg123')
     args.append ('-q -w "' + temp.name + '" "' + filename + '"')
@@ -76,30 +69,24 @@ def mp3_read(filename,normalize=True):
 
     for i in range(len(cmd)):
 
-        if cmd_exists(cmd[i]):
-
+        try:
+            
+            # execute external command:
+            subprocess.call(cmd[i] + ' ' + args[i])
+            
             print 'Decoding mp3 with: ', cmd[i], args[i]
 
-            try:
-                # execute external command:
-                # import subprocess
-                #return_code = call('mpg123') # does work
-                #return_code = call(['mpg123',args]) # did not work
-                #print return_code
+            samplerate, samplewidth, wavedata = wav_read(temp.name,normalize)
 
-                os.popen(cmd[i] + ' ' + args[i])
+            success = True
 
-                samplerate, samplewidth, wavedata = wav_read(temp.name,normalize)
-
-                #os.remove(tempfile) # now done automatically by finally part after temp.close() by tempfile class
-                success = True
-
-            except: # catch *all* exceptions
+        except OSError as e: # catch *all* exceptions
+            if e.errno != 2:
                 raise OSError("Problem appeared during decoding.")
 
-            finally:
-                # Automatically cleans up (deletes) the temp file
-                temp.close()
+        finally:
+            # Automatically cleans up (deletes) the temp file
+            temp.close()
 
         if success:
             break  # no need to loop further
@@ -137,9 +124,12 @@ if __name__ == '__main__':
     # if your MP3 decoder is not on the system PATH, add it like this:
     # path = '/path/to/ffmpeg/'
     # os.environ['PATH'] += os.pathsep + path
-
-    #file = "Lamb - Five.mp3"
-    file = "Acrassicauda_-_02_-_Garden_Of_Stones.wav"
+    
+    # test audio file: "Epic Song" by "BoxCat Game"
+    # Epic Song by BoxCat Games is licensed under a Creative Commons Attribution License.
+    # http://freemusicarchive.org/music/BoxCat_Games/Nameless_the_Hackers_RPG_Soundtrack/BoxCat_Games_-_Nameless-_the_Hackers_RPG_Soundtrack_-_10_Epic_Song
+    file = "BoxCat_Games_-_10_-_Epic_Song.mp3"
+    
     samplerate, samplewidth, wavedata = audiofile_read(file)
 
     print "Successfully read audio file:"
