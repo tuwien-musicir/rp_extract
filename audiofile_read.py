@@ -8,10 +8,9 @@ import subprocess # for subprocess calls
 import tempfile
 
 # Reading WAV files
-# scipy.io.wavfile does not support 24 bit Wav files
 # from scipy.io import wavfile
-# therefore we switch to wavio by Warren Weckesser
-# https://github.com/WarrenWeckesser/wavio -  BSD 3-Clause License
+# scipy.io.wavfile does not support 24 bit Wav files
+# therefore we switch to wavio by Warren Weckesser - https://github.com/WarrenWeckesser/wavio - BSD 3-Clause License
 import wavio
 
 
@@ -51,37 +50,37 @@ def mp3_read(filename,normalize=True):
 
     temp = tempfile.NamedTemporaryFile(suffix='.wav')
 
-    # check a number of MP3 Decoder tools if they are available
-    cmd  = []
-    args = []
+    # check a number of external MP3 decoder tools whether they are available on the system
 
-    cmd.append('mpg123')
-    args.append ('-q -w "' + temp.name + '" "' + filename + '"')
+    # for subprocess.call, we prepare the commands and the arguments as a list
+    # cmd_list is a list of commands with their arguments, which will be iterated over to try to find each tool
+    cmd_list = []
 
-    cmd.append('lame')
-    args.append ('--quiet --decode "' + filename + '" "' + temp.name + '"')
+    cmd1 = ['mpg123','-q', '-w', temp.name, filename]
+    cmd2 = ['ffmpeg','-y','-v','1','-i', filename,  temp.name]    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
+    cmd3 = ['lame','--quiet','--decode', filename, temp.name]
 
-    cmd.append('ffmpeg')
-    args.append ('-y -v 1 -i "' + filename + '" "' + temp.name + '"')
-    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
+    cmd_list.append(cmd1)
+    cmd_list.append(cmd2)
+    cmd_list.append(cmd3)
 
     success = False
 
-    for i in range(len(cmd)):
+
+    for cmd in cmd_list:
 
         try:
-            
-            # execute external command:
-            subprocess.call(cmd[i] + ' ' + args[i])
-            
-            print 'Decoding mp3 with: ', cmd[i], args[i]
+
+            subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
+
+            print 'Decoding mp3 with: ', " ".join(cmd)
 
             samplerate, samplewidth, wavedata = wav_read(temp.name,normalize)
 
             success = True
 
-        except OSError as e: # catch *all* exceptions
-            if e.errno != 2:
+        except OSError as e:
+            if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
                 raise OSError("Problem appeared during decoding.")
 
         finally:
@@ -92,7 +91,8 @@ def mp3_read(filename,normalize=True):
             break  # no need to loop further
 
     if not success:
-        raise OSError("No MP3 decoder found. Check if any of these is on your system path: " + ", ".join(cmd) + \
+        commands = ", ".join( c[0] for c in cmd_list)
+        raise OSError("No MP3 decoder found. Check if any of these is on your system path: " + commands + \
                        " and if not add the path using os.environ['PATH'] += os.pathsep + path.")
 
     return (samplerate, samplewidth, wavedata)
