@@ -54,11 +54,23 @@ def plotssd(features, reshape=True, rows=24, cols=7):
     pylab.show()
 
 
-def plotrh(hist):
-    plt.bar(range(0, hist.shape[0]), hist)  # 50, normed=1, facecolor='g', alpha=0.75)
-    plt.xlabel('Mod. Frequency Index')
+def plotrh(hist,showbpm=True):
+    xrange = range(0, hist.shape[0])
+    plt.bar(xrange, hist)  # 50, normed=1, facecolor='g', alpha=0.75)
+
     #plt.ylabel('Probability')
     plt.title('Rhythm Histogram')
+    if showbpm:
+        mod_freq_res = 1.0 / (2**18/44100.0)
+        #print type(xrange)
+        plotrange = range(1, hist.shape[0]+1, 5) # 5 = step
+        print plotrange
+        bpm = np.around(np.array(plotrange) * mod_freq_res * 60.0, 0)
+        print bpm
+        pylab.xticks(plotrange, bpm)
+        plt.xlabel('bpm')
+    else:
+        plt.xlabel('Mod. Frequency Index')
     plt.show()
 
 
