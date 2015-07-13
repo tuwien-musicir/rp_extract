@@ -64,9 +64,7 @@ def plotrh(hist,showbpm=True):
         mod_freq_res = 1.0 / (2**18/44100.0)
         #print type(xrange)
         plotrange = range(1, hist.shape[0]+1, 5) # 5 = step
-        print plotrange
         bpm = np.around(np.array(plotrange) * mod_freq_res * 60.0, 0)
-        print bpm
         pylab.xticks(plotrange, bpm)
         plt.xlabel('bpm')
     else:

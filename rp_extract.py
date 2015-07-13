@@ -494,7 +494,6 @@ def rp_extract( data,                          # pcm (wav) signal data
 
         # convert from complex128 to float64 (real)
         rp = np.abs(rhythm_patterns[:,feature_part_xaxis_rp]) # verified
-        print rp.dtype
 
         print "RP 2nd FFT: ", time.time() - tim, "sec"
         tim = time.time()
