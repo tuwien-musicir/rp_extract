@@ -139,17 +139,17 @@ def calc_spectral_histograms(mat):
     return np.asarray(result)
 
 
-def calc_statistical_features(mat):
+def calc_statistical_features(matrix):
 
-    result = np.zeros((mat.shape[0],7))
+    result = np.zeros((matrix.shape[0],7))
     
-    result[:,0] = np.mean(mat, axis=1)
-    result[:,1] = np.var(mat, axis=1, dtype=np.float64) # the values for variance differ between MATLAB and Numpy!
-    result[:,2] = stats.skew(mat, axis=1)
-    result[:,3] = stats.kurtosis(mat, axis=1, fisher=False) # Matlab calculates Pearson's Kurtosis
-    result[:,4] = np.median(mat, axis=1)
-    result[:,5] = np.min(mat, axis=1)
-    result[:,6] = np.max(mat, axis=1)
+    result[:,0] = np.mean(matrix, axis=1)
+    result[:,1] = np.var(matrix, axis=1, dtype=np.float64) # the values for variance differ between MATLAB and Numpy!
+    result[:,2] = stats.skew(matrix, axis=1)
+    result[:,3] = stats.kurtosis(matrix, axis=1, fisher=False) # Matlab calculates Pearson's Kurtosis
+    result[:,4] = np.median(matrix, axis=1)
+    result[:,5] = np.min(matrix, axis=1)
+    result[:,6] = np.max(matrix, axis=1)
     
     result[np.where(np.isnan(result))] = 0
     
@@ -319,17 +319,15 @@ def rp_extract( data,                          # pcm (wav) signal data
     seg_pos  = np.array([1, segment_size]) # array with 2 entries: start and end position of selected segment
 
     seg_pos_list = []  # list to store all the individual segment positions (only when return_segment_features == True)
-    
+
+    # if file is too small, don't skip leadin/fadeout and set step_width to 1
     if ((skip_leadin_fadeout > 0) or (step_width > 1)):
 
         duration =  data.shape[0]/samplerate
 
         if (duration < 45):
-            
-            # if file is too small, don't skip leadin/fadeout and set step_width to 1
             step_width = 1
             skip_seg   = 0
-
             print "Duration < 45 seconds: setting step_with to 1 and skip_seg to 0."
 
         else:
@@ -396,6 +394,7 @@ def rp_extract( data,                          # pcm (wav) signal data
             # from scipy.signal import periodogram # move on top
             #f,  spec = periodogram(x=wavsegment[idx],fs=samplerate,window='hann',nfft=fft_window_size,scaling='spectrum',return_onesided=True)
 
+
         matrix = np.abs(spectrogr)
 
         print "FFT: ", time.time() - tim, "sec"
@@ -440,19 +439,19 @@ def rp_extract( data,                          # pcm (wav) signal data
 
         # FEATURES: now we got a Sonogram and extract statistical features
     
-        # Statistical Spectrum Descriptors
+        # SSD: Statistical Spectrum Descriptors
         if (extract_ssd):
             ssd = calc_statistical_features(matrix)
             ssd_list.append(ssd.flatten(1))
 
-        # Statistical Spectrum Histograms
+        # SH: Statistical Spectrum Histograms
         if (extract_sh):
             sh = calc_spectral_histograms(matrix)
             sh_list.append(sh)
         
         # values verified
     
-        # RHYTHM PATTERNS
+        # RP: RHYTHM PATTERNS
         feature_part_xaxis1 = range(0,mod_ampl_limit)    # take first (opts.mod_ampl_limit) values of fft result including DC component
         feature_part_xaxis2 = range(1,mod_ampl_limit+1)  # leave DC component and take next (opts.mod_ampl_limit) values of fft result
 
@@ -473,40 +472,43 @@ def rp_extract( data,                          # pcm (wav) signal data
         
         rp = np.abs(rhythm_patterns[:,feature_part_xaxis_rp]) # verified
     
-        # Modulation Variance Descriptors
+        # MVD: Modulation Variance Descriptors
         if extract_mvd:
             mvd = calc_statistical_features(rp.transpose()) # verified
             mvd_list.append(mvd.flatten(1))
     
-        # Rhythm Histograms
+        # RH: Rhythm Histograms
         if extract_rh:
             rh = np.sum(np.abs(rhythm_patterns[:,feature_part_xaxis2]),axis=0) #without DC component # verified
             rh_list.append(rh.flatten(1))
-    
-        # TODO shall this be done before RH?
-        # Fluctuation Strength weighting curve
-        if fluctuation_strength_weighting:
-            #  modulation frequencies along x-axis from index 1 to 257)
-            mod_freq_axis = mod_freq_res * np.arange(257)
 
-            #  fluctuation strength curve
-            fluct_curve = 1 / (mod_freq_axis/4 + 4/mod_freq_axis)
+        # final steps for RP:
 
-            for b in range(rp.shape[0]):
-                rp[b,:] = rp[b,:] * fluct_curve[feature_part_xaxis_rp]
-                
-        #values verified
-        
-        # Gradient+Gauss filter
-        
-        # TODO Gradient+Gauss filter
-        
-        #for i in range(1,rp.shape[1]):
-        #    rp[:,i-1] = np.abs(rp[:,i] - rp[:,i-1]);
-        #
-        #rp = blur1 * rp * blur2;
-        
         if extract_rp:
+            # TODO shall this be done before RH?
+            # Fluctuation Strength weighting curve
+            if fluctuation_strength_weighting:
+                #  modulation frequencies along x-axis from index 1 to 257)
+                mod_freq_axis = mod_freq_res * np.arange(257)
+
+                #  fluctuation strength curve
+                fluct_curve = 1 / (mod_freq_axis/4 + 4/mod_freq_axis)
+
+                for b in range(rp.shape[0]):
+                    rp[b,:] = rp[b,:] * fluct_curve[feature_part_xaxis_rp]
+
+            #values verified
+
+            # Gradient+Gauss filter
+
+            # TODO Gradient+Gauss filter
+
+            #for i in range(1,rp.shape[1]):
+            #    rp[:,i-1] = np.abs(rp[:,i] - rp[:,i-1]);
+            #
+            #rp = blur1 * rp * blur2;
+
+
             rp_list.append(rp.flatten(order='F'))
         
         
@@ -598,14 +600,14 @@ if __name__ == '__main__':
     from audiofile_read import *
 
     try:
-        audiofile = "music/test.wav"
+        audiofile = "music/pcm16b22khz.wav"
         samplerate, samplewidth, wavedata = audiofile_read(audiofile)
 
         np.set_printoptions(suppress=True)
 
         start = time.time()
 
-        bark_bands = 24
+        bark_bands = 24  # choose the number of Bark bands (2..24)
 
         feat = rp_extract(wavedata,
                           samplerate,
