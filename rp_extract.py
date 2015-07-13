@@ -17,6 +17,7 @@ import numpy as np
 
 from scipy import stats
 from scipy.fftpack import fft
+from scipy.fftpack import rfft #  	Discrete Fourier transform of a real sequence.
 from scipy import interpolate
 
 # suppress numpy warnings (divide by 0 etc.)
@@ -39,6 +40,11 @@ barks.insert(0,0)
 
 # Phone Scale
 phon = [3, 20, 40, 60, 80, 100, 101]
+
+# copy the bark vector (using [:]) and add a 0 in front (to make calculations below easier)
+phons     = phon[:]
+phons.insert(0,0)
+phons     = np.asarray(phons)
 
 
 # Loudness Curves
@@ -119,7 +125,7 @@ def periodogram(x,win,Fs=None,nfft=1024):
         P = P[select,:] # Take only [0,pi] or [0,pi)
         P[1:-1] = P[1:-1] * 2 # Only DC is a unique point and doesn't get doubled
     else:
-        select = np.arange(nfft/2+1);    # EVEN
+        #select = np.arange(nfft/2+1);    # EVEN
         #P = P[select,:]         # Take only [0,pi] or [0,pi) # todo remove?
         P[1:-2] = P[1:-2] * 2
         
@@ -162,7 +168,7 @@ def calc_statistical_features(matrix):
 # matrix: Spectrogram values as returned from periodogram function
 # freq_axis: array of frequency values along the frequency axis
 # max_bands: limit number of Bark bands (1...24) (counting from lowest band)
-def transform2bark(spectrogr, freq_axis, max_bands=None):
+def transform2bark(matrix, freq_axis, max_bands=None):
 
     # barks and n_bark_bands have been initialized globally above
 
@@ -171,12 +177,12 @@ def transform2bark(spectrogr, freq_axis, max_bands=None):
     else:
         max_band = min(n_bark_bands,max_bands)
 
-    matrix = np.zeros((max_band,spectrogr.shape[1]),dtype=np.complex128)
+    matrix_out = np.zeros((max_band,matrix.shape[1]),dtype=matrix.dtype)
 
-    for i in range(max_band-1):
-        matrix[i] = np.sum(spectrogr[((freq_axis >= barks[i]) & (freq_axis < barks[i+1]))], axis=0)
+    for b in range(max_band-1):
+        matrix_out[b] = np.sum(matrix[((freq_axis >= barks[b]) & (freq_axis < barks[b+1]))], axis=0)
 
-    return(matrix)
+    return(matrix_out)
 
 # Spectral Masking (assumes values are arranged in <=24 Bark bands)
 def do_spectral_masking(matrix):
@@ -209,11 +215,6 @@ def transform2phon(matrix):
     #%%table_dim = size(CONST_loudn_bark,2);
     table_dim = n_bands; # OK
     cbv       = np.concatenate((np.tile(np.inf,(table_dim,1)), loudn_bark[:,0:n_bands].transpose()),1) # OK
-
-    # TODO move to initialization
-    phons     = phon[:]
-    phons.insert(0,0)
-    phons     = np.asarray(phons) # OK
 
     # init lowest level = 2
     levels = np.tile(2,(n_bands,t)) # OK
@@ -379,7 +380,6 @@ def rp_extract( data,                          # pcm (wav) signal data
         n_iter     = wavsegment.shape[0] / fft_window_size * 2 - 1    # number of iterations with 50% overlap
     
         han_window = np.hanning(fft_window_size) # verified
-        print han_window
     
         spectrogr  = np.zeros((fft_window_size, n_iter), dtype=np.complex128)
     
@@ -394,11 +394,11 @@ def rp_extract( data,                          # pcm (wav) signal data
             # from scipy.signal import periodogram # move on top
             #f,  spec = periodogram(x=wavsegment[idx],fs=samplerate,window='hann',nfft=fft_window_size,scaling='spectrum',return_onesided=True)
 
-
         matrix = np.abs(spectrogr)
 
         print "FFT: ", time.time() - tim, "sec"
         tim = time.time()
+        print matrix.dtype
 
         # PSYCHO-ACOUSTIC TRANSFORMS
 
@@ -408,6 +408,7 @@ def rp_extract( data,                          # pcm (wav) signal data
 
         print "Bark: ", time.time() - tim, "sec"
         tim = time.time()
+        print matrix.dtype
 
         # Spectral Masking
         if spectral_masking:
@@ -415,6 +416,7 @@ def rp_extract( data,                          # pcm (wav) signal data
 
         print "SpecMask: ", time.time() - tim, "sec"
         tim = time.time()
+        print matrix.dtype
 
         # Map to Decibel Scale
         if transform_db:
@@ -444,13 +446,21 @@ def rp_extract( data,                          # pcm (wav) signal data
             ssd = calc_statistical_features(matrix)
             ssd_list.append(ssd.flatten(1))
 
+        print "SSD: ", time.time() - tim, "sec"
+        tim = time.time()
+
+
         # SH: Statistical Spectrum Histograms
         if (extract_sh):
             sh = calc_spectral_histograms(matrix)
             sh_list.append(sh)
-        
+
+
+        print "SH: ", time.time() - tim, "sec"
+        tim = time.time()
+
         # values verified
-    
+
         # RP: RHYTHM PATTERNS
         feature_part_xaxis1 = range(0,mod_ampl_limit)    # take first (opts.mod_ampl_limit) values of fft result including DC component
         feature_part_xaxis2 = range(1,mod_ampl_limit+1)  # leave DC component and take next (opts.mod_ampl_limit) values of fft result
@@ -460,27 +470,48 @@ def rp_extract( data,                          # pcm (wav) signal data
         else:
             feature_part_xaxis_rp = feature_part_xaxis2
 
+        # 2nd FFT
         fft_size = 2**(nextpow2(matrix.shape[1]))
         
         rhythm_patterns = np.zeros((matrix.shape[0], fft_size), dtype=np.complex128)
-        
+        #rhythm_patterns = np.zeros((matrix.shape[0], fft_size), dtype=np.float64)
+
+        # real_matrix = abs(matrix)
+
         for b in range(0,matrix.shape[0]):
         
             rhythm_patterns[b,:] = fft(matrix[b,:], fft_size)
+
+            # tried this instead, but ...
+            #rhythm_patterns[b,:] = fft(real_matrix[b,:], fft_size)   # ... no performance improvement
+            #rhythm_patterns[b,:] = rfft(real_matrix[b,:], fft_size)  # ... different output values
         
-        rhythm_patterns = rhythm_patterns / 256  # TODO a) why value 256? b) check don't we need / 256.0 here ?
-        
+        rhythm_patterns = rhythm_patterns / 256  # why 256?
+
+        # convert from complex128 to float64
         rp = np.abs(rhythm_patterns[:,feature_part_xaxis_rp]) # verified
-    
+        print rp.dtype
+
+        print "RP 2nd FFT: ", time.time() - tim, "sec"
+        tim = time.time()
+
         # MVD: Modulation Variance Descriptors
         if extract_mvd:
             mvd = calc_statistical_features(rp.transpose()) # verified
             mvd_list.append(mvd.flatten(1))
-    
+
+
+        print "MVD: ", time.time() - tim, "sec"
+        tim = time.time()
+
         # RH: Rhythm Histograms
         if extract_rh:
             rh = np.sum(np.abs(rhythm_patterns[:,feature_part_xaxis2]),axis=0) #without DC component # verified
             rh_list.append(rh.flatten(1))
+
+
+        print "RH: ", time.time() - tim, "sec"
+        tim = time.time()
 
         # final steps for RP:
 
@@ -514,7 +545,11 @@ def rp_extract( data,                          # pcm (wav) signal data
         
         seg_pos = seg_pos + segment_size * step_width
         
-        
+
+
+    print "Filtering: ", time.time() - tim, "sec"
+    tim = time.time()
+
     if extract_rp:
         if return_segment_features:
             features["rp"] = np.array(rp_list)
@@ -588,6 +623,10 @@ def rp_extract( data,                          # pcm (wav) signal data
         features["segpos"] = np.array(seg_pos_list)
         features["timepos"] = features["segpos"] / (samplerate * 1.0)
 
+
+    print "Feature aggregation: ", time.time() - tim, "sec"
+    tim = time.time()
+
     return features
 
 
@@ -600,7 +639,9 @@ if __name__ == '__main__':
     from audiofile_read import *
 
     try:
-        audiofile = "music/pcm16b22khz.wav"
+        #audiofile = "music/pcm16b22khz.wav"
+        audiofile = "music/test.wav"
+
         samplerate, samplewidth, wavedata = audiofile_read(audiofile)
 
         np.set_printoptions(suppress=True)
@@ -639,11 +680,14 @@ if __name__ == '__main__':
     print feat["rp"][0:25]
 
     # EXAMPLE on how to plot the features
-    from rp_plot import *
+    do_plots = False
 
-    plotrp(feat["rp"],rows=bark_bands)
-    plotrh(feat["rh"])
-    plotssd(feat["ssd"],rows=bark_bands)
+    if do_plots:
+        from rp_plot import *
+
+        plotrp(feat["rp"],rows=bark_bands)
+        plotrh(feat["rh"])
+        plotssd(feat["ssd"],rows=bark_bands)
 
     # EXAMPLE on how to store RP features in CSV file
     # import pandas as pd
