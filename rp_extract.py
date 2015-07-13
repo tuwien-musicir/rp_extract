@@ -28,10 +28,17 @@ np.set_printoptions(suppress=True)
 
 bark = [100, 200, 300, 400, 510, 630, 770, 920, 1080, 1270, 1480, 1720, 2000, 2320, 2700, 3150, 3700, 4400, 5300, 6400, 7700, 9500, 12000, 15500]
 
+# copy the bark vector (using [:]) and add a 0 in front
+barks = bark[:]
+barks.insert(0,0)
+
+print bark
+print barks
+
 phon = [3, 20, 40, 60, 80, 100, 101]
 
 
-# LOUDNESS
+# LOUDNESS CURVES
 
 eq_loudness = np.array([[55,  40, 32, 24, 19, 14, 10,  6,  4,  3,  2,   2, 0,-2,-5,-4, 0,  5, 10, 14, 25, 35], 
                         [66,  52, 43, 37, 32, 27, 23, 21, 20, 20, 20,  20,19,16,13,13,18, 22, 25, 30, 40, 50], 
@@ -150,11 +157,91 @@ def calc_statistical_features(mat):
     return result
 
 
-# Main Rhythm Pattern Extraction Function
+# PSYCHO-ACOUSTIC TRANSFORMS as individual functions
+
+# Bark Transform: Convert Spectrogram to Bark Scale
+# matrix: Spectrogram values as returned from periodogram function
+# freq_axis: array of frequency values along the frequency axis
+def transform2bark(spectrogr, freq_axis, max_bands=None):
+
+    matrix = np.zeros((len(bark),spectrogr.shape[1]),dtype=np.complex128)
+
+    # barks has been initialized globally above
+    for i in range(len(bark)-1):
+        matrix[i] = np.sum(spectrogr[((freq_axis >= barks[i]) & (freq_axis < barks[i+1]))], axis=0)
+
+    return(matrix)
+
+# Spectral Masking
+def do_spectral_masking(matrix):
+
+    # CONST_spread has been initialized globally above
+    spread = CONST_spread[0:matrix.shape[0],:] # TODO: investigate - this does not work when n_bark_bands <> 24
+    matrix = np.dot(spread, matrix)
+    return(matrix)
+
+# Map to Decibel Scale
+def transform2db(matrix):
+    matrix[np.where(matrix < 1)] = 1
+    matrix = 10 * np.log10(matrix)
+    return(matrix)
+
+# Transform to Phon (assumes matrix is in dB scale)
+def transform2phon(matrix):
+
+    # number of bark bands, matrix length in time dim
+    n_bands = matrix.shape[0]
+    t       = matrix.shape[1]
+
+    # DB-TO-PHON BARK-SCALE-LIMIT TABLE
+    # introducing 1 level more with level(1) being infinite
+    # to avoid (levels - 1) producing errors like division by 0
+
+    #%%table_dim = size(CONST_loudn_bark,2);
+    table_dim = n_bands; # OK
+    cbv       = np.concatenate((np.tile(np.inf,(table_dim,1)), loudn_bark[:,0:n_bands].transpose()),1) # OK
+
+    # TODO move to initialization
+    phons     = phon[:]
+    phons.insert(0,0)
+    phons     = np.asarray(phons) # OK
+
+    # init lowest level = 2
+    levels = np.tile(2,(n_bands,t)) # OK
+
+    for lev in range(1,6): # OK
+        db_thislev = np.tile(np.asarray([cbv[:,lev]]).transpose(),(1,t))
+        levels[np.where(matrix > db_thislev)] = lev + 2
+
+    # the matrix 'levels' stores the correct Phon level for each data point
+    cbv_ind_hi = np.ravel_multi_index(dims=(table_dim,7), multi_index=np.array([np.tile(np.array([range(0,table_dim)]).transpose(),(1,t)), levels-1]), order='F')
+    cbv_ind_lo = np.ravel_multi_index(dims=(table_dim,7), multi_index=np.array([np.tile(np.array([range(0,table_dim)]).transpose(),(1,t)), levels-2]), order='F')
+
+    # interpolation factor % OPT: pre-calc diff
+    ifac = (matrix[:,0:t] - cbv.transpose().ravel()[cbv_ind_lo]) / (cbv.transpose().ravel()[cbv_ind_hi] - cbv.transpose().ravel()[cbv_ind_lo])
+
+    ifac[np.where(levels==2)] = 1 # keeps the upper phon value;
+    ifac[np.where(levels==8)] = 1 # keeps the upper phon value;
+
+    matrix[:,0:t] = phons.transpose().ravel()[levels - 2] + (ifac * (phons.transpose().ravel()[levels - 1] - phons.transpose().ravel()[levels - 2])) # OPT: pre-calc diff
+    return(matrix)
+
+# Transform to Sone scale (assumes matrix is in Phon scale)
+def transform2sone(matrix):
+    idx     = np.where(matrix >= 40)
+    not_idx = np.where(matrix < 40)
+
+    matrix[idx]     =  2**((matrix[idx]-40)/10)    #
+    matrix[not_idx] =  (matrix[not_idx]/40)**2.642 # max => 438.53
+    return(matrix)
+
+
+# MAIN Rhythm Pattern Extraction Function
 
 def rp_extract( data,                          # pcm (wav) signal data
                 samplerate,                    # signal sampling rate
-                
+
+                # which features to extract
                 extract_rp   = False,          # extract Rhythm Patterns features
                 extract_ssd  = False,          # extract Statistical Spectrum Descriptor
                 extract_sh   = False,          # extract Statistical Histograms
@@ -162,25 +249,21 @@ def rp_extract( data,                          # pcm (wav) signal data
                 extract_rh   = False,          # extract Rhythm Histogram features
                 extract_trh  = False,          # extract temporal Rhythm Histogram features
                 extract_mvd  = False,          # extract modulation variance descriptor
-                
-                # pre-processing options
-                resample     = False,          # do resampling before processing: 0 = no, > 0 = resampling frequency in Hz
-                
+
                 # processing options
                 skip_leadin_fadeout =  1,      # >=0  how many sample windows to skip at the beginning and the end
                 step_width          =  1,      # >=1  each step_width'th sample window is analyzed
                 n_bark_bands        = 24,      # 15 or 20 or 24 (for 11, 22 and 44 kHz audio respectively)
                 mod_ampl_limit      = 60,
                 
-                # enable/disable parts of feature extraction  (transform_* functions not yet used)
-                spectral_masking               = True,  # [S3]
-                transform_db                   = True,  # [S4] advisable only to turn off when [S5] and [S6] are turned off too
-                transform_phon                 = True,  # [S5] if disabled, sone_transform will be disabled too
-                transform_sone                 = True,  # [S6] only applies if opts.transform_phon = 1
-                fluctuation_strength_weighting = True,  # [R2] Fluctuation Strength weighting curve
-                
-                # not translated yet
-                #blurring                       = True  # [R3] Gradient+Gauss filter
+                # enable/disable parts of feature extraction
+                transform_bark                 = True,  # [S2] transform to Bark scale
+                spectral_masking               = True,  # [S3] compute Spectral Masking
+                transform_db                   = True,  # [S4] transfrom to dB: advisable only to turn off when [S5] and [S6] are turned off too
+                transform_phon                 = True,  # [S5] transform to Phon: if disabled, Sone_transform will be disabled too
+                transform_sone                 = True,  # [S6] transform to Sone scale (only applies if transform_phon = True)
+                fluctuation_strength_weighting = True,  # [R2] apply Fluctuation Strength weighting curve
+                #blurring                       = True  # [R3] Gradient+Gauss filter # TODO: not yet implemented
 
                 return_segment_features = False      # this will return features per each analyzed segment instead of aggregated ones
 
@@ -208,7 +291,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         # throw error not supported
         raise ValueError('A sample rate of' + samplerate + "is not supported (only 11, 22 and 44 kHz).")
     
-    # calculate frequency values on y-axis (for bark scale calculation)
+    # calculate frequency values on y-axis (for Bark scale calculation)
     freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
     
     # modulation frequency x-axis (after 2nd fft)
@@ -244,14 +327,12 @@ def rp_extract( data,                          # pcm (wav) signal data
                          str(segment_size) + " (5.94 seconds) but it is " + str(data.shape[0]) +
                          " (" + str(round(data.shape[0] * 1.0 / samplerate,2)) + " seconds)")
 
-
     ssd_list = []
     sh_list = []
     rh_list  = []
     rp_list  = []
     mvd_list = []
-    
-    
+
     for seg_id in range(n_segments):
 
         # keep track of segment position
@@ -287,19 +368,12 @@ def rp_extract( data,                          # pcm (wav) signal data
             spectrogr[:,i] = periodogram(x=wavsegment[idx], win=han_window,nfft=fft_window_size)
             idx            = idx + fft_window_size/2
     
-        spectrogr = np.abs(spectrogr)
+        matrix = np.abs(spectrogr)
     
         # Map to Bark Scale
-    
-        matrix = np.zeros((len(bark),spectrogr.shape[1]),dtype=np.complex128)
-        
-        barks = bark[:]
-        barks.insert(0,0)
-        
-        for i in range(len(barks)-1):
-            matrix[i] = np.sum(spectrogr[((freq_axis >= barks[i]) & (freq_axis < barks[i+1]))], axis=0)
-        
-    
+        if transform_bark:
+            matrix = transform2bark(matrix,freq_axis)
+
         # Spectral Masking
         if spectral_masking:
             
@@ -520,6 +594,9 @@ if __name__ == '__main__':
 
         np.set_printoptions(suppress=True)
 
+        import time
+        start = time.time()
+
         feat = rp_extract(wavedata,
                           samplerate,
                           extract_rp=True,
@@ -531,6 +608,9 @@ if __name__ == '__main__':
                           skip_leadin_fadeout=1,
                           step_width=1)
 
+        end = time.time()
+        print end - start, "sec"
+
         # feat is a dict containing arrays for different feature sets
         print "Successfully extracted features:", feat.keys()
 
@@ -539,6 +619,9 @@ if __name__ == '__main__':
 
     except ValueError, e:
         print e
+
+
+    print feat["rp"]
 
     # EXAMPLE on how to plot the features
     from rp_plot import *
