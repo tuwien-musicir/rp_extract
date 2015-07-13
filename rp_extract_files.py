@@ -1,11 +1,11 @@
 # RP_EXTRACT_FILES:
 
-# wrapper around rp_extract_python.py to sequentially extract features from all files in a given directory
+# wrapper around rp_extract.py to sequentially extract features from all files in a given directory
 
 # 2015-04, 2015-06 by Thomas Lidy
 
 from audiofile_read import * # reading wav and mp3 files
-import rp_extract_python as rp # Rhythm Pattern extractor
+import rp_extract as rp # Rhythm Pattern extractor
 
 import unicsv # unicode csv library (installed via pip install unicsv)
 import time # for time measuring
