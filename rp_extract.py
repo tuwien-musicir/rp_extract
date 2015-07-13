@@ -266,8 +266,8 @@ def rp_extract( data,                          # pcm (wav) signal data
                 # processing options
                 skip_leadin_fadeout =  1,      # >=0  how many sample windows to skip at the beginning and the end
                 step_width          =  1,      # >=1  each step_width'th sample window is analyzed
-                n_bark_bands        = 24,      # 2...24 number of desired Bark bands (from low frequencies to high) (e.g. 15 or 20 or 24 for 11, 22 and 44 kHz audio respectively) (1 delivers undefined output)
-                mod_ampl_limit      = 60,      # number of modulation frequencies on x-axis
+                n_bark_bands        = 24,      # 2..24 number of desired Bark bands (from low frequencies to high) (e.g. 15 or 20 or 24 for 11, 22 and 44 kHz audio respectively) (1 delivers undefined output)
+                mod_ampl_limit      = 60,      # 2..257 number of modulation frequencies on x-axis
                 
                 # enable/disable parts of feature extraction
                 transform_bark                 = True,  # [S2] transform to Bark scale
@@ -457,6 +457,8 @@ def rp_extract( data,                          # pcm (wav) signal data
         print "SH: ", time.time() - tim, "sec"
         tim = time.time()
 
+        print matrix.shape
+
         # values verified
 
         # RP: RHYTHM PATTERNS
@@ -470,6 +472,10 @@ def rp_extract( data,                          # pcm (wav) signal data
 
         # 2nd FFT
         fft_size = 2**(nextpow2(matrix.shape[1]))
+
+        if (mod_ampl_limit >= fft_size):
+            raise(ValueError("mod_ampl_limit option must be smaller than FFT window size (" + str(fft_size) +  ")."))
+            # NOTE: in fact only half of it (256) makes sense due to the symmetry of the FFT result
         
         rhythm_patterns = np.zeros((matrix.shape[0], fft_size), dtype=np.complex128)
         #rhythm_patterns = np.zeros((matrix.shape[0], fft_size), dtype=np.float64)
@@ -486,7 +492,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         
         rhythm_patterns = rhythm_patterns / 256  # why 256?
 
-        # convert from complex128 to float64
+        # convert from complex128 to float64 (real)
         rp = np.abs(rhythm_patterns[:,feature_part_xaxis_rp]) # verified
         print rp.dtype
 
@@ -656,6 +662,7 @@ if __name__ == '__main__':
         start = time.time()
 
         bark_bands = 24  # choose the number of Bark bands (2..24)
+        mod_ampl_limit = 60 # number modulation frequencies on x-axis
 
         feat = rp_extract(wavedata,
                           samplerate,
@@ -669,7 +676,8 @@ if __name__ == '__main__':
                           transform_sone=True,
                           fluctuation_strength_weighting=True,
                           skip_leadin_fadeout=1,
-                          step_width=1)
+                          step_width=1,
+                          mod_ampl_limit=mod_ampl_limit)
 
         end = time.time()
         print end - start, "sec"
@@ -682,6 +690,7 @@ if __name__ == '__main__':
 
     except ValueError, e:
         print e
+        exit()
 
 
     print feat["rp"][0:25]
@@ -692,7 +701,7 @@ if __name__ == '__main__':
     if do_plots:
         from rp_plot import *
 
-        plotrp(feat["rp"],rows=bark_bands)
+        plotrp(feat["rp"],rows=bark_bands,cols=mod_ampl_limit)
         plotrh(feat["rh"])
         plotssd(feat["ssd"],rows=bark_bands)
 
