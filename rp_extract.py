@@ -22,6 +22,9 @@ from scipy import interpolate
 # suppress numpy warnings (divide by 0 etc.)
 np.set_printoptions(suppress=True)
 
+# only for time measuring
+# TODO remove
+import time
 
 
 # INITIALIZATION: Constants & Mappings
@@ -82,12 +85,10 @@ CONST_spread = np.zeros((n_bark_bands,n_bark_bands))
 
 for i in range(n_bark_bands):
     CONST_spread[i,:] = 10**((15.81+7.5*((i-np.arange(n_bark_bands))+0.474)-17.5*(1+((i-np.arange(n_bark_bands))+0.474)**2)**0.5)/10)
-    
-    
-    
+
+
 
 # UTILITY FUNCTIONS
-
 
 # There is no equivalent in Python to Matlab's nextpow2() function, so it needed to be re-implemented.
 
@@ -163,28 +164,28 @@ def calc_statistical_features(mat):
 # max_bands: limit number of Bark bands (1...24) (counting from lowest band)
 def transform2bark(spectrogr, freq_axis, max_bands=None):
 
-    #max_bands = 20
+    # barks and n_bark_bands have been initialized globally above
 
     if max_bands == None:
         max_band = n_bark_bands
     else:
         max_band = min(n_bark_bands,max_bands)
 
-    #print max_band
-
     matrix = np.zeros((max_band,spectrogr.shape[1]),dtype=np.complex128)
 
-    # barks has been initialized globally above
     for i in range(max_band-1):
         matrix[i] = np.sum(spectrogr[((freq_axis >= barks[i]) & (freq_axis < barks[i+1]))], axis=0)
 
     return(matrix)
 
-# Spectral Masking
+# Spectral Masking (assumes values are arranged in <=24 Bark bands)
 def do_spectral_masking(matrix):
 
+    n_bands = matrix.shape[0]
+
     # CONST_spread has been initialized globally above
-    spread = CONST_spread[0:matrix.shape[0],:] # TODO: investigate - this does not work when n_bark_bands <> 24
+    spread = CONST_spread[0:n_bands,0:n_bands] # not sure if column limitation is right here; was originally written for n_bark_bands = 24 only
+    print spread.shape
     matrix = np.dot(spread, matrix)
     return(matrix)
 
@@ -263,8 +264,8 @@ def rp_extract( data,                          # pcm (wav) signal data
                 # processing options
                 skip_leadin_fadeout =  1,      # >=0  how many sample windows to skip at the beginning and the end
                 step_width          =  1,      # >=1  each step_width'th sample window is analyzed
-                n_bark_bands        = 24,      # 15 or 20 or 24 (for 11, 22 and 44 kHz audio respectively)
-                mod_ampl_limit      = 60,
+                n_bark_bands        = 24,      # 2...24 number of desired Bark bands (from low frequencies to high) (e.g. 15 or 20 or 24 for 11, 22 and 44 kHz audio respectively) (1 delivers undefined output)
+                mod_ampl_limit      = 60,      # number of modulation frequencies on x-Axis
                 
                 # enable/disable parts of feature extraction
                 transform_bark                 = True,  # [S2] transform to Bark scale
@@ -278,14 +279,15 @@ def rp_extract( data,                          # pcm (wav) signal data
                 return_segment_features = False      # this will return features per each analyzed segment instead of aggregated ones
 
                 ):
-    
-    
-    features = {}
-    
+
+
+     # CONVERT STEREO TO MONO: Combine channels
+    if len(data.shape) > 1:
+        data = np.mean(data, 1)
+
+    # non-exhibited parameter
     include_DC = False
 
-    duration =  data.shape[0]/samplerate
-    
     # segment_size should always be ~6 sec, fft_window_size should always be ~ 23ms
 
     if (samplerate == 11025):
@@ -309,7 +311,9 @@ def rp_extract( data,                          # pcm (wav) signal data
     # also see mod_freq_axis in fluctuation strength weighting below
     mod_freq_res  = 1 / (float(segment_size) / samplerate)
 
-    # find position of wave segment
+
+    # SEGMENT INITIALIZATION
+    # find positions of wave segments
     
     skip_seg = skip_leadin_fadeout
     seg_pos  = np.array([1, segment_size]) # array with 2 entries: start and end position of selected segment
@@ -317,13 +321,17 @@ def rp_extract( data,                          # pcm (wav) signal data
     seg_pos_list = []  # list to store all the individual segment positions (only when return_segment_features == True)
     
     if ((skip_leadin_fadeout > 0) or (step_width > 1)):
-        
+
+        duration =  data.shape[0]/samplerate
+
         if (duration < 45):
             
             # if file is too small, don't skip leadin/fadeout and set step_width to 1
             step_width = 1
             skip_seg   = 0
-        
+
+            print "Duration < 45 seconds: setting step_with to 1 and skip_seg to 0."
+
         else:
             # advance by number of skip_seg segments (i.e. skip lead_in)
             seg_pos = seg_pos + segment_size * skip_seg
@@ -337,36 +345,43 @@ def rp_extract( data,                          # pcm (wav) signal data
                          str(segment_size) + " (5.94 seconds) but it is " + str(data.shape[0]) +
                          " (" + str(round(data.shape[0] * 1.0 / samplerate,2)) + " seconds)")
 
+    # initialize output
+    features = {}
+
     ssd_list = []
     sh_list = []
     rh_list  = []
     rp_list  = []
     mvd_list = []
 
+    hearing_threshold_factor = 0.0875 * (2**15)
+
+    # SEGMENT ITERATION
+
     for seg_id in range(n_segments):
+
+        tim = time.time()
 
         # keep track of segment position
         if return_segment_features:
             seg_pos_list.append(seg_pos)
         
         # EXTRACT WAVE SEGMENT that will be processed
-        
-        # Combine separate channels
-        if len(data.shape) > 1:
-            wavsegment = data[seg_pos[0]-1:seg_pos[1],:] # verified
-            wavsegment = np.mean(wavsegment, 1) # verified
-        else:
-            # mono
-            wavsegment = data[seg_pos[0]-1:seg_pos[1]] # verified
-    
-        # adjust hearing threshold
-        wavsegment = 0.0875 * wavsegment * (2**15) # verified
-    
+        # data is assumed to be mono waveform
+        wavsegment = data[seg_pos[0]-1:seg_pos[1]] # verified
+
+        # adjust hearing threshold # TODO: move after stereo-mono conversion above?
+        wavsegment = wavsegment * hearing_threshold_factor
+
+        print "Segmentation: ", time.time() - tim, "sec"
+        tim = time.time()
+
         # SPECTROGRAM: use FFT to convert to frequency domain (with Hanning window and 50 % overlap)
     
         n_iter     = wavsegment.shape[0] / fft_window_size * 2 - 1    # number of iterations with 50% overlap
     
         han_window = np.hanning(fft_window_size) # verified
+        print han_window
     
         spectrogr  = np.zeros((fft_window_size, n_iter), dtype=np.complex128)
     
@@ -376,30 +391,52 @@ def rp_extract( data,                          # pcm (wav) signal data
             
             spectrogr[:,i] = periodogram(x=wavsegment[idx], win=han_window,nfft=fft_window_size)
             idx            = idx + fft_window_size/2
-    
+
+            # NOTE: tested scipy periodogram BUT it delivers totally different values AND takes 2x the time of our periodogram function (0.13 sec vs. 0.06 sec)
+            # from scipy.signal import periodogram # move on top
+            #f,  spec = periodogram(x=wavsegment[idx],fs=samplerate,window='hann',nfft=fft_window_size,scaling='spectrum',return_onesided=True)
+
         matrix = np.abs(spectrogr)
+
+        print "FFT: ", time.time() - tim, "sec"
+        tim = time.time()
 
         # PSYCHO-ACOUSTIC TRANSFORMS
 
         # Map to Bark Scale
         if transform_bark:
-            matrix = transform2bark(matrix,freq_axis)
+            matrix = transform2bark(matrix,freq_axis,n_bark_bands)
+
+        print "Bark: ", time.time() - tim, "sec"
+        tim = time.time()
 
         # Spectral Masking
         if spectral_masking:
             matrix = do_spectral_masking(matrix)
-    
+
+        print "SpecMask: ", time.time() - tim, "sec"
+        tim = time.time()
+
         # Map to Decibel Scale
         if transform_db:
             matrix = transform2db(matrix)
-    
+
+        print "DB: ", time.time() - tim, "sec"
+        tim = time.time()
+
         # Transform Phon
         if transform_phon:
             matrix = transform2phon(matrix)
 
+        print "Phon: ", time.time() - tim, "sec"
+        tim = time.time()
+
         # Transform Sone
         if transform_sone:
             matrix = transform2sone(matrix)
+
+        print "Sone: ", time.time() - tim, "sec"
+        tim = time.time()
 
         # FEATURES: now we got a Sonogram and extract statistical features
     
@@ -566,12 +603,16 @@ if __name__ == '__main__':
 
         np.set_printoptions(suppress=True)
 
-        import time
         start = time.time()
+
+        bark_bands = 24
 
         feat = rp_extract(wavedata,
                           samplerate,
                           extract_rp=True,
+                          extract_ssd=True,
+                          extract_rh=True,
+                          n_bark_bands=bark_bands,
                           spectral_masking=True,
                           transform_db=True,
                           transform_phon=True,
@@ -593,12 +634,14 @@ if __name__ == '__main__':
         print e
 
 
-    print feat["rp"]
+    print feat["rp"][0:25]
 
     # EXAMPLE on how to plot the features
     from rp_plot import *
 
-    plotrp(feat["rp"])
+    plotrp(feat["rp"],rows=bark_bands)
+    plotrh(feat["rh"])
+    plotssd(feat["ssd"],rows=bark_bands)
 
     # EXAMPLE on how to store RP features in CSV file
     # import pandas as pd
