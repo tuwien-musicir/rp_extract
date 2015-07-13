@@ -308,8 +308,9 @@ def rp_extract( data,                          # pcm (wav) signal data
         
     
         # Map to Decibel Scale
-        matrix[np.where(matrix < 1)] = 1
-        matrix = 10 * np.log10(matrix)
+        if transform_db:
+            matrix[np.where(matrix < 1)] = 1
+            matrix = 10 * np.log10(matrix)
     
         # Transform Phon
         
@@ -349,11 +350,12 @@ def rp_extract( data,                          # pcm (wav) signal data
         matrix[:,0:t] = phons.transpose().ravel()[levels - 2] + (ifac * (phons.transpose().ravel()[levels - 1] - phons.transpose().ravel()[levels - 2])) # OPT: pre-calc diff
     
         # Transform Sone
-        idx     = np.where(matrix >= 40)
-        not_idx = np.where(matrix < 40)
-        
-        matrix[idx]     =  2**((matrix[idx]-40)/10)    #
-        matrix[not_idx] =  (matrix[not_idx]/40)**2.642 # max => 438.53
+        if transform_sone:
+            idx     = np.where(matrix >= 40)
+            not_idx = np.where(matrix < 40)
+
+            matrix[idx]     =  2**((matrix[idx]-40)/10)    #
+            matrix[not_idx] =  (matrix[not_idx]/40)**2.642 # max => 438.53
     
         # Statistical Spectrum Descriptors
         if (extract_ssd):
@@ -370,12 +372,12 @@ def rp_extract( data,                          # pcm (wav) signal data
         # Rhythm Patterns
         feature_part_xaxis1 = range(0,mod_ampl_limit)    # take first (opts.mod_ampl_limit) values of fft result including DC component
         feature_part_xaxis2 = range(1,mod_ampl_limit+1)  # leave DC component and take next (opts.mod_ampl_limit) values of fft result
-        
+
         if (include_DC):
             feature_part_xaxis_rp = feature_part_xaxis1
         else:
             feature_part_xaxis_rp = feature_part_xaxis2
-        
+
         fft_size = 2**(nextpow2(matrix.shape[1]))
         
         rhythm_patterns = np.zeros((matrix.shape[0], fft_size), dtype=np.complex128)
@@ -395,7 +397,7 @@ def rp_extract( data,                          # pcm (wav) signal data
     
         # Rhythm Histograms
         if extract_rh:
-            rh = np.sum(np.abs(rhythm_patterns[:,feature_part_xaxis2]),axis=0) # verified
+            rh = np.sum(np.abs(rhythm_patterns[:,feature_part_xaxis2]),axis=0) #without DC component # verified
             rh_list.append(rh.flatten(1))
     
         # TODO shall this be done before RH?
@@ -513,8 +515,7 @@ if __name__ == '__main__':
     from audiofile_read import *
 
     try:
-        #audiofile = "music/Simon_Mathewson_-_01_-_Tomatoes_and_Peas.mp3"
-        audiofile = "music/24bit_audio.wav"
+        audiofile = "music/test.wav"
         samplerate, samplewidth, wavedata = audiofile_read(audiofile)
 
         np.set_printoptions(suppress=True)
@@ -539,7 +540,12 @@ if __name__ == '__main__':
     except ValueError, e:
         print e
 
-    # EXAMPLE ON how to store RP features in CSV file
+    # EXAMPLE on how to plot the features
+    from rp_plot import *
+
+    plotrp(feat["rp"])
+
+    # EXAMPLE on how to store RP features in CSV file
     # import pandas as pd
 
     # filename = "features.rp.csv"
