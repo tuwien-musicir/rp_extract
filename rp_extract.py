@@ -24,11 +24,14 @@ np.set_printoptions(suppress=True)
 
 
 
-# Mappings & Initialization of Constants
+# INITIALIZATION: Constants & Mappings
 
 bark = [100, 200, 300, 400, 510, 630, 770, 920, 1080, 1270, 1480, 1720, 2000, 2320, 2700, 3150, 3700, 4400, 5300, 6400, 7700, 9500, 12000, 15500]
 
 phon = [3, 20, 40, 60, 80, 100, 101]
+
+
+# LOUDNESS
 
 eq_loudness = np.array([[55,  40, 32, 24, 19, 14, 10,  6,  4,  3,  2,   2, 0,-2,-5,-4, 0,  5, 10, 14, 25, 35], 
                         [66,  52, 43, 37, 32, 27, 23, 21, 20, 20, 20,  20,19,16,13,13,18, 22, 25, 30, 40, 50], 
@@ -39,6 +42,9 @@ eq_loudness = np.array([[55,  40, 32, 24, 19, 14, 10,  6,  4,  3,  2,   2, 0,-2,
 
 loudn_freq = np.array([31.62, 50, 70.7, 100, 141.4, 200, 316.2, 500, 707.1, 1000, 1414, 1682, 2000, 2515, 3162, 3976, 5000, 7071, 10000, 11890, 14140, 15500])
 
+
+# We have the loudness values for the frequencies in loudn_freq
+# now we calculate in loudn_bark a matrix of loudness sensation values for the bark bands margins
 
 i = 0
 j = 0
@@ -75,11 +81,10 @@ for i in range(n_bark_bands):
     
     
 
-# Utility Functions
+# UTILITY FUNCTIONS
 
 
 # There is no equivalent in Python to Matlab's nextpow2() function, so it needed to be re-implemented.
-
 
 def nextpow2(num):
     n = 2 
@@ -214,7 +219,7 @@ def rp_extract( data,                          # pcm (wav) signal data
     # find position of wave segment
     
     skip_seg = skip_leadin_fadeout
-    seg_pos  = np.array([1, segment_size])
+    seg_pos  = np.array([1, segment_size]) # array with 2 entries: start and end position of selected segment
 
     seg_pos_list = []  # list to store all the individual segment positions (only when return_segment_features == True)
     
@@ -331,7 +336,7 @@ def rp_extract( data,                          # pcm (wav) signal data
             db_thislev = np.tile(np.asarray([cbv[:,lev]]).transpose(),(1,t))
             levels[np.where(matrix > db_thislev)] = lev + 2
         
-        # the matrix 'levels' stores the correct Phon level for each datapoint
+        # the matrix 'levels' stores the correct Phon level for each data point
         cbv_ind_hi = np.ravel_multi_index(dims=(table_dim,7), multi_index=np.array([np.tile(np.array([range(0,table_dim)]).transpose(),(1,t)), levels-1]), order='F') 
         cbv_ind_lo = np.ravel_multi_index(dims=(table_dim,7), multi_index=np.array([np.tile(np.array([range(0,table_dim)]).transpose(),(1,t)), levels-2]), order='F') 
         
