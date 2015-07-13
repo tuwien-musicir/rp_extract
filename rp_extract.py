@@ -17,7 +17,7 @@ import numpy as np
 
 from scipy import stats
 from scipy.fftpack import fft
-from scipy.fftpack import rfft #  	Discrete Fourier transform of a real sequence.
+#from scipy.fftpack import rfft #  	Discrete Fourier transform of a real sequence.
 from scipy import interpolate
 
 # suppress numpy warnings (divide by 0 etc.)
@@ -259,6 +259,7 @@ def rp_extract( data,                          # pcm (wav) signal data
                 extract_sh   = False,          # extract Statistical Histograms
                 extract_tssd = False,          # extract temporal Statistical Spectrum Descriptor
                 extract_rh   = False,          # extract Rhythm Histogram features
+                extract_rh2  = False,          # extract Rhythm Histogram features including Fluctuation Strength Weighting
                 extract_trh  = False,          # extract temporal Rhythm Histogram features
                 extract_mvd  = False,          # extract modulation variance descriptor
 
@@ -266,7 +267,7 @@ def rp_extract( data,                          # pcm (wav) signal data
                 skip_leadin_fadeout =  1,      # >=0  how many sample windows to skip at the beginning and the end
                 step_width          =  1,      # >=1  each step_width'th sample window is analyzed
                 n_bark_bands        = 24,      # 2...24 number of desired Bark bands (from low frequencies to high) (e.g. 15 or 20 or 24 for 11, 22 and 44 kHz audio respectively) (1 delivers undefined output)
-                mod_ampl_limit      = 60,      # number of modulation frequencies on x-Axis
+                mod_ampl_limit      = 60,      # number of modulation frequencies on x-axis
                 
                 # enable/disable parts of feature extraction
                 transform_bark                 = True,  # [S2] transform to Bark scale
@@ -307,10 +308,6 @@ def rp_extract( data,                          # pcm (wav) signal data
     # calculate frequency values on y-axis (for Bark scale calculation)
     freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
     
-    # modulation frequency x-axis (after 2nd fft)
-    # mod_freq_res = resolution of modulation frequency axis (0.17 Hz)
-    # also see mod_freq_axis in fluctuation strength weighting below
-    mod_freq_res  = 1 / (float(segment_size) / samplerate)
 
 
     # SEGMENT INITIALIZATION
@@ -350,6 +347,7 @@ def rp_extract( data,                          # pcm (wav) signal data
     ssd_list = []
     sh_list = []
     rh_list  = []
+    rh2_list = []
     rp_list  = []
     mvd_list = []
 
@@ -504,7 +502,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         print "MVD: ", time.time() - tim, "sec"
         tim = time.time()
 
-        # RH: Rhythm Histograms
+        # RH: Rhythm Histograms - OPTION 1: before fluctuation_strength_weighting (as in Matlab)
         if extract_rh:
             rh = np.sum(np.abs(rhythm_patterns[:,feature_part_xaxis2]),axis=0) #without DC component # verified
             rh_list.append(rh.flatten(1))
@@ -515,23 +513,33 @@ def rp_extract( data,                          # pcm (wav) signal data
 
         # final steps for RP:
 
-        if extract_rp:
-            # TODO shall this be done before RH?
-            # Fluctuation Strength weighting curve
-            if fluctuation_strength_weighting:
-                #  modulation frequencies along x-axis from index 1 to 257)
-                mod_freq_axis = mod_freq_res * np.arange(257)
+        # Fluctuation Strength weighting curve
+        if fluctuation_strength_weighting:
 
-                #  fluctuation strength curve
-                fluct_curve = 1 / (mod_freq_axis/4 + 4/mod_freq_axis)
+            # modulation frequency x-axis (after 2nd FFT)
+            # mod_freq_res = resolution of modulation frequency axis (0.17 Hz)
+            mod_freq_res  = 1 / (float(segment_size) / samplerate)
 
-                for b in range(rp.shape[0]):
-                    rp[b,:] = rp[b,:] * fluct_curve[feature_part_xaxis_rp]
+            #  modulation frequencies along x-axis from index 0 to 256)
+            mod_freq_axis = mod_freq_res * np.array(feature_part_xaxis_rp)
 
-            #values verified
+            #  fluctuation strength curve
+            fluct_curve = 1 / (mod_freq_axis/4 + 4/mod_freq_axis)
 
-            # Gradient+Gauss filter
+            for b in range(rp.shape[0]):
+                rp[b,:] = rp[b,:] * fluct_curve #[feature_part_xaxis_rp]
 
+        #values verified
+
+
+        # RH: Rhythm Histograms - OPTION 2 (after Fluctuation weighting)
+        if extract_rh2:
+            rh2 = np.sum(rp,axis=0) #TODO: adapt to do always without DC component
+            rh2_list.append(rh2.flatten(1))
+
+
+        # Gradient+Gauss filter
+        #if extract_rp:
             # TODO Gradient+Gauss filter
 
             #for i in range(1,rp.shape[1]):
@@ -539,16 +547,14 @@ def rp_extract( data,                          # pcm (wav) signal data
             #
             #rp = blur1 * rp * blur2;
 
+        print "Filtering: ", time.time() - tim, "sec"
+        tim = time.time()
 
-            rp_list.append(rp.flatten(order='F'))
-        
-        
+        rp_list.append(rp.flatten(order='F'))
+
         seg_pos = seg_pos + segment_size * step_width
-        
 
 
-    print "Filtering: ", time.time() - tim, "sec"
-    tim = time.time()
 
     if extract_rp:
         if return_segment_features:
@@ -639,8 +645,9 @@ if __name__ == '__main__':
     from audiofile_read import *
 
     try:
-        #audiofile = "music/pcm16b22khz.wav"
-        audiofile = "music/test.wav"
+        audiofile = "music/pcm16b22khz.wav"
+        #audiofile = "music/test.wav"
+        #audiofile = "music/Runstep Vol 1 - 180 BPM - DJ Diana Floss.mp3"
 
         samplerate, samplewidth, wavedata = audiofile_read(audiofile)
 
@@ -680,7 +687,7 @@ if __name__ == '__main__':
     print feat["rp"][0:25]
 
     # EXAMPLE on how to plot the features
-    do_plots = False
+    do_plots = True
 
     if do_plots:
         from rp_plot import *
