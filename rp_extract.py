@@ -162,12 +162,23 @@ def calc_statistical_features(mat):
 # Bark Transform: Convert Spectrogram to Bark Scale
 # matrix: Spectrogram values as returned from periodogram function
 # freq_axis: array of frequency values along the frequency axis
+# max_bands: limit number of Bark bands (1...24) (counting from lowest band)
 def transform2bark(spectrogr, freq_axis, max_bands=None):
 
-    matrix = np.zeros((len(bark),spectrogr.shape[1]),dtype=np.complex128)
+    #max_bands = 20
+
+    if max_bands == None:
+        max_band = len(bark)
+    else:
+        max_band = min(len(bark),max_bands)
+
+    print max_band
+
+
+    matrix = np.zeros((max_band,spectrogr.shape[1]),dtype=np.complex128)
 
     # barks has been initialized globally above
-    for i in range(len(bark)-1):
+    for i in range(max_band-1):
         matrix[i] = np.sum(spectrogr[((freq_axis >= barks[i]) & (freq_axis < barks[i+1]))], axis=0)
 
     return(matrix)
