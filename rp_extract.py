@@ -26,19 +26,19 @@ np.set_printoptions(suppress=True)
 
 # INITIALIZATION: Constants & Mappings
 
+# Bark Scale
 bark = [100, 200, 300, 400, 510, 630, 770, 920, 1080, 1270, 1480, 1720, 2000, 2320, 2700, 3150, 3700, 4400, 5300, 6400, 7700, 9500, 12000, 15500]
+n_bark_bands = len(bark)
 
-# copy the bark vector (using [:]) and add a 0 in front
+# copy the bark vector (using [:]) and add a 0 in front (to make calculations below easier)
 barks = bark[:]
 barks.insert(0,0)
 
-print bark
-print barks
-
+# Phone Scale
 phon = [3, 20, 40, 60, 80, 100, 101]
 
 
-# LOUDNESS CURVES
+# Loudness Curves
 
 eq_loudness = np.array([[55,  40, 32, 24, 19, 14, 10,  6,  4,  3,  2,   2, 0,-2,-5,-4, 0,  5, 10, 14, 25, 35], 
                         [66,  52, 43, 37, 32, 27, 23, 21, 20, 20, 20,  20,19,16,13,13,18, 22, 25, 30, 40, 50], 
@@ -48,7 +48,6 @@ eq_loudness = np.array([[55,  40, 32, 24, 19, 14, 10,  6,  4,  3,  2,   2, 0,-2,
                         [118,110,107,105,103,102,101,100,100,100,100,  99,97,94,90,90,95,100,103,105,108,115]])
 
 loudn_freq = np.array([31.62, 50, 70.7, 100, 141.4, 200, 316.2, 500, 707.1, 1000, 1414, 1682, 2000, 2515, 3162, 3976, 5000, 7071, 10000, 11890, 14140, 15500])
-
 
 # We have the loudness values for the frequencies in loudn_freq
 # now we calculate in loudn_bark a matrix of loudness sensation values for the bark bands margins
@@ -76,9 +75,8 @@ for bsi in bark:
 
 
 
-# SPREADING FUNCTION FOR SPECTRAL MASKING
+# SPECTRAL MASKING Spreading Function
 # CONST_spread contains matrix of spectral frequency masking factors
-n_bark_bands = len(bark)
 
 CONST_spread = np.zeros((n_bark_bands,n_bark_bands))
 
@@ -168,12 +166,11 @@ def transform2bark(spectrogr, freq_axis, max_bands=None):
     #max_bands = 20
 
     if max_bands == None:
-        max_band = len(bark)
+        max_band = n_bark_bands
     else:
-        max_band = min(len(bark),max_bands)
+        max_band = min(n_bark_bands,max_bands)
 
-    print max_band
-
+    #print max_band
 
     matrix = np.zeros((max_band,spectrogr.shape[1]),dtype=np.complex128)
 
@@ -233,6 +230,8 @@ def transform2phon(matrix):
 
     ifac[np.where(levels==2)] = 1 # keeps the upper phon value;
     ifac[np.where(levels==8)] = 1 # keeps the upper phon value;
+
+    # phons has been initialized globally above
 
     matrix[:,0:t] = phons.transpose().ravel()[levels - 2] + (ifac * (phons.transpose().ravel()[levels - 1] - phons.transpose().ravel()[levels - 2])) # OPT: pre-calc diff
     return(matrix)
@@ -363,8 +362,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         # adjust hearing threshold
         wavsegment = 0.0875 * wavsegment * (2**15) # verified
     
-        # Convert to frequency domain
-        # [S1] spectrogram: real FFT with hanning window and 50 % overlap
+        # SPECTROGRAM: use FFT to convert to frequency domain (with Hanning window and 50 % overlap)
     
         n_iter     = wavsegment.shape[0] / fft_window_size * 2 - 1    # number of iterations with 50% overlap
     
@@ -380,67 +378,30 @@ def rp_extract( data,                          # pcm (wav) signal data
             idx            = idx + fft_window_size/2
     
         matrix = np.abs(spectrogr)
-    
+
+        # PSYCHO-ACOUSTIC TRANSFORMS
+
         # Map to Bark Scale
         if transform_bark:
             matrix = transform2bark(matrix,freq_axis)
 
         # Spectral Masking
         if spectral_masking:
-            
-            spread = CONST_spread[0:matrix.shape[0],:] # TODO: investigate - this does not work when n_bark_bands <> 24
-            matrix = np.dot(spread, matrix)
-        
+            matrix = do_spectral_masking(matrix)
     
         # Map to Decibel Scale
         if transform_db:
-            matrix[np.where(matrix < 1)] = 1
-            matrix = 10 * np.log10(matrix)
+            matrix = transform2db(matrix)
     
         # Transform Phon
-        
-        # number of bark bands, matrix length in time dim
-        n_bands = matrix.shape[0]
-        t       = matrix.shape[1]
-        
-        # DB-TO-PHON BARK-SCALE-LIMIT TABLE
-        # introducing 1 level more with level(1) being infinite
-        # to avoid (levels - 1) producing errors like division by 0
-        
-        #%%table_dim = size(CONST_loudn_bark,2);
-        table_dim = n_bands; # OK
-        cbv       = np.concatenate((np.tile(np.inf,(table_dim,1)), loudn_bark[:,0:n_bands].transpose()),1) # OK
-        
-        phons     = phon[:]
-        phons.insert(0,0)
-        phons     = np.asarray(phons) # OK
-        
-        # init lowest level = 2
-        levels = np.tile(2,(n_bands,t)) # OK
-        
-        for lev in range(1,6): # OK
-            db_thislev = np.tile(np.asarray([cbv[:,lev]]).transpose(),(1,t))
-            levels[np.where(matrix > db_thislev)] = lev + 2
-        
-        # the matrix 'levels' stores the correct Phon level for each data point
-        cbv_ind_hi = np.ravel_multi_index(dims=(table_dim,7), multi_index=np.array([np.tile(np.array([range(0,table_dim)]).transpose(),(1,t)), levels-1]), order='F') 
-        cbv_ind_lo = np.ravel_multi_index(dims=(table_dim,7), multi_index=np.array([np.tile(np.array([range(0,table_dim)]).transpose(),(1,t)), levels-2]), order='F') 
-        
-        # interpolation factor % OPT: pre-calc diff
-        ifac = (matrix[:,0:t] - cbv.transpose().ravel()[cbv_ind_lo]) / (cbv.transpose().ravel()[cbv_ind_hi] - cbv.transpose().ravel()[cbv_ind_lo])
-        
-        ifac[np.where(levels==2)] = 1 # keeps the upper phon value;
-        ifac[np.where(levels==8)] = 1 # keeps the upper phon value;
-        
-        matrix[:,0:t] = phons.transpose().ravel()[levels - 2] + (ifac * (phons.transpose().ravel()[levels - 1] - phons.transpose().ravel()[levels - 2])) # OPT: pre-calc diff
-    
+        if transform_phon:
+            matrix = transform2phon(matrix)
+
         # Transform Sone
         if transform_sone:
-            idx     = np.where(matrix >= 40)
-            not_idx = np.where(matrix < 40)
+            matrix = transform2sone(matrix)
 
-            matrix[idx]     =  2**((matrix[idx]-40)/10)    #
-            matrix[not_idx] =  (matrix[not_idx]/40)**2.642 # max => 438.53
+        # FEATURES: now we got a Sonogram and extract statistical features
     
         # Statistical Spectrum Descriptors
         if (extract_ssd):
@@ -454,7 +415,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         
         # values verified
     
-        # Rhythm Patterns
+        # RHYTHM PATTERNS
         feature_part_xaxis1 = range(0,mod_ampl_limit)    # take first (opts.mod_ampl_limit) values of fft result including DC component
         feature_part_xaxis2 = range(1,mod_ampl_limit+1)  # leave DC component and take next (opts.mod_ampl_limit) values of fft result
 
@@ -471,7 +432,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         
             rhythm_patterns[b,:] = fft(matrix[b,:], fft_size)
         
-        rhythm_patterns = rhythm_patterns / 256  # TODO check don't we need / 256.0 here ?
+        rhythm_patterns = rhythm_patterns / 256  # TODO a) why value 256? b) check don't we need / 256.0 here ?
         
         rp = np.abs(rhythm_patterns[:,feature_part_xaxis_rp]) # verified
     
