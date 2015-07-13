@@ -23,9 +23,6 @@ from scipy import interpolate
 # suppress numpy warnings (divide by 0 etc.)
 np.set_printoptions(suppress=True)
 
-# only for time measuring
-# TODO remove
-import time
 
 
 # INITIALIZATION: Constants & Mappings
@@ -307,7 +304,9 @@ def rp_extract( data,                          # pcm (wav) signal data
     
     # calculate frequency values on y-axis (for Bark scale calculation)
     freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
-    
+
+    # TESTING:
+    #segment_size    = segment_size / 2
 
 
     # SEGMENT INITIALIZATION
@@ -326,7 +325,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         if (duration < 45):
             step_width = 1
             skip_seg   = 0
-            print "Duration < 45 seconds: setting step_with to 1 and skip_seg to 0."
+            print "Duration < 45 seconds: setting step_width to 1 and skip_leadin_fadeout to 0."
 
         else:
             # advance by number of skip_seg segments (i.e. skip lead_in)
@@ -357,8 +356,6 @@ def rp_extract( data,                          # pcm (wav) signal data
 
     for seg_id in range(n_segments):
 
-        tim = time.time()
-
         # keep track of segment position
         if return_segment_features:
             seg_pos_list.append(seg_pos)
@@ -370,8 +367,6 @@ def rp_extract( data,                          # pcm (wav) signal data
         # adjust hearing threshold # TODO: move after stereo-mono conversion above?
         wavsegment = wavsegment * hearing_threshold_factor
 
-        print "Segmentation: ", time.time() - tim, "sec"
-        tim = time.time()
 
         # SPECTROGRAM: use FFT to convert to frequency domain (with Hanning window and 50 % overlap)
     
@@ -394,48 +389,28 @@ def rp_extract( data,                          # pcm (wav) signal data
 
         matrix = np.abs(spectrogr)
 
-        print "FFT: ", time.time() - tim, "sec"
-        tim = time.time()
-        print matrix.dtype
-
         # PSYCHO-ACOUSTIC TRANSFORMS
 
         # Map to Bark Scale
         if transform_bark:
             matrix = transform2bark(matrix,freq_axis,n_bark_bands)
 
-        print "Bark: ", time.time() - tim, "sec"
-        tim = time.time()
-        print matrix.dtype
-
         # Spectral Masking
         if spectral_masking:
             matrix = do_spectral_masking(matrix)
-
-        print "SpecMask: ", time.time() - tim, "sec"
-        tim = time.time()
-        print matrix.dtype
 
         # Map to Decibel Scale
         if transform_db:
             matrix = transform2db(matrix)
 
-        print "DB: ", time.time() - tim, "sec"
-        tim = time.time()
-
         # Transform Phon
         if transform_phon:
             matrix = transform2phon(matrix)
-
-        print "Phon: ", time.time() - tim, "sec"
-        tim = time.time()
 
         # Transform Sone
         if transform_sone:
             matrix = transform2sone(matrix)
 
-        print "Sone: ", time.time() - tim, "sec"
-        tim = time.time()
 
         # FEATURES: now we got a Sonogram and extract statistical features
     
@@ -444,20 +419,10 @@ def rp_extract( data,                          # pcm (wav) signal data
             ssd = calc_statistical_features(matrix)
             ssd_list.append(ssd.flatten(1))
 
-        print "SSD: ", time.time() - tim, "sec"
-        tim = time.time()
-
-
         # SH: Statistical Spectrum Histograms
         if (extract_sh):
             sh = calc_spectral_histograms(matrix)
             sh_list.append(sh)
-
-
-        print "SH: ", time.time() - tim, "sec"
-        tim = time.time()
-
-        print matrix.shape
 
         # values verified
 
@@ -495,26 +460,15 @@ def rp_extract( data,                          # pcm (wav) signal data
         # convert from complex128 to float64 (real)
         rp = np.abs(rhythm_patterns[:,feature_part_xaxis_rp]) # verified
 
-        print "RP 2nd FFT: ", time.time() - tim, "sec"
-        tim = time.time()
-
         # MVD: Modulation Variance Descriptors
         if extract_mvd:
             mvd = calc_statistical_features(rp.transpose()) # verified
             mvd_list.append(mvd.flatten(1))
 
-
-        print "MVD: ", time.time() - tim, "sec"
-        tim = time.time()
-
         # RH: Rhythm Histograms - OPTION 1: before fluctuation_strength_weighting (as in Matlab)
         if extract_rh:
             rh = np.sum(np.abs(rhythm_patterns[:,feature_part_xaxis2]),axis=0) #without DC component # verified
             rh_list.append(rh.flatten(1))
-
-
-        print "RH: ", time.time() - tim, "sec"
-        tim = time.time()
 
         # final steps for RP:
 
@@ -551,9 +505,6 @@ def rp_extract( data,                          # pcm (wav) signal data
             #    rp[:,i-1] = np.abs(rp[:,i] - rp[:,i-1]);
             #
             #rp = blur1 * rp * blur2;
-
-        print "Filtering: ", time.time() - tim, "sec"
-        tim = time.time()
 
         rp_list.append(rp.flatten(order='F'))
 
@@ -634,10 +585,6 @@ def rp_extract( data,                          # pcm (wav) signal data
         features["segpos"] = np.array(seg_pos_list)
         features["timepos"] = features["segpos"] / (samplerate * 1.0)
 
-
-    print "Feature aggregation: ", time.time() - tim, "sec"
-    tim = time.time()
-
     return features
 
 
@@ -658,8 +605,6 @@ if __name__ == '__main__':
 
         np.set_printoptions(suppress=True)
 
-        start = time.time()
-
         bark_bands = 24  # choose the number of Bark bands (2..24)
         mod_ampl_limit = 60 # number modulation frequencies on x-axis
 
@@ -677,9 +622,6 @@ if __name__ == '__main__':
                           skip_leadin_fadeout=1,
                           step_width=1,
                           mod_ampl_limit=mod_ampl_limit)
-
-        end = time.time()
-        print end - start, "sec"
 
         # feat is a dict containing arrays for different feature sets
         print "Successfully extracted features:", feat.keys()
@@ -701,8 +643,8 @@ if __name__ == '__main__':
         from rp_plot import *
 
         plotrp(feat["rp"],rows=bark_bands,cols=mod_ampl_limit)
-        plotrh(feat["rh"])
-        plotssd(feat["ssd"],rows=bark_bands)
+        #plotrh(feat["rh"])
+        #plotssd(feat["ssd"],rows=bark_bands)
 
     # EXAMPLE on how to store RP features in CSV file
     # import pandas as pd
