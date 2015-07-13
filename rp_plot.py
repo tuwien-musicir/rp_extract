@@ -37,28 +37,25 @@ def plotmatrix(features):
 #  #xticks(arange(0.5,10.5),range(0,10))
 #show()
 
-def plotrp(features, reshape=True):
+def plotrp(features, reshape=True, rows=24, cols=60):
     if reshape:
-        features = features.reshape(24, 60, order='F')
-
-    #print features.shape
-
+        features = features.reshape(rows, cols, order='F')
     plotmatrix(features)
 
 
-def plotssd(features, reshape=True):
+def plotssd(features, reshape=True, rows=24, cols=7):
     if reshape:
-        features = features.reshape(24, 7, order='F')
+        features = features.reshape(rows, cols, order='F')
 
     pylab.figure()
     pylab.imshow(features, origin='lower', aspect='auto', interpolation='nearest')
-    pylab.xticks(range(0, 7), ['mean', 'var', 'skew', 'kurt', 'median', 'min', 'max'])
+    pylab.xticks(range(0, cols), ['mean', 'var', 'skew', 'kurt', 'median', 'min', 'max'])
     pylab.ylabel('Frequency [Bark]')
     pylab.show()
 
 
 def plotrh(hist):
-    plt.bar(range(0, 60), hist)  # 50, normed=1, facecolor='g', alpha=0.75)
+    plt.bar(range(0, hist.shape[0]), hist)  # 50, normed=1, facecolor='g', alpha=0.75)
     plt.xlabel('Mod. Frequency Index')
     #plt.ylabel('Probability')
     plt.title('Rhythm Histogram')
