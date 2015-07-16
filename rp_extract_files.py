@@ -196,18 +196,19 @@ if __name__ == '__main__':
     # SET WHICH FEATURES TO EXTRACT (must be lower case)
 
     #feature_types = ['rp','ssd','rh','mvd'] # sh, tssd, trh
-    feature_types = ['rp','ssd','rh'] # sh, tssd, trh
+    feature_types = ['rp','ssd','rh','mvd','tssd','trh']
+
     # SET PATH WITH AUDIO FILES (INPUT)
 
-    in_path = "./music"
+    in_path = "/data/music/GTZAN/wav"
 
     # OUTPUT FEATURE FILES
 
-    out_path = './features'
+    out_path = '/data/music/GTZAN/vec'
     if not os.path.exists(out_path):
         os.mkdir(out_path)
 
-    out_file = 'features'
+    out_file = 'GTZAN.python'
 
     out_filename = out_path + os.sep + out_file
 
