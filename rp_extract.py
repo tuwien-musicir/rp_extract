@@ -188,7 +188,6 @@ def do_spectral_masking(matrix):
 
     # CONST_spread has been initialized globally above
     spread = CONST_spread[0:n_bands,0:n_bands] # not sure if column limitation is right here; was originally written for n_bark_bands = 24 only
-    print spread.shape
     matrix = np.dot(spread, matrix)
     return(matrix)
 
