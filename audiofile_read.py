@@ -95,19 +95,17 @@ def mp3_read(filename,normalize=True):
         for cmd in cmd_list:
             
             try:
-    
-                print cmd
+
                 return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
                 
                 if return_code != 0:
                     raise DecoderException("Problem appeared during decoding.", command=cmd)
-                #print 'Decoding mp3 with: ', " ".join(cmd)
+                print 'Decoding mp3 with:', " ".join(cmd)
                 samplerate, samplewidth, wavedata = wav_read(temp,normalize)
     
                 success = True
     
             except OSError as e:
-                print e.errno
                 if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
                     raise DecoderException("Problem appeared during decoding.", cmd=cmd, orig_error=e)
                 
@@ -158,7 +156,7 @@ if __name__ == '__main__':
     # test audio file: "Epic Song" by "BoxCat Game"
     # Epic Song by BoxCat Games is licensed under a Creative Commons Attribution License.
     # http://freemusicarchive.org/music/BoxCat_Games/Nameless_the_Hackers_RPG_Soundtrack/BoxCat_Games_-_Nameless-_the_Hackers_RPG_Soundtrack_-_10_Epic_Song
-    file = "E:/Data/MIR/EU_SOUNDS/2023601/oai_eu_dismarc_ARTP_GBCRW0158204.mp3"
+    file = "BoxCat_Games_-_10_-_Epic_Song.mp3"
     
     samplerate, samplewidth, wavedata = audiofile_read(file)
 
