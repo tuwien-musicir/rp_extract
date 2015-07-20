@@ -81,15 +81,18 @@ def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
 
         # convert to numpy matrix/array
         feat[e] = dataframe.as_matrix(columns=None)
-        print "Read:", e,":\t", feat[e].shape[0], "vectors", feat[e].shape[1], "dimensions (incl. id)"
 
+        if separate_ids:
+           ids[e] = feat[e][:,id_column]
+           feat[e] = np.delete(feat[e],id_column,1)
 
-    if separate_ids == False:
-        return feat
+        print "Read:", e,":\t", feat[e].shape[0], "vectors", feat[e].shape[1], "dimensions (excl. id)"
+
+    if separate_ids:
+        return(ids,feat)
     else:
-       ids[e] = feat[e][:,id_column]
-       feat[e] = np.delete(feat[e],id_column,1)
-       return(ids,feat)
+        return feat
+
 
 
 
@@ -106,11 +109,15 @@ def extract_all_files_in_path(path,out_file,feature_types):
     n = 0  # counting the files that were actually analyzed
 
     for d in os.walk(path):    # finds all subdirectories and gets a list of files therein
+        print path
         subpath = d[0]
         # dir_list = d[1]
         filelist = d[2]
         print subpath, len(filelist), "files found (any file type)"
 
+        filelist2 = [ file for file in filelist if not file.lower().endswith( ('.wav','.mp3') ) ]
+        print subpath, len(filelist2), "files found (wav or mp3)."
+        exit()
 
         for fil in filelist:  # iterate over all files in a dir
             try:
@@ -197,6 +204,7 @@ if __name__ == '__main__':
 
     #feature_types = ['rp','ssd','rh','mvd'] # sh, tssd, trh
     feature_types = ['rp','ssd','rh','mvd','tssd','trh']
+    feature_types = ['rh']
 
     # SET PATH WITH AUDIO FILES (INPUT)
 
@@ -208,7 +216,7 @@ if __name__ == '__main__':
     if not os.path.exists(out_path):
         os.mkdir(out_path)
 
-    out_file = 'GTZAN.python'
+    out_file = 'dummytest'
 
     out_filename = out_path + os.sep + out_file
 
