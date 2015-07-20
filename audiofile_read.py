@@ -14,6 +14,19 @@ import tempfile
 import wavio
 
 
+
+class DecoderException(Exception):
+    
+    def __init__(self, message, command=[], orig_error=None):
+
+        # Call the base class constructor with the parameters it needs
+        super(DecoderException, self).__init__(message)
+        self.command        = command
+        self.original_error = orig_error
+
+
+
+
 # Normalize integer WAV data to float in range (-1,1)
 # Note that this works fine with Wav files read with Wavio
 # when using scipy.io.wavfile to read Wav files, use divisor = np.iinfo(wavedata.dtype).max + 1
@@ -66,29 +79,32 @@ def mp3_read(filename,normalize=True):
 
     success = False
 
+    try:
 
-    for cmd in cmd_list:
-
-        try:
-
-            subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
-
-            print 'Decoding mp3 with: ', " ".join(cmd)
-
-            samplerate, samplewidth, wavedata = wav_read(temp.name,normalize)
-
-            success = True
-
-        except OSError as e:
-            if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
-                raise OSError("Problem appeared during decoding.")
-
-        finally:
-            # Automatically cleans up (deletes) the temp file
-            temp.close()
-
-        if success:
-            break  # no need to loop further
+        for cmd in cmd_list:
+            
+            try:
+    
+                return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
+                
+                if return_code != 0:
+                    raise DecoderException("Problem appeared during decoding.", command=cmd)
+                
+                #print 'Decoding mp3 with: ', " ".join(cmd)
+                samplerate, samplewidth, wavedata = wav_read(temp.name,normalize)
+    
+                success = True
+    
+            except OSError as e:
+                if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
+                    raise DecoderException("Problem appeared during decoding.", cmd=cmd, orig_error=e) 
+    
+            if success:
+                break  # no need to loop further
+            
+    finally:
+        temp.close()
+            
 
     if not success:
         commands = ", ".join( c[0] for c in cmd_list)
@@ -128,7 +144,7 @@ if __name__ == '__main__':
     # test audio file: "Epic Song" by "BoxCat Game"
     # Epic Song by BoxCat Games is licensed under a Creative Commons Attribution License.
     # http://freemusicarchive.org/music/BoxCat_Games/Nameless_the_Hackers_RPG_Soundtrack/BoxCat_Games_-_Nameless-_the_Hackers_RPG_Soundtrack_-_10_Epic_Song
-    file = "BoxCat_Games_-_10_-_Epic_Song.mp3"
+    file = "E:/Data/MIR/EU_SOUNDS/2023601/oai_eu_dismarc_2GSR_371055160279.mp3"
     
     samplerate, samplewidth, wavedata = audiofile_read(file)
 
