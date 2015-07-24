@@ -491,7 +491,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         # FEATURES: now we got a Sonogram and extract statistical features
     
         # SSD: Statistical Spectrum Descriptors
-        if (extract_ssd):
+        if (extract_ssd or extract_tssd):
             ssd = calc_statistical_features(matrix)
             ssd_list.append(ssd.flatten(1))
 
@@ -713,6 +713,7 @@ if __name__ == '__main__':
                           samplerate,
                           extract_rp=True,
                           extract_ssd=True,
+                          extract_tssd=False,
                           extract_rh=True,
                           n_bark_bands=bark_bands,
                           spectral_masking=True,
@@ -725,20 +726,19 @@ if __name__ == '__main__':
                           mod_ampl_limit=mod_ampl_limit)
 
         # feat is a dict containing arrays for different feature sets
-        print "Successfully extracted features:", feat.keys()
+        print "Successfully extracted features:" #, feat.keys()
 
-        # print feat
-        print feat["rp"].shape
+        for k in feat.keys():
+            print k.upper(), ":", feat[k].shape[0], "dimensions"
 
     except ValueError, e:
         print e
         exit()
 
-
-    print feat["rp"][0:25]
+    # print feat["rp"][0:25]
 
     # EXAMPLE on how to plot the features
-    do_plots = True
+    do_plots = False
 
     if do_plots:
         from rp_plot import *
