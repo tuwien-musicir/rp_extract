@@ -21,11 +21,11 @@ from numpy.lib import stride_tricks
 # get_ipython().magic(u'pylab inline')
 
 
-def plotmatrix(features):
+def plotmatrix(features,xlabel=None,ylabel=None):
     pylab.figure()
     pylab.imshow(features, origin='lower', aspect='auto', interpolation='nearest')
-    plt.xlabel('Mod. Frequency Index')
-    pylab.ylabel('Frequency [Bark]')
+    if xlabel: plt.xlabel(xlabel)
+    if ylabel: pylab.ylabel(ylabel)
     pylab.show()
 
 
@@ -40,7 +40,7 @@ def plotmatrix(features):
 def plotrp(features, reshape=True, rows=24, cols=60):
     if reshape:
         features = features.reshape(rows, cols, order='F')
-    plotmatrix(features)
+    plotmatrix(features,'Modulation Frequency Index','Frequency Band [Bark]')
 
 
 def plotssd(features, reshape=True, rows=24, cols=7):
