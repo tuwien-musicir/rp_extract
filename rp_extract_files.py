@@ -94,6 +94,8 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
 
     files, writer = initialize_feature_files(out_file,ext)
 
+    path_len = len(path)
+
     # iterate through all files
 
     start_abs = time.time()
@@ -102,14 +104,14 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
 
     for d in os.walk(path):    # finds all subdirectories and gets a list of files therein
         print path
-        subpath = d[0]
+        subpath = d[0]   # complete sub directory path ( full path )
         # dir_list = d[1]
         filelist = d[2]
         #print subpath, len(filelist), "files found (any file type)"
 
         # FILTER FILE LIST FOR FILE TYPE
         filelist2 = [ file for file in filelist if file.lower().endswith( audiofile_types ) ]
-        #print subpath, len(filelist2), "files found (" + ' or '.join(audiofile_types) + ")."
+        print subpath, len(filelist2), "files found (" + ' or '.join(audiofile_types) + ")."
 
         for fil in filelist2:  # iterate over all files in a dir (filtered by audiofile_types)
             try:
@@ -167,8 +169,11 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
 
                 start = time.time()
 
-                # id = fil -> add filename before vector (to include path, change fil to filename)
-                id = fil # filename
+                # add filename before vector. 3 choices:
+
+                # id = fil  # filename only
+                # id = filename   # full filename incl. full path
+                id = filename[len(path)+1:] # relative filename only
                 write_feature_files(id,feat,writer)
 
                 end = time.time()
