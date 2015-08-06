@@ -64,29 +64,31 @@ def to_dataframe(feature_data, attribute_labels=None, ids=None, classes=None):
     return dataframe
 
 
+# classes_from_filename:
+# derive class label from filename
+# this function derives class labels from the document file names (ids) given in the original feature files
+# e.g. in GTZAN collection: pop.00001.wav -> first part before . is the class
+
+# TODO: write similar functions for other methods to derive the class name (e.g. from folders, or provded by separate file)
+
+def classes_from_filename(filenames):
+    # this example works for GTZAN collection: class is first part of filename before '.'
+    classes = [x.split('.', 1)[0] for x in filenames]
+    return classes
 
 
-if __name__ == '__main__':
+# convert feature files that are stored in CSV format to Weka ARFF format
+# in_filenamestub, in_filenamestub: full file path and filname but without .rp, .rh etc. extension (will be added from feature types) for input and output feature files
+# feature_types = ['rp','ssd','rh','mvd']
 
+def csv_to_arff(in_filenamestub,out_filenamestub,feature_types,add_class=True):
 
-    vec_path = '/data/music/GTZAN/vec'
-
-    filenamestub = 'GTZAN.python'
-
-    feature_types = ['rp','ssd','rh','mvd']
-
-
-    # READ CSV (all feature types into a dict)
-    full_filenamestub = vec_path + os.sep + filenamestub
-
-    ids, features = read_feature_files(full_filenamestub,feature_types)
-
+    ids, features = read_feature_files(in_filenamestub,feature_types)
 
     for ext in feature_types:
 
-        # ADD CLASS LABEL
-        # only works for GTZAN collection: class is first part of filename before '.'
-        classes = [x.split('.', 1)[0] for x in ids[ext]]
+        # derive the class labels from the audio filenames (see function above)
+        classes = classes_from_filename(ids[ext]) if add_class else None
 
         # CREATE DATAFRAME
         # with ids
@@ -95,10 +97,24 @@ if __name__ == '__main__':
         df = to_dataframe(features[ext], classes=classes)
 
         # WRITE ARFF
-        out_filename = full_filenamestub + "." + ext + ".arff"
+        out_filename = out_filenamestub + "." + ext + ".arff"
         print "Saving " + out_filename + " ..."
         save_arff(out_filename,df)
 
     print "Finished."
 
 
+if __name__ == '__main__':
+
+    # test CSV to ARFF
+
+    in_path = '/data/music/GTZAN/vec'
+    out_path = './feat'
+    filenamestub = 'GTZAN.python'
+
+    feature_types = ['rp','ssd','rh','mvd']
+
+    in_filenamestub = in_path + os.sep + filenamestub
+    out_filenamestub = out_path + os.sep + filenamestub
+
+    csv_to_arff(in_filenamestub,out_filenamestub,feature_types)
