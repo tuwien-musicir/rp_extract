@@ -1,11 +1,41 @@
-# 20.07.2015 by Thomas Lidy
-# based on arff writing code by Alexander Schindler
+# 20.07. and 06.08.2015 by Thomas Lidy
 
 import os
 import pandas as pd
-from rp_extract_files import read_feature_files
+from rp_extract_files import read_feature_files  # for csv_to_arff
 
 
+
+
+
+# load_arff
+# read arff file and bring to Numpy array format
+# returns a tuple (features,classes)
+
+def load_arff(arff_file):
+
+    import scipy.io.arff as arff
+    import numpy as np
+
+    arffdata, metadata = arff.loadarff(arff_file)
+
+    # GET CLASS DATA # TODO: check if we even have a class attribute
+    classes = arffdata['class']
+
+    # GET FEATURE DATA
+    # strip off class column and get correct NP 2D array with data
+    features = arffdata[metadata.names()[:-1]] #everything but the last column # TODO: check which column is the class column and remove that one
+    features = features.view(np.float).reshape(arffdata.shape + (-1,)) #converts the record array to a normal numpy array
+
+    return (features,classes)
+
+
+
+
+# save_arff
+# save data in Weka ARFF format
+# adds typcial ARFF file headers (@relation, @attribute), optionally adds class label + writes data into ARFF format
+# based on npz2arff arff writing code by Alexander Schindler
 
 def save_arff(filename,dataframe,relation_name=None):
     
@@ -118,3 +148,15 @@ if __name__ == '__main__':
     out_filenamestub = out_path + os.sep + filenamestub
 
     csv_to_arff(in_filenamestub,out_filenamestub,feature_types)
+
+    # try to load ARFF
+
+    feat_type = 'ssd'
+
+    arff_file = out_filenamestub + '.' + feat_type + '.arff'
+
+    features, classes  = load_arff(arff_file)
+
+    print "Reading ", arff_file
+    print "classes:" , classes.shape
+    print "feature dimensions:", features.shape
