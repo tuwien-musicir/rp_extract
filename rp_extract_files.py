@@ -1,18 +1,18 @@
 # RP_EXTRACT_FILES:
 
-# wrapper around rp_extract.py to sequentially extract features from all files in a given directory
+# wrapper around rp_extract.py to sequentially extract features from all audio files in a given directory
+# and store them into CSV feature files
 
 # 2015-04, 2015-06 by Thomas Lidy
+
+import unicsv # unicode csv library (installed via pip install unicsv)
+import time # for time measuring
 
 from audiofile_read import * # reading wav and mp3 files
 import rp_extract as rp # Rhythm Pattern extractor
 
-import unicsv # unicode csv library (installed via pip install unicsv)
-import time # for time measuring
-# import pandas as pd # only needed in read_feature_files -> import has been moved there
 
-
-
+# these 3 functions are to incrementally save the features line by line into CSV files
 
 def initialize_feature_files(base_filename,ext,append=False):
     files = {}  # files is a dict of one file handle per extension
