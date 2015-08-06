@@ -12,6 +12,8 @@ import time # for time measuring
 # import pandas as pd # only needed in read_feature_files -> import has been moved there
 
 
+
+
 def initialize_feature_files(base_filename,ext,append=False):
     files = {}  # files is a dict of one file handle per extension
     writer = {} # files is a dict of one file writer per extension
@@ -63,35 +65,11 @@ def close_feature_files(files,ext):
 # returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
 #          each of them is a python dict containing an entry per feature extension (ext)
 
+# NOTE: this functin has been moved to rp_feature_files.py and is maintained here for backwards compatibility
+
 def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
-
-    import numpy as np
-    import pandas as pd
-
-    # initialize empty dicts
-    feat = {}
-    ids = {}
-
-    for e in ext:
-        filename = filenamestub + "." + e
-
-        # we use pandas to import CSV as pandas dataframe,
-        # because it handles quoted filnames (containing ,) well (by contrast to other CSV readers)
-        dataframe = pd.read_csv(filename, sep=',',header=None)
-
-        # convert to numpy matrix/array
-        feat[e] = dataframe.as_matrix(columns=None)
-
-        if separate_ids:
-           ids[e] = feat[e][:,id_column]
-           feat[e] = np.delete(feat[e],id_column,1)
-
-        print "Read:", e,":\t", feat[e].shape[0], "vectors", feat[e].shape[1], "dimensions (excl. id)"
-
-    if separate_ids:
-        return(ids,feat)
-    else:
-        return feat
+    from rp_feature_files import read_csv_features
+    return read_csv_features(filenamestub,ext,separate_ids,id_column)
 
 
 
@@ -115,11 +93,11 @@ def extract_all_files_in_path(path,out_file,feature_types):
         filelist = d[2]
         print subpath, len(filelist), "files found (any file type)"
 
-        filelist2 = [ file for file in filelist if not file.lower().endswith( ('.wav','.mp3') ) ]
+        # FILTER FILE LIST FOR FILE TYPE
+        filelist2 = [ file for file in filelist if file.lower().endswith( ('.wav','.mp3') ) ]
         print subpath, len(filelist2), "files found (wav or mp3)."
-        exit()
 
-        for fil in filelist:  # iterate over all files in a dir
+        for fil in filelist2:  # iterate over all files in a dir
             try:
 
                 # restrict to mp3 and wav files (remove this if and unindent all subsequent code in case you do not want to check for file extension)
@@ -208,15 +186,15 @@ if __name__ == '__main__':
 
     # SET PATH WITH AUDIO FILES (INPUT)
 
-    in_path = "/data/music/GTZAN/wav"
+    in_path = "./music"
 
     # OUTPUT FEATURE FILES
 
-    out_path = '/data/music/GTZAN/vec'
+    out_path = './feat'
     if not os.path.exists(out_path):
         os.mkdir(out_path)
 
-    out_file = 'dummytest'
+    out_file = 'GTZAN_test'
 
     out_filename = out_path + os.sep + out_file
 
@@ -224,8 +202,12 @@ if __name__ == '__main__':
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
 
-    # filenamestub = out_filename
-    # filenamestub = 'features'
-    # ext = ['rh']
-    # ids, features = read_feature_files(filenamestub,ext)
+    filenamestub = out_file
+    ext = ['ssd']
 
+    in_filenamestub = out_path + os.sep + filenamestub
+
+    ids, features = read_feature_files(in_filenamestub,ext)
+    e = ext[0]
+    print ids[e].shape
+    print features[e].shape

@@ -9,7 +9,61 @@ import pandas as pd
 from rp_extract_files import read_feature_files  # for csv_to_arff
 
 
+# == CSV ==
 
+
+# read_feature_files:
+# reads pre-analyzed features from CSV files
+# in write_feature_files we use unicsv to store the features
+# it will quote strings containing , and other characters if needed only (automatically)
+# here we use pandas to import CSV as a pandas dataframe,
+# because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
+
+# parameters:
+# filenamestub: full path to feature file name WITHOUT .extension
+# ext: a list of file .extensions (e.g. 'rh','ssd','rp') to be read in
+# separate_ids: if False, it will return a single matrix containing the id column
+#               if True, it will return a tuple: (ids, features) separating the id column from the features
+# id_column: which of the CSV columns contains the ids (default = 0, i.e. first column)
+#
+# returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
+#          each of them is a python dict containing an entry per feature extension (ext)
+
+def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
+
+    import numpy as np
+    import pandas as pd
+
+    # initialize empty dicts
+    feat = {}
+    ids = {}
+
+    for e in ext:
+        filename = filenamestub + "." + e
+
+        # we use pandas to import CSV as pandas dataframe,
+        # because it handles quoted filnames (containing ,) well (by contrast to other CSV readers)
+        dataframe = pd.read_csv(filename, sep=',',header=None)
+
+        # convert to numpy matrix/array
+        feat[e] = dataframe.as_matrix(columns=None)
+
+        if separate_ids:
+           ids[e] = feat[e][:,id_column]
+           feat[e] = np.delete(feat[e],id_column,1)
+
+        print "Read:", e,":\t", feat[e].shape[0], "vectors", feat[e].shape[1], "dimensions (excl. id)"
+
+    if separate_ids:
+        return(ids,feat)
+    else:
+        return feat
+
+
+
+
+
+# == ARFF ==
 
 # load_arff
 # read arff file and bring to Numpy array format
