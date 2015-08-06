@@ -74,9 +74,23 @@ def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
 
 
 
-def extract_all_files_in_path(path,out_file,feature_types):
+# finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub directories in it
+# extracts selected RP feature types
+# and saves them into separate CSV feature files (one per feature type)
+
+
+# path: input file path to search for audio files (including subdirectories)
+# out_file: output file name stub for feature files to write
+# feature_types: RP feature types to extract. see rp_extract.py
+# audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
+
+
+def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav','.mp3')):
 
     ext = feature_types
+
+    # lower case the audio file types
+    audiofile_types = tuple((f.lower() for f in audiofile_types))
 
     files, writer = initialize_feature_files(out_file,ext)
 
@@ -91,78 +105,75 @@ def extract_all_files_in_path(path,out_file,feature_types):
         subpath = d[0]
         # dir_list = d[1]
         filelist = d[2]
-        print subpath, len(filelist), "files found (any file type)"
+        #print subpath, len(filelist), "files found (any file type)"
 
         # FILTER FILE LIST FOR FILE TYPE
-        filelist2 = [ file for file in filelist if file.lower().endswith( ('.wav','.mp3') ) ]
-        print subpath, len(filelist2), "files found (wav or mp3)."
+        filelist2 = [ file for file in filelist if file.lower().endswith( audiofile_types ) ]
+        #print subpath, len(filelist2), "files found (" + ' or '.join(audiofile_types) + ")."
 
-        for fil in filelist2:  # iterate over all files in a dir
+        for fil in filelist2:  # iterate over all files in a dir (filtered by audiofile_types)
             try:
 
-                # restrict to mp3 and wav files (remove this if and unindent all subsequent code in case you do not want to check for file extension)
-                if os.path.splitext(fil)[1].lower() in ['.wav','.mp3']:
+                n += 1
+                filename = subpath + os.sep + fil
+                print '#',n,':', filename
 
-                    n += 1
-                    filename = subpath + os.sep + fil
-                    print '#',n,':', filename
+                start = time.time()
 
-                    start = time.time()
+                # read audio file (wav or mp3)
+                samplerate, samplewidth, data = audiofile_read(filename)
 
-                    # read audio file (wav or mp3)
-                    samplerate, samplewidth, data = audiofile_read(filename)
+                end = time.time()
+                print end - start, "sec"
 
-                    end = time.time()
-                    print end - start, "sec"
+                # audio file info
+                print samplerate, "Hz,", data.shape[1], "channels,", data.shape[0], "samples"
 
-                    # audio file info
-                    print samplerate, "Hz,", data.shape[1], "channels,", data.shape[0], "samples"
+                # extract features
+                # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)
 
-                    # extract features
-                    # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)
+                start = time.time()
 
-                    start = time.time()
+                feat = rp.rp_extract(data,
+                                  samplerate,
+                                  extract_rp   = ('rp' in ext),          # extract Rhythm Patterns features
+                                  extract_ssd  = ('ssd' in ext),           # extract Statistical Spectrum Descriptor
+                                  extract_sh   = ('sh' in ext),          # extract Statistical Histograms
+                                  extract_tssd = ('tssd' in ext),          # extract temporal Statistical Spectrum Descriptor
+                                  extract_rh   = ('rh' in ext),           # extract Rhythm Histogram features
+                                  extract_trh  = ('trh' in ext),          # extract temporal Rhythm Histogram features
+                                  extract_mvd  = ('mvd' in ext),        # extract Modulation Frequency Variance Descriptor
+                                  spectral_masking=True,
+                                  transform_db=True,
+                                  transform_phon=True,
+                                  transform_sone=True,
+                                  fluctuation_strength_weighting=True,
+                                  skip_leadin_fadeout=1,
+                                  step_width=1)
 
-                    feat = rp.rp_extract(data,
-                                      samplerate,
-                                      extract_rp   = ('rp' in ext),          # extract Rhythm Patterns features
-                                      extract_ssd  = ('ssd' in ext),           # extract Statistical Spectrum Descriptor
-                                      extract_sh   = ('sh' in ext),          # extract Statistical Histograms
-                                      extract_tssd = ('tssd' in ext),          # extract temporal Statistical Spectrum Descriptor
-                                      extract_rh   = ('rh' in ext),           # extract Rhythm Histogram features
-                                      extract_trh  = ('trh' in ext),          # extract temporal Rhythm Histogram features
-                                      extract_mvd  = ('mvd' in ext),        # extract Modulation Frequency Variance Descriptor
-                                      spectral_masking=True,
-                                      transform_db=True,
-                                      transform_phon=True,
-                                      transform_sone=True,
-                                      fluctuation_strength_weighting=True,
-                                      skip_leadin_fadeout=1,
-                                      step_width=1)
+                end = time.time()
 
-                    end = time.time()
+                print "Features extracted:", feat.keys(), end - start, "sec"
 
-                    print "Features extracted:", feat.keys(), end - start, "sec"
+                #type(feat["rp"])
+                #numpy.ndarray
 
-                    #type(feat["rp"])
-                    #numpy.ndarray
+                #print feat["rp"].shape
+                #(1440,)
 
-                    #print feat["rp"].shape
-                    #(1440,)
+                # WRITE each features to a CSV
 
-                    # WRITE each features to a CSV
+                # TODO check if ext and feat.keys are consistent
 
-                    # TODO check if ext and feat.keys are consistent
+                start = time.time()
 
-                    start = time.time()
+                # id = fil -> add filename before vector (to include path, change fil to filename)
+                id = fil # filename
+                write_feature_files(id,feat,writer)
 
-                    # id = fil -> add filename before vector (to include path, change fil to filename)
-                    id = fil # filename
-                    write_feature_files(id,feat,writer)
+                end = time.time()
 
-                    end = time.time()
-
-                    print "Data written." #, end-start
+                print "Data written." #, end-start
             except:
                 print "Error analysing file: " + file
 
@@ -203,7 +214,7 @@ if __name__ == '__main__':
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
 
     filenamestub = out_file
-    ext = ['ssd']
+    ext = feature_types
 
     in_filenamestub = out_path + os.sep + filenamestub
 
@@ -211,3 +222,4 @@ if __name__ == '__main__':
     e = ext[0]
     print ids[e].shape
     print features[e].shape
+    print ids
