@@ -94,6 +94,36 @@ def to_dataframe(feature_data, attribute_labels=None, ids=None, classes=None):
     return dataframe
 
 
+
+# convert npz to arff format
+# adapted from Alex Schindlers npz2arff.py # untested: TODO: test!
+
+def npz2arff(in_file, out_file, relation_name, include_filenames=False):
+
+    import numpy as np
+    npz = np.load(in_file)
+
+    # load data
+    data = pd.DataFrame(npz["data"], columns=npz["attribute_names"])
+
+    if include_filenames:
+        data["ID"] = npz["filenames"]
+
+    data["class"] = npz["labels"]
+
+    npz.close()
+
+    ordered_indexes = data.columns.tolist()
+    ordered_indexes.remove("labels")
+
+    if include_filenames:
+        ordered_indexes.remove("filenames")
+
+
+    save_arff(out_file,data,relation_name)
+
+
+
 # classes_from_filename:
 # derive class label from filename
 # this function derives class labels from the document file names (ids) given in the original feature files
@@ -111,7 +141,7 @@ def classes_from_filename(filenames):
 # in_filenamestub, in_filenamestub: full file path and filname but without .rp, .rh etc. extension (will be added from feature types) for input and output feature files
 # feature_types = ['rp','ssd','rh','mvd']
 
-def csv_to_arff(in_filenamestub,out_filenamestub,feature_types,add_class=True):
+def csv2arff(in_filenamestub,out_filenamestub,feature_types,add_class=True):
 
     ids, features = read_feature_files(in_filenamestub,feature_types)
 
@@ -147,7 +177,7 @@ if __name__ == '__main__':
     in_filenamestub = in_path + os.sep + filenamestub
     out_filenamestub = out_path + os.sep + filenamestub
 
-    csv_to_arff(in_filenamestub,out_filenamestub,feature_types)
+    csv2arff(in_filenamestub,out_filenamestub,feature_types)
 
     # try to load ARFF
 
