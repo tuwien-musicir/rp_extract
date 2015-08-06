@@ -1,9 +1,12 @@
 # 20.07. and 06.08.2015 by Thomas Lidy
 
+# load and save feature files from RP_extract
+
+# supported formats: CSV, ARFF, NPZ(load)
+
 import os
 import pandas as pd
 from rp_extract_files import read_feature_files  # for csv_to_arff
-
 
 
 
