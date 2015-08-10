@@ -38,7 +38,7 @@ def find_files(path,file_types=('.wav','.mp3'),relative_path = False):
             filelist = [ file for file in filelist if file.lower().endswith(file_types) ]
             print subpath, len(filelist), "files found (" + ' or '.join(file_types) + ")."
         else:
-             print subpath, len(filelist), "files found (any file type)"
+            print subpath, len(filelist), "files found (any file type)"
 
         # add full absolute path
         filelist = [ subpath + os.sep + file for file in filelist ]
@@ -214,13 +214,6 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
 # EXAMPLE CALL: please adapt to your needs (esp. in_path , out_path and out_file)
 
 if __name__ == '__main__':
-
-
-    in_path = '/data/music/GTZAN/wav/'
-
-    l = find_files(in_path,None)
-    print l[0:10]
-    exit()
 
     # SET WHICH FEATURES TO EXTRACT (must be lower case)
 
