@@ -20,8 +20,12 @@ import rp_extract as rp # Rhythm Pattern extractor
 
 def find_files(path,file_types=('.wav','.mp3'),relative_path = False):
 
+    if path.endswith(os.sep):
+        path = path[0:-1]   # we need to remove the file separator at the end otherwise the path handling below gets confused
+
     # lower case the file types for comparison
-    file_types = tuple((f.lower() for f in file_types))
+    if file_types:
+        file_types = tuple((f.lower() for f in file_types))
 
     all_files = []
 
@@ -29,15 +33,18 @@ def find_files(path,file_types=('.wav','.mp3'),relative_path = False):
         # subpath: complete sub directory path (full path)
         # filelist: files in that sub path (filenames only)
         (subpath, _, filelist) = d
-        #print subpath, len(filelist), "files found (any file type)"
+        print subpath, len(filelist), "files found (any file type)"
 
-        if file_types:   # FILTER FILE LIST FOR FILE TYPE
-            filelist = [ subpath + os.sep + file for file in filelist if file.lower().endswith(file_types) ]
+        if file_types:   # FILTER FILE LIST by FILE TYPE
+            filelist = [ file for file in filelist if file.lower().endswith(file_types) ]
             print subpath, len(filelist), "files found (" + ' or '.join(file_types) + ")."
 
-        if relative_path: # cut away full path at the beginning
-            add1 = 1 - in_path.endswith(os.sep)
-            filelist = [ filename[len(path)+add1:] for filename in filelist ]
+        # add full absolute path
+        filelist = [ subpath + os.sep + file for file in filelist ]
+
+        if relative_path: # cut away full path at the beginning (+/- 1 character depending if path ends with path separator)
+            filelist = [ filename[len(path)+1:] for filename in filelist ]
+
         all_files.extend(filelist)
 
     return all_files
@@ -206,6 +213,13 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
 # EXAMPLE CALL: please adapt to your needs (esp. in_path , out_path and out_file)
 
 if __name__ == '__main__':
+
+
+    in_path = '/data/music/GTZAN/wav/'
+
+    l = find_files(in_path,None)
+    print l[0:10]
+    exit()
 
     # SET WHICH FEATURES TO EXTRACT (must be lower case)
 
