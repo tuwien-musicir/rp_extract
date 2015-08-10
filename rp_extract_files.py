@@ -33,11 +33,12 @@ def find_files(path,file_types=('.wav','.mp3'),relative_path = False):
         # subpath: complete sub directory path (full path)
         # filelist: files in that sub path (filenames only)
         (subpath, _, filelist) = d
-        print subpath, len(filelist), "files found (any file type)"
 
         if file_types:   # FILTER FILE LIST by FILE TYPE
             filelist = [ file for file in filelist if file.lower().endswith(file_types) ]
             print subpath, len(filelist), "files found (" + ' or '.join(file_types) + ")."
+        else:
+             print subpath, len(filelist), "files found (any file type)"
 
         # add full absolute path
         filelist = [ subpath + os.sep + file for file in filelist ]
