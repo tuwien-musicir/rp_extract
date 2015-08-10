@@ -3,7 +3,8 @@
 # wrapper around rp_extract.py to sequentially extract features from all audio files in a given directory
 # and store them into CSV feature files
 
-# 2015-04, 2015-06 by Thomas Lidy
+# (c) 2015 by Thomas Lidy
+
 
 import unicsv # unicode csv library (installed via pip install unicsv)
 import time # for time measuring
@@ -201,6 +202,8 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
     print "FEATURE EXTRACTION FINISHED.", n, "files,", end-start_abs, "sec"
 
 
+
+# EXAMPLE CALL: please adapt to your needs (esp. in_path , out_path and out_file)
 
 if __name__ == '__main__':
 
