@@ -45,6 +45,9 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
         # because it handles quoted filnames (containing ,) well (by contrast to other CSV readers)
         dataframe = pd.read_csv(filename, sep=',',header=None)
 
+        # TODO: future option: this would be a way to set the file ids as index in the dataframe
+        # dataframe = pd.read_csv(filename, sep=',',header=None,index_col=0) # index_col=0 makes 1st column the rowname (index)
+
         # convert to numpy matrix/array
         feat[e] = dataframe.as_matrix(columns=None)
 
