@@ -182,15 +182,20 @@ def npz2arff(in_file, out_file, relation_name, include_filenames=False):
 
 
 # classes_from_filename:
-# derive class label from filename
+# derive class label from filename or relative file path
 # this function derives class labels from the document file names (ids) given in the original feature files
-# e.g. in GTZAN collection: pop.00001.wav -> first part before . is the class
 
-# TODO: write similar functions for other methods to derive the class name (e.g. from folders, or provded by separate file)
+# examples:
+# split class by first / or \ (os.sep)
+#classes = classes_from_filename(ids[ext]) if add_class else None
+# split class by first '.' as used e.g. in GTZAN collection: pop.00001.wav
+#classes = classes_from_filename(ids[ext]) if add_class else None
 
-def classes_from_filename(filenames):
+# TODO: adapt to enable splitting by LAST appearance of split_char instead of first
+
+def classes_from_filename(filenames,split_char=os.sep):
     # this example works for GTZAN collection: class is first part of filename before '.'
-    classes = [x.split('.', 1)[0] for x in filenames]
+    classes = [x.split(split_char, 1)[0] for x in filenames]
     return classes
 
 
@@ -205,7 +210,11 @@ def csv2arff(in_filenamestub,out_filenamestub,feature_types,add_class=True):
     for ext in feature_types:
 
         # derive the class labels from the audio filenames (see function above)
-        classes = classes_from_filename(ids[ext]) if add_class else None
+        # THIS VERSION splits by first / or \ (os.sep)
+        #classes = classes_from_filename(ids[ext]) if add_class else None
+
+        # THIS VERSION splits by first '.' as used e.g. in GTZAN collection: pop.00001.wav
+        classes = classes_from_filename(ids[ext],'.') if add_class else None
 
         # CREATE DATAFRAME
         # with ids
