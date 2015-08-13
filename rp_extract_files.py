@@ -138,6 +138,7 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
     filelist = find_files(path,audiofile_types,relative_path=True)
 
     n = 0  # counting the files that were actually analyzed
+    err = 0 # counting errors
     n_files = len(filelist)
 
     start_abs = time.time()
@@ -205,7 +206,8 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
 
             print "Data written." #, end-start
         except:
-            print "Error analysing file: " + file
+            print "ERROR analysing file: " + fil
+            err += 1
 
     # close all output files
 
@@ -214,7 +216,8 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
     end = time.time()
 
     print "FEATURE EXTRACTION FINISHED.", n, "files,", end-start_abs, "sec"
-
+    if err > 0:
+        print err, "files had ERRORs during feature extraction."
 
 
 # EXAMPLE CALL: please adapt to your needs (esp. in_path , out_path and out_file)
