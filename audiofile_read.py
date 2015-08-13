@@ -67,12 +67,17 @@ def get_temp_filename(suffix=None):
         
     return os.path.join(temp_dir, rand_filename)
 
-# convert mp3 to wav and read from wav file
-# returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
-def mp3_read(filename,normalize=True):
 
-    temp = get_temp_filename(suffix='.wav')
+# mp3_decode:
+# calls external MP3 decoder to convert an mp3 file to a wav file
+# mpg123, ffmpeg or lame must be installed on the system (consider adding their path  using os.environ['PATH'] += os.pathsep + path )
+# if out_filename is omitted, the input filename is used, replacing the extension by .wav
+
+def mp3_decode(in_filename, out_filename=None):
+
+    if out_filename == None:
+        out_filename = in_filename[:-4]+'.wav'
 
     # check a number of external MP3 decoder tools whether they are available on the system
 
@@ -80,9 +85,9 @@ def mp3_read(filename,normalize=True):
     # cmd_list is a list of commands with their arguments, which will be iterated over to try to find each tool
     cmd_list = []
 
-    cmd1 = ['mpg123','-q', '-w', temp, filename]
-    cmd2 = ['ffmpeg','-v','1','-y','-i', filename,  temp]    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
-    cmd3 = ['lame','--quiet','--decode', filename, temp]
+    cmd1 = ['mpg123','-q', '-w', out_filename, in_filename]
+    cmd2 = ['ffmpeg','-v','1','-y','-i', in_filename,  out_filename]    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
+    cmd3 = ['lame','--quiet','--decode', in_filename, out_filename]
 
     cmd_list.append(cmd1)
     cmd_list.append(cmd2)
@@ -90,38 +95,49 @@ def mp3_read(filename,normalize=True):
 
     success = False
 
-    try:
+    for cmd in cmd_list:
 
-        for cmd in cmd_list:
-            
-            try:
+        try:
 
-                return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
-                
-                if return_code != 0:
-                    raise DecoderException("Problem appeared during decoding.", command=cmd)
-                print 'Decoding mp3 with:', " ".join(cmd)
-                samplerate, samplewidth, wavedata = wav_read(temp,normalize)
-    
-                success = True
-    
-            except OSError as e:
-                if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
-                    raise DecoderException("Problem appeared during decoding.", cmd=cmd, orig_error=e)
-                
-            if success:
-                break  # no need to loop further
-            
-    finally:
-       
-       if os.path.exists(temp):
-           os.remove(temp)
-            
+            return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
+
+            if return_code != 0:
+                raise DecoderException("Problem appeared during decoding.", command=cmd)
+            print 'Decoded mp3 with:', " ".join(cmd)
+            #samplerate, samplewidth, wavedata = wav_read(temp,normalize)
+
+            success = True
+
+        except OSError as e:
+            if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
+                raise DecoderException("Problem appeared during decoding.", cmd=cmd, orig_error=e)
+
+        if success:
+            break  # no need to loop further
 
     if not success:
         commands = ", ".join( c[0] for c in cmd_list)
         raise OSError("No MP3 decoder found. Check if any of these is on your system path: " + commands + \
-                       " and if not add the path using os.environ['PATH'] += os.pathsep + path.")
+                       ". Otherwise install one of these and/or add them to the path using os.environ['PATH'] += os.pathsep + path.")
+
+
+# mp3_read:
+# call mp3_decode and read from wav file ,then delete wav file
+# returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
+
+def mp3_read(filename,normalize=True):
+
+    tempfile = get_temp_filename(suffix='.wav')
+
+    try:
+
+        mp3_decode(filename,tempfile)
+        samplerate, samplewidth, wavedata = wav_read(tempfile,normalize)
+
+    finally: # delete temp file
+
+        if os.path.exists(tempfile):
+            os.remove(tempfile)
 
     return (samplerate, samplewidth, wavedata)
 
@@ -156,8 +172,8 @@ if __name__ == '__main__':
     # test audio file: "Epic Song" by "BoxCat Game"
     # Epic Song by BoxCat Games is licensed under a Creative Commons Attribution License.
     # http://freemusicarchive.org/music/BoxCat_Games/Nameless_the_Hackers_RPG_Soundtrack/BoxCat_Games_-_Nameless-_the_Hackers_RPG_Soundtrack_-_10_Epic_Song
-    file = "BoxCat_Games_-_10_-_Epic_Song.mp3"
-    
+    file = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
+
     samplerate, samplewidth, wavedata = audiofile_read(file)
 
     print "Successfully read audio file:"
