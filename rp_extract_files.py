@@ -1,11 +1,15 @@
 # RP_EXTRACT_FILES:
 
-# wrapper around rp_extract.py to sequentially extract features from all audio files in a given directory
-# and store them into CSV feature files
-
 # (c) 2015 by Thomas Lidy
 
+# Batch extraction of RP features:
+#   wrapper around rp_extract.py to sequentially extract features from all audio files in a given directory
+#   and store them into CSV feature files
 
+# Batch MP3 to WAV conversion
+#   use one of three external decoders to batch convert folders with mp3 to wav files
+
+import os
 import unicsv # unicode csv library (installed via pip install unicsv)
 import time # for time measuring
 
@@ -18,7 +22,7 @@ import rp_extract as rp # Rhythm Pattern extractor
 # file_types: a tuple of file extensions (e.g.'.wav','.mp3') (case-insensitive) or 'None' in which case ALL files in path will be returned
 # relative_path: if False, absolute paths will be returned, otherwise the path relative to the given path
 
-def find_files(path,file_types=('.wav','.mp3'),relative_path = False):
+def find_files(path,file_types=('.wav','.mp3'),relative_path = False,verbose=False):
 
     if path.endswith(os.sep):
         path = path[0:-1]   # we need to remove the file separator at the end otherwise the path handling below gets confused
@@ -44,7 +48,7 @@ def find_files(path,file_types=('.wav','.mp3'),relative_path = False):
         if file_types:   # FILTER FILE LIST by FILE TYPE
             filelist = [ file for file in filelist if file.lower().endswith(file_types) ]
 
-        print subpath, len(filelist), "files found (" + file_type_string + ")."
+        if (verbose): print subpath,":", len(filelist), "files found (" + file_type_string + ")"
 
         # add full absolute path
         filelist = [ subpath + os.sep + file for file in filelist ]
@@ -118,11 +122,54 @@ def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
 
 
 
+# mp3_to_wav_batch:
+# finds all MP3s in a given directory in all subdirectories
+# and converts all of them to WAV
+# if outdir is specified it will replicate the entire subdir structure from within input path to outdir
+# otherwise the WAV file will be created in the same dir as the MP3 file
+# in both cases the file name is maintained and the extension changed to .wav
+
+def mp3_to_wav_batch(path,outdir=None):
+
+    get_relative_path = (outdir!=None) # if outdir is specified we need relative path otherwise absolute
+
+    filenames = find_files(path,'.mp3',get_relative_path)
+
+    n_files = len(filenames)
+    n = 0
+
+    for file in filenames:
+
+        n += 1
+        wav_file = os.path.splitext(file)[0] + '.wav'
+
+        if outdir: # if outdir is specified we add it in front of the relative file path
+            file = path + os.sep + file
+            wav_file = outdir + os.sep + wav_file
+
+            # recreate same subdir path structure as in input path
+            out_subpath = os.path.split(wav_file)[0]
+
+            if not os.path.exists(out_subpath):
+                os.makedirs(out_subpath)
+
+        # future option: (to avoid recreating the input path subdir structure in outdir)
+        #filename_only = os.path.split(wav_file)[1]
+
+        try:
+            if not os.path.exists(wav_file):
+                print "Decoding:", n, "/", n_files, ":"
+                mp3_decode(file,wav_file)
+            else:
+                print "Already existing: " + wav_file
+        except:
+            print "Not decoded " + file
+
+
 
 # finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub directories in it
 # extracts selected RP feature types
 # and saves them into separate CSV feature files (one per feature type)
-
 
 # path: input file path to search for audio files (including subdirectories)
 # out_file: output file name stub for feature files to write
@@ -223,6 +270,12 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
 # EXAMPLE CALL: please adapt to your needs (esp. in_path , out_path and out_file)
 
 if __name__ == '__main__':
+
+    # Example for MP3 to WAV batch conversion:
+    # mp3_to_wav_batch('/data/music/ISMIRgenre/mp3_44khz_128kbit_stereo','/data/music/ISMIRgenre/wav')
+
+
+    # EXAMPLE FOR BATCH RP FEATURE EXTRACTION:
 
     # SET WHICH FEATURES TO EXTRACT (must be lower case)
 
