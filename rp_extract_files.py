@@ -24,8 +24,15 @@ def find_files(path,file_types=('.wav','.mp3'),relative_path = False):
         path = path[0:-1]   # we need to remove the file separator at the end otherwise the path handling below gets confused
 
     # lower case the file types for comparison
-    if file_types:
-        file_types = tuple((f.lower() for f in file_types))
+    if file_types: # if we have file_types (otherwise 'None')
+        if type(file_types) == tuple:
+            file_types = tuple((f.lower() for f in file_types))
+            file_type_string = ' or '.join(file_types) # for print message only
+        else: # single string
+            file_types = file_types.lower()
+            file_type_string = file_types # for print message only
+    else:
+        file_type_string = 'any file type'  # for print message only
 
     all_files = []
 
@@ -36,9 +43,8 @@ def find_files(path,file_types=('.wav','.mp3'),relative_path = False):
 
         if file_types:   # FILTER FILE LIST by FILE TYPE
             filelist = [ file for file in filelist if file.lower().endswith(file_types) ]
-            print subpath, len(filelist), "files found (" + ' or '.join(file_types) + ")."
-        else:
-            print subpath, len(filelist), "files found (any file type)"
+
+        print subpath, len(filelist), "files found (" + file_type_string + ")."
 
         # add full absolute path
         filelist = [ subpath + os.sep + file for file in filelist ]
