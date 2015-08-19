@@ -1,7 +1,7 @@
 '''
 Created on 03.01.2014
 
-@author: SchindlerA
+@author: Alexander Schindler, Thomas Lidy
 '''
 
 # RP_extract: Rhythm Patterns Audio Feature Extractor
@@ -14,15 +14,7 @@ Created on 03.01.2014
 # All required functions are provided by the two main scientific libraries scipy and numpy.
 
 
-
 import numpy as np
-
-# required for debugging
-np.set_printoptions(precision=8, 
-                    threshold=10, 
-                    suppress=True,
-                    linewidth=200,
-                    edgeitems=10)
 
 from scipy import stats
 from scipy.fftpack import fft
@@ -32,6 +24,12 @@ from scipy import interpolate
 # suppress numpy warnings (divide by 0 etc.)
 np.set_printoptions(suppress=True)
 
+# required for debugging
+np.set_printoptions(precision=8,
+                    threshold=10,
+                    suppress=True,
+                    linewidth=200,
+                    edgeitems=10)
 
 
 # INITIALIZATION: Constants & Mappings
@@ -102,10 +100,16 @@ for i in range(n_bark_bands):
 
 # UTILITY FUNCTIONS
 
-# There is no equivalent in Python to Matlab's nextpow2() function, so it needed to be re-implemented.
 
 def nextpow2(num):
-    n = 2 
+    '''NextPow2
+
+    find the next highest number to the power of 2 to a given number
+    and return the exponent to 2
+    (analogously to Matlab's nextpow2() function)
+    '''
+
+    n = 2
     i = 1
     while n < num:
         n *= 2 
@@ -114,9 +118,23 @@ def nextpow2(num):
 
 
 def periodogram(x,win,Fs=None,nfft=1024):
-        
-    if Fs == None:
-        Fs = 2 * np.pi
+    ''' Periodogram
+
+    Periodogram power spectral density estimate
+    Note: this function was written with 1:1 Matlab compatibility in mind.
+
+    The number of points, nfft, in the discrete Fourier transform (DFT) is the maximum of 256 or the next power of two greater than the signal length.
+
+    :param x: time series data (e.g. audio signal), ideally length matches nfft
+    :param win: window function to be applied (e.g. Hanning window). in this case win expects already data points of the window to be provided.
+    :param Fs: sampling frequency (unused)
+    :param nfft: number of bins for FFT (ideally matches length of x)
+    :return: Periodogram power spectrum (np.array)
+    '''
+
+
+    #if Fs == None:
+    #    Fs = 2 * np.pi         # commented out because unused
    
     U  = np.dot(win.conj().transpose(), win) # compensates for the power of the window.
     Xx = fft((x * win),nfft) # verified
@@ -132,11 +150,10 @@ def periodogram(x,win,Fs=None,nfft=1024):
         P[1:-1] = P[1:-1] * 2 # Only DC is a unique point and doesn't get doubled
     else:
         #select = np.arange(nfft/2+1);    # EVEN
-        #P = P[select,:]         # Take only [0,pi] or [0,pi) # todo remove?
+        #P = P[select,:]         # Take only [0,pi] or [0,pi) # TODO: why commented out?
         P[1:-2] = P[1:-2] * 2
-        
-    
-    P = P / (2* np.pi)
+
+    P = P / (2 * np.pi)
 
     return P
 
