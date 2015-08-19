@@ -202,6 +202,7 @@ def do_spectral_masking(matrix):
 
 # Map to Decibel Scale
 def transform2db(matrix):
+    '''Map to Decibel Scale'''
     matrix[np.where(matrix < 1)] = 1
     matrix = 10 * np.log10(matrix)
     return(matrix)
@@ -255,7 +256,7 @@ def transform2sone(matrix):
 
 # MAIN Rhythm Pattern Extraction Function
 
-def rp_extract( data,                          # pcm (wav) signal data
+def rp_extract( wavedata,                          # pcm (wav) signal data normalized to (-1,1)
                 samplerate,                    # signal sampling rate
 
                 # which features to extract
@@ -288,9 +289,12 @@ def rp_extract( data,                          # pcm (wav) signal data
                 ):
 
 
-     # CONVERT STEREO TO MONO: Combine channels
-    if len(data.shape) > 1:
-        data = np.mean(data, 1)
+     # CONVERT STEREO TO MONO: Average the channels
+    if wavedata.ndim > 1:                    # if we have more than 1 dimension
+        if wavedata.shape[1] == 1:           # check if 2nd dimension is just 1
+            wavedata = wavedata[:,0]         # then we take first and only channel
+        else:
+            wavedata = np.mean(wavedata, 1)  # otherwise we average the signals over the channels
 
     # non-exhibited parameter
     include_DC = False
@@ -310,12 +314,10 @@ def rp_extract( data,                          # pcm (wav) signal data
         # throw error not supported
         raise ValueError('A sample rate of' + samplerate + "is not supported (only 11, 22 and 44 kHz).")
     
-    # calculate frequency values on y-axis (for Bark scale calculation)
-    freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
-
-    # TESTING:
-    #segment_size    = segment_size / 2
-
+    # calculate frequency values on y-axis (for Bark scale calculation):
+    # freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
+    # linear space from 0 to samplerate/2 in (fft_window_size/2+1) steps
+    freq_axis = np.linspace(0, float(samplerate)/2, int(fft_window_size//2) + 1, endpoint=True)
 
     # SEGMENT INITIALIZATION
     # find positions of wave segments
@@ -328,7 +330,7 @@ def rp_extract( data,                          # pcm (wav) signal data
     # if file is too small, don't skip leadin/fadeout and set step_width to 1
     if ((skip_leadin_fadeout > 0) or (step_width > 1)):
 
-        duration =  data.shape[0]/samplerate
+        duration =  wavedata.shape[0]/samplerate
 
         if (duration < 45):
             step_width = 1
@@ -340,13 +342,13 @@ def rp_extract( data,                          # pcm (wav) signal data
             seg_pos = seg_pos + segment_size * skip_seg
     
     # calculate number of segments
-    n_segments = int(np.floor( (np.floor( (data.shape[0] - (skip_seg*2*segment_size)) / segment_size ) - 1 ) / step_width ) + 1)
+    n_segments = int(np.floor( (np.floor( (wavedata.shape[0] - (skip_seg*2*segment_size)) / segment_size ) - 1 ) / step_width ) + 1)
     print "Analyzing", n_segments, "segments"
 
     if n_segments == 0:
         raise ValueError("Not enough data to analyze! Minumum sample length needs to be " +
-                         str(segment_size) + " (5.94 seconds) but it is " + str(data.shape[0]) +
-                         " (" + str(round(data.shape[0] * 1.0 / samplerate,2)) + " seconds)")
+                         str(segment_size) + " (5.94 seconds) but it is " + str(wavedata.shape[0]) +
+                         " (" + str(round(wavedata.shape[0] * 1.0 / samplerate,2)) + " seconds)")
 
     # initialize output
     features = {}
@@ -370,7 +372,7 @@ def rp_extract( data,                          # pcm (wav) signal data
         
         # EXTRACT WAVE SEGMENT that will be processed
         # data is assumed to be mono waveform
-        wavsegment = data[seg_pos[0]-1:seg_pos[1]] # verified
+        wavsegment = wavedata[seg_pos[0]-1:seg_pos[1]] # verified
         
         # v210715
         # Python : [-0.0269165  -0.02128601 -0.01864624 -0.01893616 -0.02166748 -0.02694702 -0.03457642 -0.04333496 -0.05166626 -0.05891418]
