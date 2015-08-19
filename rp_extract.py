@@ -387,26 +387,33 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         # Matlab : [ -77,175    -60,94375  -53,3750   -54,29375  -62,081    -77,2625   -99,0938  -124,21    -148,1375  -168,91875]        
         
 
-        # SPECTROGRAM: use FFT to convert to frequency domain (with Hanning window and 50 % overlap)
-    
-        n_iter     = wavsegment.shape[0] / fft_window_size * 2 - 1    # number of iterations with 50% overlap
-    
+        # SPECTROGRAM: use periodogram (FFT) to convert to frequency domain (with Hanning window and 50 % overlap)
+
+
+        fft_overlap = 0.5 # 50% overlap in FFT analysis
+
+        n_frames = wavsegment.shape[0] / fft_window_size * 2 - 1  # number of iterations with 50% overlap
+        # TODO: incorporate fft_overlap in above formula (instead of * 2)
+        # similar to: n_segments = int(np.floor( (np.floor( (wavedata.shape[0] - (skip_seg*2*segment_size)) / segment_size ) - 1 ) / step_width ) + 1)
+
         han_window = np.hanning(fft_window_size) # verified
-    
-        spectrogr  = np.zeros((fft_window_size, n_iter), dtype=np.complex128)
-    
-        idx        = np.arange(fft_window_size)
-    
-        for i in range(n_iter): # stepping through the wave segment, building spectrum for each window        
-            
-            spectrogr[:,i] = periodogram(x=wavsegment[idx], win=han_window,nfft=fft_window_size)
-            idx            = idx + fft_window_size/2
+
+        # set start index + hop size for frame-wise iteration
+        ix = 0
+        hop_size = int(fft_window_size*(1-fft_overlap))
+
+        # initialize result matrix
+        spectrogram  = np.zeros((fft_window_size, n_frames), dtype=np.complex128)
+
+        for i in range(n_frames): # stepping through the wave segment, building spectrum for each window
+            spectrogram[:,i] = periodogram(wavsegment[ix:ix+fft_window_size], win=han_window,nfft=fft_window_size)
+            ix = ix + hop_size
 
             # NOTE: tested scipy periodogram BUT it delivers totally different values AND takes 2x the time of our periodogram function (0.13 sec vs. 0.06 sec)
             # from scipy.signal import periodogram # move on top
             #f,  spec = periodogram(x=wavsegment[idx],fs=samplerate,window='hann',nfft=fft_window_size,scaling='spectrum',return_onesided=True)
 
-        matrix = np.abs(spectrogr)
+        matrix = np.abs(spectrogram)
         
         # v210715
         #Python:   0.01372537     0.51454915    72.96077581   84.86663379   2.09940049    3.29631279   97373.2756834      23228.2065494       2678.44451741     30467.235416   
