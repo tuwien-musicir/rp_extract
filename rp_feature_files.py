@@ -6,13 +6,11 @@
 
 import os
 import pandas as pd
-from rp_extract_files import read_feature_files  # for csv_to_arff
 
 
 # == CSV ==
 
-
-# read_feature_files:
+# read_csv_features:
 # reads pre-analyzed features from CSV files
 # in write_feature_files we use unicsv to store the features
 # it will quote strings containing , and other characters if needed only (automatically)
@@ -208,7 +206,7 @@ def classes_from_filename(filenames,split_char=os.sep):
 
 def csv2arff(in_filenamestub,out_filenamestub,feature_types,add_class=True):
 
-    ids, features = read_feature_files(in_filenamestub,feature_types)
+    ids, features = read_csv_features(in_filenamestub,feature_types)
 
     for ext in feature_types:
 
