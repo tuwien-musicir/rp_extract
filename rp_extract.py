@@ -158,6 +158,55 @@ def periodogram(x,win,Fs=None,nfft=1024):
     return P
 
 
+
+
+def calc_spectrogram(wavsegment,fft_window_size,fft_overlap = 0.5,real_values=True):
+
+    ''' Calc_Spectrogram
+
+    calculate spectrogram using periodogram function (which performs FFT) to convert wave signal data
+    from time to frequency domain (applying a Hanning window and (by default) 50 % window overlap)
+
+    :param wavsegment: audio wave file data for a segment to be analyzed (mono (i.e. 1-dimensional vector) only
+    :param fft_window_size: windows size to apply FFT to
+    :param fft_overlap: overlap to apply during FFT analysis in % fraction (e.g. default = 0.5, means 50% overlap)
+    :param real_values: if True, return real values by taking abs(spectrogram), if False return complex values
+    :return: spectrogram matrix as numpy array (fft_window_size, n_frames)
+    '''
+
+    # hop_size (increment step in samples, determined by fft_window_size and fft_overlap)
+    hop_size = int(fft_window_size*(1-fft_overlap))
+
+    # this would compute the segment length, but it's pre-defined above ...
+    # segment_size = fft_window_size + (frames-1) * hop_size
+    # ... therefore we convert the formula to give the number of frames needed to iterate over the segment:
+    n_frames = (wavsegment.shape[0] - fft_window_size) / hop_size + 1
+    # n_frames_old = wavsegment.shape[0] / fft_window_size * 2 - 1  # number of iterations with 50% overlap
+
+    # TODO: provide this as parameter for better caching?
+    han_window = np.hanning(fft_window_size) # verified
+
+    # initialize result matrix for spectrogram
+    spectrogram  = np.zeros((fft_window_size, n_frames), dtype=np.complex128)
+
+    # start index for frame-wise iteration
+    ix = 0
+
+    for i in range(n_frames): # stepping through the wave segment, building spectrum for each window
+        spectrogram[:,i] = periodogram(wavsegment[ix:ix+fft_window_size], win=han_window,nfft=fft_window_size)
+        ix = ix + hop_size
+
+        # NOTE: tested scipy periodogram BUT it delivers totally different values AND takes 2x the time of our periodogram function (0.13 sec vs. 0.06 sec)
+        # from scipy.signal import periodogram # move on top
+        #f,  spec = periodogram(x=wavsegment[idx],fs=samplerate,window='hann',nfft=fft_window_size,scaling='spectrum',return_onesided=True)
+
+    if real_values: spectrogram = np.abs(spectrogram)
+
+    return (spectrogram)
+
+
+
+
 def calc_spectral_histograms(mat):
 
     result = []
@@ -441,37 +490,9 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         # v210715
         # Python : [ -77.175    -61.03125  -53.4625   -54.29375  -62.125    -77.2625   -99.1375  -124.25    -148.1375  -168.91875]
         # Matlab : [ -77,175    -60,94375  -53,3750   -54,29375  -62,081    -77,2625   -99,0938  -124,21    -148,1375  -168,91875]        
-        
 
-        # SPECTROGRAM: use periodogram (FFT) to convert to frequency domain (with Hanning window and 50 % overlap)
+        matrix = calc_spectrogram(wavsegment,fft_window_size)
 
-        # FFT parameters: overlap + hop_size (determined by overlap)
-        fft_overlap = 0.5 # 50% window overlap in FFT analysis
-        hop_size = int(fft_window_size*(1-fft_overlap))  # hop_size is the increment step given the fft window size and the overlap
-
-        # this would compute the segment length, but it's pre-defined above ...
-        # segment_size = fft_window_size + (frames-1) * hop_size
-        # ... therefore we convert the formula to give the number of frames needed to iterate over the segment:
-        n_frames = (wavsegment.shape[0] - fft_window_size) / hop_size + 1
-        # n_frames_old = wavsegment.shape[0] / fft_window_size * 2 - 1  # number of iterations with 50% overlap
-
-        han_window = np.hanning(fft_window_size) # verified
-
-        # initialize result matrix for spectrogram
-        spectrogram  = np.zeros((fft_window_size, n_frames), dtype=np.complex128)
-        # start index for frame-wise iteration
-        ix = 0
-
-        for i in range(n_frames): # stepping through the wave segment, building spectrum for each window
-            spectrogram[:,i] = periodogram(wavsegment[ix:ix+fft_window_size], win=han_window,nfft=fft_window_size)
-            ix = ix + hop_size
-
-            # NOTE: tested scipy periodogram BUT it delivers totally different values AND takes 2x the time of our periodogram function (0.13 sec vs. 0.06 sec)
-            # from scipy.signal import periodogram # move on top
-            #f,  spec = periodogram(x=wavsegment[idx],fs=samplerate,window='hann',nfft=fft_window_size,scaling='spectrum',return_onesided=True)
-
-        matrix = np.abs(spectrogram)
-        
         # v210715
         #Python:   0.01372537     0.51454915    72.96077581   84.86663379   2.09940049    3.29631279   97373.2756834      23228.2065494       2678.44451741     30467.235416   
         #      :  84.50635406    58.32826049  1263.82538188  234.11858349  85.48176796   97.26094525  214067.91208223   3570917.53366476   2303291.96676741   1681002.94519665 
