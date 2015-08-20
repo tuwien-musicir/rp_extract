@@ -305,14 +305,44 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
 
                 ):
 
+    '''Rhythm Pattern Feature Extraction
 
-     # CONVERT STEREO TO MONO: Average the channels
-    if wavedata.ndim > 1:                    # if we have more than 1 dimension
-        if wavedata.shape[1] == 1:           # check if 2nd dimension is just 1
-            wavedata = wavedata[:,0]         # then we take first and only channel
-        else:
-            wavedata = np.mean(wavedata, 1)  # otherwise we average the signals over the channels
+    performs segment-wise audio feature extraction from provided audio wave (PCM) data
+    and extracts the following features:
 
+        Rhythm Pattern
+        Statistical Spectrum Descriptor
+        Statistical Histogram
+        temporal Statistical Spectrum Descriptor
+        Rhythm Histogram
+        temporal Rhythm Histogram features
+        Modulation Variance Descriptor
+
+    Examples:
+    >>> from audiofile_read import *
+    >>> samplerate, samplewidth, wavedata = audiofile_read("music/BoxCat_Games_-_10_-_Epic_Song.mp3") #doctest: +ELLIPSIS
+    Decoded mp3 with: mpg123 -q -w /....wav music/BoxCat_Games_-_10_-_Epic_Song.mp3
+    >>> feat = rp_extract(wavedata, samplerate, extract_rp=True, extract_ssd=True, extract_rh=True)
+    Analyzing 7 segments
+    >>> for k in feat.keys():
+    ...     print k.upper() +  ":", feat[k].shape[0], "dimensions"
+    SSD: 168 dimensions
+    RH: 60 dimensions
+    RP: 1440 dimensions
+    >>> print feat["rp"]
+    [ 0.01599218  0.01979605  0.01564305  0.01674175  0.00959912  0.00931604  0.00937831  0.00709122  0.00929631  0.00754473 ...,  0.02998088  0.03602739  0.03633861  0.03664331  0.02589753  0.02110256
+      0.01457744  0.01221825  0.0073788   0.00164668]
+    >>> print feat["rh"]
+    [  7.11614842  12.58303013   6.96717295   5.24244146   6.49677561   4.21249659  12.43844045   4.19672357   5.30714983   6.1674115  ...,   1.55870044   2.69988854   2.75075831   3.67269877  13.0351257
+      11.7871738    3.76106713   2.45225195   2.20457928   2.06494926]
+    >>> print feat["ssd"]
+    [  3.7783279    5.84444695   5.58439197   4.87849697   4.14983056   4.09638223   4.04971225   3.96152261   3.65551062   3.2857232  ...,  14.45953191  14.6088727   14.03351539  12.84783095  10.81735946
+       9.04121124   7.13804008   5.6633501    3.09678286   0.52076428]
+
+    '''
+
+
+    # PARAMETER INITIALIZATION
     # non-exhibited parameter
     include_DC = False
 
@@ -335,6 +365,15 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
     # freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
     # linear space from 0 to samplerate/2 in (fft_window_size/2+1) steps
     freq_axis = np.linspace(0, float(samplerate)/2, int(fft_window_size//2) + 1, endpoint=True)
+
+
+    # CONVERT STEREO TO MONO: Average the channels
+    if wavedata.ndim > 1:                    # if we have more than 1 dimension
+        if wavedata.shape[1] == 1:           # check if 2nd dimension is just 1
+            wavedata = wavedata[:,0]         # then we take first and only channel
+        else:
+            wavedata = np.mean(wavedata, 1)  # otherwise we average the signals over the channels
+
 
     # SEGMENT INITIALIZATION
     # find positions of wave segments
@@ -716,18 +755,31 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
 
 
 
+# function to self test rp_extract if working properly
+def self_test():
+    import doctest
+    #doctest.testmod()
+    doctest.run_docstring_examples(rp_extract, globals())
+
 
 
 if __name__ == '__main__':
 
-    # IMPORT our library for reading wav and mp3 files
+
+    # to run self test:
+    #self_test()
+    #exit()
+    # (no output means that everything went fine)
+
+
+    # import our library for reading wav and mp3 files
     from audiofile_read import *
 
+    audiofile = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
+
+
+    # LONG EXAMPLE (does essentially the same):
     try:
-        #audiofile = "music/pcm16b22khz.wav"
-        #audiofile = "music/test.wav"
-        #audiofile = "music/Runstep Vol 1 - 180 BPM - DJ Diana Floss.mp3"
-        audiofile = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
 
         samplerate, samplewidth, wavedata = audiofile_read(audiofile)
 
@@ -753,16 +805,15 @@ if __name__ == '__main__':
                           mod_ampl_limit=mod_ampl_limit)
 
         # feat is a dict containing arrays for different feature sets
-        print "Successfully extracted features:" #, feat.keys()
-
-        for k in feat.keys():
-            print k.upper(), ":", feat[k].shape[0], "dimensions"
+        print "Successfully extracted features:" , feat.keys()
 
     except ValueError, e:
         print e
         exit()
 
-    # print feat["rp"][0:25]
+
+    print "Rhythm Histogram feature vector:"
+    print feat["rh"]
 
     # EXAMPLE on how to plot the features
     do_plots = False
@@ -771,8 +822,8 @@ if __name__ == '__main__':
         from rp_plot import *
 
         plotrp(feat["rp"],rows=bark_bands,cols=mod_ampl_limit)
-        #plotrh(feat["rh"])
-        #plotssd(feat["ssd"],rows=bark_bands)
+        plotrh(feat["rh"])
+        plotssd(feat["ssd"],rows=bark_bands)
 
     # EXAMPLE on how to store RP features in CSV file
     # import pandas as pd
