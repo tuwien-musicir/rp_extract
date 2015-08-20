@@ -406,21 +406,22 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
 
         # SPECTROGRAM: use periodogram (FFT) to convert to frequency domain (with Hanning window and 50 % overlap)
 
+        # FFT parameters: overlap + hop_size (determined by overlap)
+        fft_overlap = 0.5 # 50% window overlap in FFT analysis
+        hop_size = int(fft_window_size*(1-fft_overlap))  # hop_size is the increment step given the fft window size and the overlap
 
-        fft_overlap = 0.5 # 50% overlap in FFT analysis
-
-        n_frames = wavsegment.shape[0] / fft_window_size * 2 - 1  # number of iterations with 50% overlap
-        # TODO: incorporate fft_overlap in above formula (instead of * 2)
-        # similar to: n_segments = int(np.floor( (np.floor( (wavedata.shape[0] - (skip_seg*2*segment_size)) / segment_size ) - 1 ) / step_width ) + 1)
+        # this would compute the segment length, but it's pre-defined above ...
+        # segment_size = fft_window_size + (frames-1) * hop_size
+        # ... therefore we convert the formula to give the number of frames needed to iterate over the segment:
+        n_frames = (wavsegment.shape[0] - fft_window_size) / hop_size + 1
+        # n_frames_old = wavsegment.shape[0] / fft_window_size * 2 - 1  # number of iterations with 50% overlap
 
         han_window = np.hanning(fft_window_size) # verified
 
-        # set start index + hop size for frame-wise iteration
-        ix = 0
-        hop_size = int(fft_window_size*(1-fft_overlap))
-
-        # initialize result matrix
+        # initialize result matrix for spectrogram
         spectrogram  = np.zeros((fft_window_size, n_frames), dtype=np.complex128)
+        # start index for frame-wise iteration
+        ix = 0
 
         for i in range(n_frames): # stepping through the wave segment, building spectrum for each window
             spectrogram[:,i] = periodogram(wavsegment[ix:ix+fft_window_size], win=han_window,nfft=fft_window_size)
