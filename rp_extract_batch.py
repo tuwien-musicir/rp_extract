@@ -1,13 +1,14 @@
-# RP_EXTRACT_FILES:
+''' RP_Extract_Batch
 
-# (c) 2015 by Thomas Lidy
+(c) 2015 by Thomas Lidy
 
-# Batch extraction of RP features:
-#   wrapper around rp_extract.py to sequentially extract features from all audio files in a given directory
-#   and store them into CSV feature files
+Batch extraction of RP features:
+  wrapper around rp_extract.py to sequentially extract features from all audio files in a given directory
+  and store them into CSV feature files
 
-# Batch MP3 to WAV conversion
-#   use one of three external decoders to batch convert folders with mp3 to wav files
+Batch MP3 to WAV conversion
+  use one of three external decoders to batch convert folders with mp3 to wav files
+'''
 
 import os
 import unicsv # unicode csv library (installed via pip install unicsv)
@@ -114,7 +115,7 @@ def close_feature_files(files,ext):
 # returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
 #          each of them is a python dict containing an entry per feature extension (ext)
 
-# NOTE: this functin has been moved to rp_feature_files.py and is maintained here for backwards compatibility
+# NOTE: this function has been moved to rp_feature_files.py and is maintained here for backwards compatibility
 
 def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
     from rp_feature_files import read_csv_features
