@@ -241,6 +241,49 @@ def calc_statistical_features(matrix):
 
 # PSYCHO-ACOUSTIC TRANSFORMS as individual functions
 
+
+# Transform 2 Mel Scale: NOT USED by rp_extract, but included for testing purposes or for import into other programs
+
+def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_max = None):
+    '''Transform to Mel
+
+    convert a spectrogram to a Mel scale spectrogram by grouping original frequency bins
+    to Mel frequency bands (using Mel filter from Librosa)
+
+    Parameters
+    spectrogram: input spectrogram
+    samplerate: samplerate of audio signal
+    fft_window_size: number of time window / frequency bins in the FFT analysis
+    n_mel_bands: number of desired Mel bands, typically 20, 40, 80 (max. 128 which is default when 'None' is provided)
+    freq_max: cut-off frequency (Mel filters will be applied <= this frequency, but still return n_meld_bands number of bands)
+
+    Returns:
+    mel_spectrogram: Mel spectrogram: np.array of shape(n_mel_bands,frames) maintaining the number of frames in the original spectrogram
+    '''
+
+    import librosa.filters
+
+    # Syntax: librosa.filters.mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False)
+    mel_basis = librosa.filters.mel(samplerate,fft_window_size, n_mels=n_mel_bands,fmax=freq_max)
+
+    freq_bin_max = mel_basis.shape[1] # will be fft_window_size / 2 + 1
+
+    # IMPLEMENTATION WITH FOR LOOP
+    # initialize Mel Spectrogram matrix
+    #n_mel_bands = mel_basis.shape[0]  # get the number of bands from result in case 'None' was specified as parameter
+    #mel_spectrogram = np.empty((n_mel_bands, frames))
+
+    #for i in range(frames): # stepping through the wave segment, building spectrum for each window
+    #    mel_spectrogram[:,i] = np.dot(mel_basis,spectrogram[0:freq_bin_max,i])
+
+    # IMPLEMENTATION WITH DOT PRODUCT (15% faster)
+    # multiply the mel filter of each band with the spectogram frame (dot product executes it on all frames)
+    mel_spectrogram = np.dot(mel_basis,spectrogram[0:freq_bin_max,:])
+    return (mel_spectrogram)
+
+
+
+
 # Bark Transform: Convert Spectrogram to Bark Scale
 # matrix: Spectrogram values as returned from periodogram function
 # freq_axis: array of frequency values along the frequency axis
