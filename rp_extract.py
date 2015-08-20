@@ -1,17 +1,19 @@
 '''
-Created on 03.01.2014
 
-@author: Alexander Schindler, Thomas Lidy
+RP_extract: Rhythm Patterns Audio Feature Extractor
+
+@author: 2014-2015 Alexander Schindler, Thomas Lidy
+
+
+Re-implementation by Alexander Schindler of RP_extract for Matlab
+Matlab version originally by Thomas Lidy, based on Musik Analysis Toolbox by Elias Pampalk
+( see http://ifs.tuwien.ac.at/mir/downloads.html )
+
+Main function is rp_extract. See function definition and description for more information,
+or example usage in main function.
+
+Note: All required functions are provided by the two main scientific libraries numpy and scipy.
 '''
-
-# RP_extract: Rhythm Patterns Audio Feature Extractor
-
-# Re-implementation by Alexander Schindler of RP_extract for Matlab
-# Matlab version originally by Thomas Lidy, based on Musik Analysis Toolbox by Elias Pampalk
-# see http://ifs.tuwien.ac.at/mir/downloads.html
-
-
-# All required functions are provided by the two main scientific libraries scipy and numpy.
 
 
 import numpy as np
@@ -117,6 +119,9 @@ def nextpow2(num):
     return i
 
 
+
+# FFT FUNCTIONS
+
 def periodogram(x,win,Fs=None,nfft=1024):
     ''' Periodogram
 
@@ -205,7 +210,7 @@ def calc_spectrogram(wavsegment,fft_window_size,fft_overlap = 0.5,real_values=Tr
     return (spectrogram)
 
 
-
+# FEATURE FUNCTIONS
 
 def calc_spectral_histograms(mat):
 
