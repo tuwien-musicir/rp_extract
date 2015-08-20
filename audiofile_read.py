@@ -43,7 +43,7 @@ def normalize_wav(wavedata,samplewidth):
 # read wav files
 # returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
-def wav_read(filename,normalize=True):
+def wav_read(filename,normalize=True,verbose=True):
 
     # check if file exists
     if not os.path.exists(filename):
@@ -74,7 +74,7 @@ def get_temp_filename(suffix=None):
 # mpg123, ffmpeg or lame must be installed on the system (consider adding their path  using os.environ['PATH'] += os.pathsep + path )
 # if out_filename is omitted, the input filename is used, replacing the extension by .wav
 
-def mp3_decode(in_filename, out_filename=None):
+def mp3_decode(in_filename, out_filename=None, verbose=True):
 
     if out_filename == None:
         out_filename = in_filename[:-4]+'.wav'
@@ -103,7 +103,7 @@ def mp3_decode(in_filename, out_filename=None):
 
             if return_code != 0:
                 raise DecoderException("Problem appeared during decoding.", command=cmd)
-            print 'Decoded mp3 with:', " ".join(cmd)
+            if (verbose): print 'Decoded mp3 with:', " ".join(cmd)
             #samplerate, samplewidth, wavedata = wav_read(temp,normalize)
 
             success = True
@@ -125,14 +125,13 @@ def mp3_decode(in_filename, out_filename=None):
 # call mp3_decode and read from wav file ,then delete wav file
 # returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
-def mp3_read(filename,normalize=True):
+def mp3_read(filename,normalize=True,verbose=True):
 
     tempfile = get_temp_filename(suffix='.wav')
 
     try:
-
-        mp3_decode(filename,tempfile)
-        samplerate, samplewidth, wavedata = wav_read(tempfile,normalize)
+        mp3_decode(filename,tempfile,verbose)
+        samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
 
     finally: # delete temp file
 
@@ -142,10 +141,23 @@ def mp3_read(filename,normalize=True):
     return (samplerate, samplewidth, wavedata)
 
 
-# generic function capable of reading both .wav and .mp3 files
-# returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
-def audiofile_read(filename,normalize=True):
+def audiofile_read(filename,normalize=True,verbose=True):
+    ''' audiofile_read
+
+    generic function capable of reading both WAV and MP3 files
+
+    :param filename: file name path to audio file
+    :param normalize: normalize to (-1,1) if True (default), or keep original values (16 bit, 24 bit or 32 bit)
+    :param verbose: whether to print a message while decoding MP3 files or not
+    :return: a tuple with 3 entries: samplerate in Hz (e.g. 44100), samplewidth in bytes (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
+
+    Example:
+    >>> samplerate, samplewidth, wavedata = audiofile_read("music/BoxCat_Games_-_10_-_Epic_Song.mp3",verbose=False)
+    >>> print samplerate, "Hz,", samplewidth*8, "bit,", wavedata.shape[1], "channels,", wavedata.shape[0], "samples"
+    44100 Hz, 16 bit, 2 channels, 2421504 samples
+
+    '''
 
     # check if file exists
     if not os.path.exists(filename):
@@ -154,22 +166,34 @@ def audiofile_read(filename,normalize=True):
     basename, ext = os.path.splitext(filename)
 
     if ext.lower() == '.wav':
-        return(wav_read(filename,normalize))
+        return(wav_read(filename,normalize,verbose))
     elif ext.lower() == '.mp3':
-        return(mp3_read(filename,normalize))
+        return(mp3_read(filename,normalize,verbose))
     else:
         raise NameError("File name extension must be either .wav or .mp3 when using audiofile_read. Extension found: " + ext)
+
+
+# function to self test audiofile_read if working properly
+def self_test():
+    import doctest
+    #doctest.testmod()
+    doctest.run_docstring_examples(audiofile_read, globals())
 
 
 # main routine: to test if decoding works properly
 
 if __name__ == '__main__':
 
+    # to run self test:
+    #self_test()
+    #exit()
+    # (no output means that everything went fine)
+
     # if your MP3 decoder is not on the system PATH, add it like this:
     # path = '/path/to/ffmpeg/'
     # os.environ['PATH'] += os.pathsep + path
     
-    # test audio file: "Epic Song" by "BoxCat Game"
+    # test audio file: "Epic Song" by "BoxCat Game" (included in repository)
     # Epic Song by BoxCat Games is licensed under a Creative Commons Attribution License.
     # http://freemusicarchive.org/music/BoxCat_Games/Nameless_the_Hackers_RPG_Soundtrack/BoxCat_Games_-_Nameless-_the_Hackers_RPG_Soundtrack_-_10_Epic_Song
     file = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
