@@ -59,7 +59,7 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
 
     if separate_ids:
         ids = feat[:,id_column]
-        feat = np.delete(feat,id_column,1)
+        feat = np.delete(feat,id_column,1).astype(np.float) # delete id columns and return feature vectors as float type
         return (ids,feat)
     else:
         return feat
