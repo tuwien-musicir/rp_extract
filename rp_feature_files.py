@@ -27,10 +27,34 @@ import pandas as pd
 # returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
 #          each of them is a python dict containing an entry per feature extension (ext)
 
-def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
+
+# read a single csv feature file
+
+def read_csv_features1(filename,separate_ids=True,id_column=0):
 
     import numpy as np
     import pandas as pd
+
+    # we use pandas to import CSV as pandas dataframe,
+    # because it handles quoted filnames (containing ,) well (by contrast to other CSV readers)
+    dataframe = pd.read_csv(filename, sep=',',header=None)
+
+    # TODO: future option: this would be a way to set the file ids as index in the dataframe
+    # dataframe = pd.read_csv(filename, sep=',',header=None,index_col=0) # index_col=0 makes 1st column the rowname (index)
+
+    # convert to numpy matrix/array
+    feat = dataframe.as_matrix(columns=None)
+
+    if separate_ids:
+        ids = feat[:,id_column]
+        feat = np.delete(feat,id_column,1)
+        return (ids,feat)
+    else:
+        return feat
+
+# read multiple csv feature files
+
+def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
 
     # initialize empty dicts
     feat = {}
@@ -39,21 +63,12 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
     for e in ext:
         filename = filenamestub + "." + e
 
-        # we use pandas to import CSV as pandas dataframe,
-        # because it handles quoted filnames (containing ,) well (by contrast to other CSV readers)
-        dataframe = pd.read_csv(filename, sep=',',header=None)
-
-        # TODO: future option: this would be a way to set the file ids as index in the dataframe
-        # dataframe = pd.read_csv(filename, sep=',',header=None,index_col=0) # index_col=0 makes 1st column the rowname (index)
-
-        # convert to numpy matrix/array
-        feat[e] = dataframe.as_matrix(columns=None)
-
         if separate_ids:
-           ids[e] = feat[e][:,id_column]
-           feat[e] = np.delete(feat[e],id_column,1)
+            ids[e], feat[e] = read_csv_features1(filename,separate_ids,id_column)
+        else:
+            feat[e] = read_csv_features1(filename,separate_ids,id_column)
 
-        print "Read:", e,":\t", feat[e].shape[0], "vectors", feat[e].shape[1], "dimensions (excl. id)"
+        print "Read:", e + ":\t", feat[e].shape[0], "vectors", feat[e].shape[1], "dimensions (excl. id)"
 
     if separate_ids:
         return(ids,feat)
