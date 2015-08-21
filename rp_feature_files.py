@@ -214,7 +214,28 @@ def npz2arff(in_file, out_file, relation_name, include_filenames=False):
 
     save_arff(out_file,data,relation_name)
 
+# CLASS LABELS
 
+
+def read_class_file(filename, delimiter='\t',as_dict=True):
+    ''' Read_Class_File
+
+    read a comma or tab separated file providing class labels to analyzed audio files, typically in the format:
+    <audio file name or id> <class_label>
+
+    :param filename: input filename to read class labels from
+    :param delimiter: separator in the input file: \t by default, can be set to ',', ';' or anything else needed
+    :param as_dict: True by default, will return a dict with file ids as key and class label as value
+            if False, it will return a list of lists, each list entry containing a "tuple" of file id and label
+    :return:
+    '''
+
+    import csv
+    fi = open(filename, 'r')
+    reader = csv.reader(fi, delimiter)
+    result = dict(reader) if as_dict else list(reader)
+    fi.close()
+    return(result)
 
 # classes_from_filename:
 # derive class label from filename or relative file path
@@ -233,6 +254,8 @@ def classes_from_filename(filenames,split_char=os.sep):
     classes = [x.split(split_char, 1)[0] for x in filenames]
     return classes
 
+
+# CONVERSION
 
 # convert feature files that are stored in CSV format to Weka ARFF format
 # in_filenamestub, in_filenamestub: full file path and filname but without .rp, .rh etc. extension (will be added from feature types) for input and output feature files
