@@ -31,6 +31,18 @@ import pandas as pd
 # read a single csv feature file
 
 def read_csv_features1(filename,separate_ids=True,id_column=0):
+    ''' Read_CSV_features1
+
+    read features (and optionally one or more ids) from a CSV file
+
+    :param filename: filename path to CSV file to read from
+    :param separate_ids: will split off the id column(s) from the features (containing eg. and index or filename string)
+    :param id_column: specify which is/are the id column(s) as integer or list, e.g. 0 (= first column) or [0,1] (= first two columns)
+            negative integers identify the columns backwards, i.e. -1 is the last column, -2 the second last column, and so on
+    :return: if separate_ids is True, it will return a tuple (ids, features) both being numpy arrays
+             (with ids containing usually identifiers and features the numeric data)
+             if separate_ids is False, just the features array will returned (containing everything read from the CSV)
+    '''
 
     import numpy as np
     import pandas as pd
@@ -39,7 +51,7 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
     # because it handles quoted filnames (containing ,) well (by contrast to other CSV readers)
     dataframe = pd.read_csv(filename, sep=',',header=None)
 
-    # TODO: future option: this would be a way to set the file ids as index in the dataframe
+    # future option: this would be a way to set the file ids as index in the dataframe
     # dataframe = pd.read_csv(filename, sep=',',header=None,index_col=0) # index_col=0 makes 1st column the rowname (index)
 
     # convert to numpy matrix/array
