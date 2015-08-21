@@ -1,8 +1,12 @@
-# 20.07. and 06.08.2015 by Thomas Lidy
+# 2015 (20.07. and 06.08. and 21.08.) by Thomas Lidy
 
 # load and save feature files from RP_extract
 
-# supported formats: CSV, ARFF, NPZ(load)
+# supported formats: CSV, ARFF, NPZ (Numpy Pickle, currently loading only)
+
+# additional helper functions:
+# classes_from_filename: derive a class label from a part of a filename or path
+
 
 import os
 import pandas as pd
@@ -10,31 +14,19 @@ import pandas as pd
 
 # == CSV ==
 
-# read_csv_features:
-# reads pre-analyzed features from CSV files
-# in write_feature_files we use unicsv to store the features
-# it will quote strings containing , and other characters if needed only (automatically)
-# here we use pandas to import CSV as a pandas dataframe,
-# because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
 
-# parameters:
-# filenamestub: full path to feature file name WITHOUT .extension
-# ext: a list of file .extensions (e.g. 'rh','ssd','rp') to be read in
-# separate_ids: if False, it will return a single matrix containing the id column
-#               if True, it will return a tuple: (ids, features) separating the id column from the features
-# id_column: which of the CSV columns contains the ids (default = 0, i.e. first column)
-#
-# returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
-#          each of them is a python dict containing an entry per feature extension (ext)
-
-
-# read a single csv feature file
 
 def read_csv_features1(filename,separate_ids=True,id_column=0):
     ''' Read_CSV_features1
 
     read features (and optionally one or more ids) from a CSV file
 
+    Note: in write_feature_files we use unicsv to store the features.
+    It will quote strings containing , and other characters if needed only (automatically)
+    Here we use pandas to import CSV as a pandas dataframe,
+    because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
+
+    Parameters:
     :param filename: filename path to CSV file to read from
     :param separate_ids: will split off the id column(s) from the features (containing eg. and index or filename string)
     :param id_column: specify which is/are the id column(s) as integer or list, e.g. 0 (= first column) or [0,1] (= first two columns)
@@ -64,9 +56,24 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
     else:
         return feat
 
-# read multiple csv feature files
+
 
 def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
+    ''' Read_CSV_features:
+
+    read pre-analyzed features from multiple CSV files (with feature name extensions)
+
+    Parameters:
+    # filenamestub: full path to feature file name WITHOUT .extension
+    # ext: a list of file .extensions (e.g. 'rh','ssd','rp') to be read in
+    # separate_ids: if False, it will return a single matrix containing the id column
+    #               if True, it will return a tuple: (ids, features) separating the id column from the features
+    # id_column: which of the CSV columns contains the ids (default = 0, i.e. first column)
+    #
+    # returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
+    #          each of them is a python dict containing an entry per feature extension (ext)
+    '''
+
 
     # initialize empty dicts
     feat = {}
