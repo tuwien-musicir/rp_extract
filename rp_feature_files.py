@@ -14,8 +14,6 @@ import pandas as pd
 
 # == CSV ==
 
-
-
 def read_csv_features1(filename,separate_ids=True,id_column=0):
     ''' Read_CSV_features1
 
@@ -57,7 +55,6 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
         return feat
 
 
-
 def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
     ''' Read_CSV_features:
 
@@ -73,7 +70,6 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
     # returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
     #          each of them is a python dict containing an entry per feature extension (ext)
     '''
-
 
     # initialize empty dicts
     feat = {}
@@ -93,8 +89,6 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
         return(ids,feat)
     else:
         return feat
-
-
 
 
 
@@ -120,8 +114,6 @@ def load_arff(arff_file):
     features = features.view(np.float).reshape(arffdata.shape + (-1,)) #converts the record array to a normal numpy array
 
     return (features,classes)
-
-
 
 
 # save_arff
@@ -158,36 +150,57 @@ def save_arff(filename,dataframe,relation_name=None):
     out_file.close()
     
     
-
-# converts np.array + extra ids and/or classes to Pandas dataframe
-# ids (e.g. audio filenames) and classes can be provided optionally as list (will be excluded if omitted)
-# feature attribute labels also optionally as a list (will be generated if omitted)
-
-def to_dataframe(feature_data, attribute_labels=None, ids=None, classes=None):
-
-    if attribute_labels is None:
-        attribute_labels = feature_data.dtype.names
-        if attribute_labels == None:
-            # if nothing is passed and nothing is stored in np array we create the attribute names
-            fdim = feature_data.shape[1]
-            attribute_labels = [("feat" + str(x)) for x in range(fdim)]
-            
-    if feature_data.dtype == object: # convert to float for proper PD output to arff
-        feature_data = feature_data.astype(float)
-
-    dataframe = pd.DataFrame(feature_data, columns=attribute_labels)
-    
-    if not ids is None:
-        dataframe["ID"] = ids
-
-    if not classes is None:
-        dataframe["class"] = pd.Categorical(classes) # classes 
-        
-    return dataframe
+# == NPZ (Numpy Pickle) ==
 
 
 
-# convert npz to arff format
+# == HDF5 ==
+
+
+def load_hdf5(hdf_filename):
+    store = pd.HDFStore(hdf_filename)
+    # .as_matrix(columns=None) converts to Numpy array (of undefined data column types)
+    data = store['data'].as_matrix(columns=None)
+    store.close()
+    return(data)
+
+
+# == CONVERSION ==
+
+
+# Csv2Arff
+# convert feature files that are stored in CSV format to Weka ARFF format
+# in_filenamestub, in_filenamestub: full file path and filname but without .rp, .rh etc. extension (will be added from feature types) for input and output feature files
+# feature_types = ['rp','ssd','rh','mvd']
+
+def csv2arff(in_filenamestub,out_filenamestub,feature_types,add_class=True):
+
+    ids, features = read_csv_features(in_filenamestub,feature_types)
+
+    for ext in feature_types:
+
+        # derive the class labels from the audio filenames (see function above)
+        # THIS VERSION splits by first / or \ (os.sep)
+        #classes = classes_from_filename(ids[ext]) if add_class else None
+
+        # THIS VERSION splits by first '.' as used e.g. in GTZAN collection: pop.00001.wav
+        classes = classes_from_filename(ids[ext],'.') if add_class else None
+
+        # CREATE DATAFRAME
+        # with ids
+        #df = to_dataframe(features[ext], None, ids[ext], classes)
+        # without ids
+        df = to_dataframe(features[ext], classes=classes)
+
+        # WRITE ARFF
+        out_filename = out_filenamestub + "." + ext + ".arff"
+        print "Saving " + out_filename + " ..."
+        save_arff(out_filename,df)
+
+    print "Finished."
+
+
+# convert NPZ (Numpy Pickle) to ARFF format
 # adapted from Alex Schindlers npz2arff.py # untested: TODO: test!
 
 def npz2arff(in_file, out_file, relation_name, include_filenames=False):
@@ -214,8 +227,44 @@ def npz2arff(in_file, out_file, relation_name, include_filenames=False):
 
     save_arff(out_file,data,relation_name)
 
-# CLASS LABELS
 
+def csv2hdf5(csv_filename,hdf_filename,chunk_size=1000,verbose=True):
+    ''' Csv2Hdf5
+
+    converting CSV files to HDF5 file format (using Pandas HDFStore)
+
+    Parameters:
+    csv_filename: input filename of file to convert
+    hdf_filename: output HDF5 filename
+    chunk_size: number of files to read chunk-wise from CSV and store iteratively in HDF5 (default: 1000)
+    verbose: if False no output will be printed
+    '''
+    import os
+    import numpy as np
+    import pandas as pd
+
+    # we check and delete the filename, otherwise we would always append
+    if os.path.exists(hdf_filename):
+        os.remove(hdf_filename)
+
+    store = pd.HDFStore(hdf_filename)
+
+    # read all at once:
+    #dataframe = pd.read_csv(csv_filename, sep=',',header=None)
+
+    cnt = 0
+    csv_reader = pd.read_csv(csv_filename, sep=',',header=None,chunksize=chunk_size)
+
+    for chunk in csv_reader:
+        store.append('data', chunk)
+        cnt += chunk.shape[0]
+        if verbose: print "processed", cnt, "rows"
+
+    store.close()
+    if verbose: print "Finished."
+
+
+# == CLASS LABELS ==
 
 def read_class_file(filename, delimiter='\t',as_dict=True):
     ''' Read_Class_File
@@ -255,37 +304,35 @@ def classes_from_filename(filenames,split_char=os.sep):
     return classes
 
 
-# CONVERSION
+# == HELPER FUNCTIONS ==
 
-# convert feature files that are stored in CSV format to Weka ARFF format
-# in_filenamestub, in_filenamestub: full file path and filname but without .rp, .rh etc. extension (will be added from feature types) for input and output feature files
-# feature_types = ['rp','ssd','rh','mvd']
+# converts np.array + extra ids and/or classes to Pandas dataframe
+# ids (e.g. audio filenames) and classes can be provided optionally as list (will be excluded if omitted)
+# feature attribute labels also optionally as a list (will be generated if omitted)
 
-def csv2arff(in_filenamestub,out_filenamestub,feature_types,add_class=True):
+def to_dataframe(feature_data, attribute_labels=None, ids=None, classes=None):
 
-    ids, features = read_csv_features(in_filenamestub,feature_types)
+    if attribute_labels is None:
+        attribute_labels = feature_data.dtype.names
+        if attribute_labels == None:
+            # if nothing is passed and nothing is stored in np array we create the attribute names
+            fdim = feature_data.shape[1]
+            attribute_labels = [("feat" + str(x)) for x in range(fdim)]
 
-    for ext in feature_types:
+    if feature_data.dtype == object: # convert to float for proper PD output to arff
+        feature_data = feature_data.astype(float)
 
-        # derive the class labels from the audio filenames (see function above)
-        # THIS VERSION splits by first / or \ (os.sep)
-        #classes = classes_from_filename(ids[ext]) if add_class else None
+    dataframe = pd.DataFrame(feature_data, columns=attribute_labels)
 
-        # THIS VERSION splits by first '.' as used e.g. in GTZAN collection: pop.00001.wav
-        classes = classes_from_filename(ids[ext],'.') if add_class else None
+    if not ids is None:
+        dataframe["ID"] = ids
 
-        # CREATE DATAFRAME
-        # with ids
-        #df = to_dataframe(features[ext], None, ids[ext], classes)
-        # without ids
-        df = to_dataframe(features[ext], classes=classes)
+    if not classes is None:
+        dataframe["class"] = pd.Categorical(classes) # classes
 
-        # WRITE ARFF
-        out_filename = out_filenamestub + "." + ext + ".arff"
-        print "Saving " + out_filename + " ..."
-        save_arff(out_filename,df)
+    return dataframe
 
-    print "Finished."
+
 
 
 if __name__ == '__main__':
