@@ -356,6 +356,18 @@ def get_classes_from_dict(class_dict,filenames):
 
 # == HELPER FUNCTIONS ==
 
+
+def get_filenames_without_path(filenames):
+    '''get_filenames_without_path
+
+    strips off the preceding paths of all given filenames in an array of filenames
+    :param filenames: array of filenames (possibly including absolute or relative path)
+    :return: array of filenames only without path
+    '''
+    from os.path import basename
+    return([basename(f) for f in filenames])
+
+
 # converts np.array + extra ids and/or classes to Pandas dataframe
 # ids (e.g. audio filenames) and classes can be provided optionally as list (will be excluded if omitted)
 # feature attribute labels also optionally as a list (will be generated if omitted)
