@@ -1,12 +1,17 @@
-# 2015 (20.07. and 06.08. and 21.08.) by Thomas Lidy
+'''RP_Feature_IO
 
-# load and save feature files from RP_extract
+2015 by Thomas Lidy
 
-# supported formats: CSV, ARFF, NPZ (Numpy Pickle, currently loading only)
+load and save feature files from RP_extract
 
-# additional helper functions:
-# classes_from_filename: derive a class label from a part of a filename or path
+supported formats:
+read and write: CSV, ARFF
+read only currently: HDF5, NPZ (Numpy Pickle)
 
+additional functions to load or get class labels for audiofiles:
+read_class_file: load a (comma or tab-separated) class label file
+classes_from_filename: derive a class label from a part of a filename or path
+'''
 
 import os
 import pandas as pd

@@ -115,10 +115,10 @@ def close_feature_files(files,ext):
 # returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
 #          each of them is a python dict containing an entry per feature extension (ext)
 
-# NOTE: this function has been moved to rp_feature_files.py and is maintained here for backwards compatibility
+# NOTE: this function has been moved to rp_feature_io.py and is maintained here for backwards compatibility
 
 def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
-    from rp_feature_files import read_csv_features
+    from rp_feature_io import read_csv_features
     return read_csv_features(filenamestub,ext,separate_ids,id_column)
 
 
