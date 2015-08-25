@@ -291,22 +291,67 @@ def read_class_file(filename, delimiter='\t',as_dict=True):
     fi.close()
     return(result)
 
-# classes_from_filename:
-# derive class label from filename or relative file path
-# this function derives class labels from the document file names (ids) given in the original feature files
-
-# examples:
-# split class by first / or \ (os.sep)
-#classes = classes_from_filename(ids[ext]) if add_class else None
-# split class by first '.' as used e.g. in GTZAN collection: pop.00001.wav
-#classes = classes_from_filename(ids[ext]) if add_class else None
-
-# TODO: adapt to enable splitting by LAST appearance of split_char instead of first
 
 def classes_from_filename(filenames,split_char=os.sep):
+    '''Classes_From_Filename
+
+    derive class label from filename or relative file path
+    this function derives class labels from the document file names (ids) given in the original feature files
+
+    # TODO: adapt to enable splitting by LAST appearance of split_char instead of first
+
+    Examples:
+    # split class by first / or \ (os.sep) as e.g. in "pop/file1.wav"
+    >>>classes = classes_from_filename(ids[ext])
+    # split class by first '.' as used e.g. in GTZAN collection: "pop.00001.wav"
+    >>>classes = classes_from_filename(ids[ext],'.')
+    '''
+
     # this example works for GTZAN collection: class is first part of filename before '.'
     classes = [x.split(split_char, 1)[0] for x in filenames]
     return classes
+
+
+def classes_to_numeric(class_labels,verbose=True):
+    '''Classes_to_Numeric
+
+    encode string class labels to numeric values
+    '''
+
+    from sklearn.preprocessing import LabelEncoder
+
+    labelenc = LabelEncoder()
+    labelenc.fit(class_labels)
+    if (verbose): print len(labelenc.classes_), "classes:", list(labelenc.classes_)
+    return(labelenc.transform(class_labels))
+    # to transform back to strings (needed later):
+    #list(labelenc.inverse_transform([2, 2, 1]))
+
+
+def classdict_to_numeric(class_dict):
+    '''ClassDict_to_Numeric
+
+    in a dictionary containing filenames as keys and class labels as values (e.g.: {'pop.00006.wav': 'pop'})
+    encode all string class labels to numeric values (this will create a new dictionary)
+    '''
+
+    # this will create a new dict with old keys and numeric values
+    classes_num = classes_to_numeric(class_dict.values())
+    return (dict(zip(class_dict.keys(),classes_num)))
+
+
+def get_classes_from_dict(class_dict,filenames):
+    '''Get_Classes_From_Dict
+
+    get multiple class values at once (as a list) for multiple file ids in a class label dictionary
+
+    :param class_dict: a dictionary containing filenames as keys and class labels as values (e.g.: {'pop.00006.wav': 'pop'})
+    :param filenames: a list of filenames to be queried as keys in this dictionary
+    :return: list of class values (string or numeric, depending of the composition of the given dictionary)
+
+    also see classdict_to_numeric
+    '''
+    return([class_dict.get(key) for key in filenames])
 
 
 # == HELPER FUNCTIONS ==
