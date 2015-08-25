@@ -240,7 +240,7 @@ def csv2hdf5(csv_filename,hdf_filename,chunk_size=1000,verbose=True):
     verbose: if False no output will be printed
     '''
     import os
-    import numpy as np
+    #import numpy as np
     import pandas as pd
 
     # we check and delete the filename, otherwise we would always append
@@ -281,7 +281,7 @@ def read_class_file(filename, delimiter='\t',as_dict=True):
 
     import csv
     fi = open(filename, 'r')
-    reader = csv.reader(fi, delimiter)
+    reader = csv.reader(fi, delimiter=delimiter)
     result = dict(reader) if as_dict else list(reader)
     fi.close()
     return(result)
