@@ -365,6 +365,15 @@ def reduce_class_dict(class_dict,new_file_ids):
     return (new_class_dict)
 
 
+def get_class_counts(class_dict,printit=False):
+    '''print number of instances per class in a class_dict'''
+    classes = class_dict.values()
+    class_stats = {c: classes.count(c) for c in set(classes)}
+    if (printit):
+        for key, val in class_stats.iteritems():
+            print key+":",val
+
+
 # == HELPER FUNCTIONS ==
 
 
