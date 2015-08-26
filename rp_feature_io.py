@@ -357,15 +357,19 @@ def get_classes_from_dict(class_dict,filenames):
 # == HELPER FUNCTIONS ==
 
 
-def get_filenames_without_path(filenames):
-    '''get_filenames_without_path
+def strip_filenames(filenames,cut_path=True, cut_ext=True):
+    '''Strip_Filenames
 
-    strips off the preceding paths of all given filenames in an array of filenames
+    strips off the preceding paths and/or the extensions of all given filenames in an array of filenames
     :param filenames: array of filenames (possibly including absolute or relative path)
+    :param cut_path: whether or not to cut away the preceding path (leaving filename only)
+    :param cut_ext: whether or not to cut away the extension of the filename
     :return: array of filenames only without path
     '''
-    from os.path import basename
-    return([basename(f) for f in filenames])
+    from os.path import basename, splitext
+    if (cut_path): filenames = ([basename(f) for f in filenames])
+    if (cut_ext): filenames = ([splitext(f)[0] for f in filenames])
+    return(filenames)
 
 
 # converts np.array + extra ids and/or classes to Pandas dataframe
