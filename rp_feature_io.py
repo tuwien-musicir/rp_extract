@@ -354,6 +354,17 @@ def get_classes_from_dict(class_dict,filenames):
     return([class_dict.get(key) for key in filenames])
 
 
+def reduce_class_dict(class_dict,new_file_ids):
+    '''reduce a {filename: class} dictonary to a subset of 'new_file_ids'
+    all new_file_ids must be contained as keys in the given class_dict
+    '''
+    # check if all new_file_ids are contained in the original class_dict
+    #if len(set(new_file_ids) - set(class_dict.keys())) > 0
+    # we avoid this check because for key will throw an error anyway
+    new_class_dict = { key: class_dict[key] for key in new_file_ids }
+    return (new_class_dict)
+
+
 # == HELPER FUNCTIONS ==
 
 
