@@ -355,7 +355,7 @@ def get_classes_from_dict(class_dict,filenames):
 
 
 def reduce_class_dict(class_dict,new_file_ids):
-    '''reduce a {filename: class} dictonary to a subset of 'new_file_ids'
+    '''reduce a {filename: class} dictionary to a subset of 'new_file_ids'
     all new_file_ids must be contained as keys in the given class_dict
     '''
     # check if all new_file_ids are contained in the original class_dict
@@ -364,6 +364,31 @@ def reduce_class_dict(class_dict,new_file_ids):
     new_class_dict = { key: class_dict[key] for key in new_file_ids }
     return (new_class_dict)
 
+
+def reduce_class_dict_min_instances(class_dict,min_instances=2):
+    ''' reduce a {filename: class} dictionary to retain classes only with a minimum number of file instances per class
+    :param class_dict: a {filename: class} dictionary
+    :param min_instances: minimum file instances per class required (default = 2)
+    :return: {filename: class} dictionary with entries removed where class does not fulfil minimum requirement
+    '''
+
+    classes = class_dict.values()
+    class_stats = {c: classes.count(c) for c in set(classes)}
+
+    retain_classes = []
+    for key, val in class_stats.iteritems():
+        if val >= min_instances: retain_classes.append(key)
+    #retain_classes
+    diff = len(set(classes)) - len(retain_classes)
+    if diff > 0: print "Removing", diff, "classes for required minimum of", min_instances, "instances per class."
+
+    new_class_dict = {}
+    for key, val in class_dict.iteritems():
+        if val in retain_classes:
+            new_class_dict[key] = val
+
+    if diff > 0: print "Removed", len(class_dict) - len(new_class_dict), "file instances from class dictionary."
+    return (new_class_dict)
 
 def get_class_counts(class_dict,printit=False):
     '''print number of instances per class in a class_dict'''
