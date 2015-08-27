@@ -397,6 +397,7 @@ def get_class_counts(class_dict,printit=False):
     if (printit):
         for key, val in class_stats.iteritems():
             print key+":",val
+    return (class_stats)
 
 
 # == HELPER FUNCTIONS ==
