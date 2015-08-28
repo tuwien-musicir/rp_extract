@@ -403,6 +403,21 @@ def get_class_counts(class_dict,printit=False):
 # == HELPER FUNCTIONS ==
 
 
+def read_filenames(filename):
+    '''Read_Filenames
+
+    reads a list of audio files to process from a text file (one audio file per line)
+    (used instead of find_files)
+
+    :param filename: filename of input text file
+    :return: list of audio files to process, read line-wise from filename
+    '''
+
+    with open(filename) as f:
+        content = [line.rstrip('\n') for line in f]
+    return(content)
+
+
 def strip_filenames(filenames,cut_path=True, cut_ext=True):
     '''Strip_Filenames
 
