@@ -440,6 +440,14 @@ def read_filenames(filename):
     return(content)
 
 
+def write_filenames(filename, filelist):
+    '''write a list of filenames to a plain text file (one per line)'''
+    fil = open(filename,'w')
+    for f in filelist:
+        fil.write(f + "\n") # python will convert \n to os.linesep
+    fil.close()
+
+
 def strip_filenames(filenames,cut_path=True, cut_ext=True):
     '''Strip_Filenames
 
