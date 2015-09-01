@@ -292,6 +292,13 @@ def read_class_file(filename, delimiter='\t',as_dict=True):
     return(result)
 
 
+def write_class_file(filename, class_dict, delimiter='\t'):
+    fil = open(filename,'w')
+    for f, c in class_dict.iteritems():
+        fil.write(f + delimiter + c + '\n') # python will convert \n to os.linesep
+    fil.close()
+
+
 def classes_from_filename(filenames,split_char=os.sep):
     '''Classes_From_Filename
 
