@@ -400,6 +400,21 @@ def get_class_counts(class_dict,printit=False):
     return (class_stats)
 
 
+
+def get_filenames_for_class(classname):
+    '''Get_Filenames_For_Class
+
+    return filename ids for a selected class
+
+    classname: e.g. 'Jazz'
+    '''
+    key_list = []
+    for key,val in class_dict.iteritems():
+        if val == classname: key_list.append(key)
+    return(key_list)
+
+
+
 # == HELPER FUNCTIONS ==
 
 
