@@ -244,7 +244,7 @@ def calc_statistical_features(matrix):
 
 # Transform 2 Mel Scale: NOT USED by rp_extract, but included for testing purposes or for import into other programs
 
-def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_min = None,freq_max = None):
+def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_min = 0,freq_max = None):
     '''Transform to Mel
 
     convert a spectrogram to a Mel scale spectrogram by grouping original frequency bins
