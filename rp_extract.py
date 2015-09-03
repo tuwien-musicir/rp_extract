@@ -244,7 +244,7 @@ def calc_statistical_features(matrix):
 
 # Transform 2 Mel Scale: NOT USED by rp_extract, but included for testing purposes or for import into other programs
 
-def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_max = None):
+def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_min = None,freq_max = None):
     '''Transform to Mel
 
     convert a spectrogram to a Mel scale spectrogram by grouping original frequency bins
@@ -255,6 +255,7 @@ def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_m
     samplerate: samplerate of audio signal
     fft_window_size: number of time window / frequency bins in the FFT analysis
     n_mel_bands: number of desired Mel bands, typically 20, 40, 80 (max. 128 which is default when 'None' is provided)
+    freq_min: minimum frequency (Mel filters will be applied >= this frequency, but still return n_meld_bands number of bands)
     freq_max: cut-off frequency (Mel filters will be applied <= this frequency, but still return n_meld_bands number of bands)
 
     Returns:
@@ -264,7 +265,7 @@ def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_m
     import librosa.filters
 
     # Syntax: librosa.filters.mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False)
-    mel_basis = librosa.filters.mel(samplerate,fft_window_size, n_mels=n_mel_bands,fmax=freq_max)
+    mel_basis = librosa.filters.mel(samplerate,fft_window_size, n_mels=n_mel_bands,fmin=freq_min,fmax=freq_max)
 
     freq_bin_max = mel_basis.shape[1] # will be fft_window_size / 2 + 1
 
