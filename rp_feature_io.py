@@ -323,6 +323,14 @@ def classes_to_numeric(class_labels,verbose=True):
     '''Classes_to_Numeric
 
     encode string class labels to numeric values
+
+    will return encoded numeric classes
+
+    Note:  to transform (predicted) numeric classes back to strings use as follows:
+
+    > labelenc.transform(class_labels) # to output numeric classes
+
+    > list(labelenc.inverse_transform([2, 2, 1])) # to transform (predicted) numeric classes back to strings
     '''
 
     from sklearn.preprocessing import LabelEncoder
@@ -331,8 +339,6 @@ def classes_to_numeric(class_labels,verbose=True):
     labelenc.fit(class_labels)
     if (verbose): print len(labelenc.classes_), "classes:", list(labelenc.classes_)
     return(labelenc.transform(class_labels))
-    # to transform back to strings (needed later):
-    #list(labelenc.inverse_transform([2, 2, 1]))
 
 
 def classdict_to_numeric(class_dict):
@@ -408,7 +414,7 @@ def get_class_counts(class_dict,printit=False):
 
 
 
-def get_filenames_for_class(classname):
+def get_filenames_for_class(class_dict,classname):
     '''Get_Filenames_For_Class
 
     return filename ids for a selected class
