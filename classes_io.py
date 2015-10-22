@@ -69,7 +69,7 @@ def classes_from_filename(filenames,split_char=os.sep):
     return classes
 
 
-def classes_to_numeric(class_labels,verbose=True):
+def classes_to_numeric(class_labels, verbose=True, return_encoder = False):
     '''Classes_to_Numeric
 
     encode string class labels to numeric values
@@ -85,13 +85,17 @@ def classes_to_numeric(class_labels,verbose=True):
 
     from sklearn.preprocessing import LabelEncoder
 
-    labelenc = LabelEncoder()
-    labelenc.fit(class_labels)
-    if (verbose): print len(labelenc.classes_), "classes:", list(labelenc.classes_)
-    return(labelenc.transform(class_labels))
+    labelencoder = LabelEncoder()
+    labelencoder.fit(class_labels)
+    if (verbose): print len(labelencoder.classes_), "classes:", list(labelencoder.classes_)
+    classes_num = labelencoder.transform(class_labels)
+    if return_encoder:
+        return (classes_num, labelencoder)
+    else:
+        return classes_num
 
 
-def classdict_to_numeric(class_dict):
+def classdict_to_numeric(class_dict, return_encoder = False):
     '''ClassDict_to_Numeric
 
     in a dictionary containing filenames as keys and class labels as values (e.g.: {'pop.00006.wav': 'pop'})
@@ -99,8 +103,17 @@ def classdict_to_numeric(class_dict):
     '''
 
     # this will create a new dict with old keys and numeric values
-    classes_num = classes_to_numeric(class_dict.values())
-    return (dict(zip(class_dict.keys(),classes_num)))
+    if return_encoder:
+        classes_num, labelencoder = classes_to_numeric(class_dict.values(), return_encoder=return_encoder)
+    else:
+        classes_num = classes_to_numeric(class_dict.values())
+
+    new_class_dict = (dict(zip(class_dict.keys(),classes_num)))
+
+    if return_encoder:
+        return (new_class_dict, labelencoder)
+    else:
+        return new_class_dict
 
 
 def get_classes_from_dict(class_dict,filenames):
@@ -176,6 +189,15 @@ def get_filenames_for_class(class_dict,classname):
         if val == classname: key_list.append(key)
     return(key_list)
 
+
+def get_baseline(class_dict, printit = True):
+    '''Print classification baseline according to class with maximum instances
+    '''
+    class_counts = get_class_counts(class_dict)
+    max_class = max(class_counts.values())
+    baseline = max_class * 1.0 / len(class_dict)
+    if printit: print "Baseline: max class: %.2f %%" % baseline * 100
+    return baseline
 
 
 # == HELPER FUNCTIONS ==
