@@ -194,9 +194,10 @@ def get_baseline(class_dict, printit = True):
     '''Print classification baseline according to class with maximum instances
     '''
     class_counts = get_class_counts(class_dict)
+    #print "Class counts:", class_counts
     max_class = max(class_counts.values())
     baseline = max_class * 1.0 / len(class_dict)
-    if printit: print "Baseline: max class: %.2f %%" % baseline * 100
+    if printit: print "Baseline: %.2f %% (max class=%d/%d)" % ((baseline * 100), max_class, len(class_dict))
     return baseline
 
 
