@@ -277,10 +277,17 @@ if __name__ == '__main__':
     # Example for MP3 to WAV batch conversion:
     # mp3_to_wav_batch('/data/music/ISMIRgenre/mp3_44khz_128kbit_stereo','/data/music/ISMIRgenre/wav')
 
-    argparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
+    argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
     argparser.add_argument('input_path', help='input file path to search for wav/mp3') # nargs='?' to make it optional
-    argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension)', default='features/features') # nargs='?' to make it optional
+    argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension) [default: features/features]', default='features/features') # nargs='?' to make it optional
+
+    argparser.add_argument('-rp',action='store_true',help='extract Rhythm Patterns (default)',default=False) # boolean opt
+    argparser.add_argument('-rh',action='store_true',help='extract Rhythm Histograms (default)',default=False) # boolean opt
+    argparser.add_argument('-trh',action='store_true',help='extract Temporal Rhythm Histograms',default=False) # boolean opt
+    argparser.add_argument('-ssd',action='store_true',help='extract Statistical Spectrum Descriptors (default)',default=False) # boolean opt
+    argparser.add_argument('-tssd',action='store_true',help='extract Temporal Statistical Spectrum Descriptors',default=False) # boolean opt
+    argparser.add_argument('-mvd',action='store_true',help='extract Modulation Frequency Variance Descriptors',default=False) # boolean opt
 
     args = argparser.parse_args()
 
@@ -289,16 +296,23 @@ if __name__ == '__main__':
     if not outpath == '' and not os.path.exists(outpath):
         os.mkdir(outpath)
 
+    # select the feature types according to given option(s) or default
+    feature_types = []
+    if args.rp: feature_types.append('rp')
+    if args.rh: feature_types.append('rh')
+    if args.trh: feature_types.append('trh')
+    if args.ssd: feature_types.append('ssd')
+    if args.tssd: feature_types.append('tssd')
+    if args.mvd: feature_types.append('mvd')
+
+    # if none was selected set default feature set
+    if feature_types == []: feature_types = ['rp','ssd','rh']
+
+    print "Extracting features:", feature_types
+    print "From files in:", args.input_path
+
     # BATCH RP FEATURE EXTRACTION:
-
-    # SET WHICH FEATURES TO EXTRACT (must be lower case)
-    # TODO make argparse option
-    feature_types = ['rp','ssd','rh','mvd'] # sh, tssd, trh
-    #feature_types = ['rp','ssd','rh','mvd','tssd','trh']
-    #feature_types = ['rh']
-
     extract_all_files_in_path(args.input_path,args.output_filename,feature_types)
-
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
