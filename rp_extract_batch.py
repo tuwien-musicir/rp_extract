@@ -13,6 +13,7 @@ Batch MP3 to WAV conversion
 import os
 import unicsv # unicode csv library (installed via pip install unicsv)
 import time # for time measuring
+import argparse
 
 from audiofile_read import * # reading wav and mp3 files
 import rp_extract as rp # Rhythm Pattern extractor
@@ -266,6 +267,7 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
     print "FEATURE EXTRACTION FINISHED.", n, "files,", end-start_abs, "sec"
     if err > 0:
         print err, "files had ERRORs during feature extraction."
+    print "Feature file(s):", out_file + ".*", ext
 
 
 # EXAMPLE CALL: please adapt to your needs (esp. in_path , out_path and out_file)
@@ -275,40 +277,28 @@ if __name__ == '__main__':
     # Example for MP3 to WAV batch conversion:
     # mp3_to_wav_batch('/data/music/ISMIRgenre/mp3_44khz_128kbit_stereo','/data/music/ISMIRgenre/wav')
 
+    argparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
-    # EXAMPLE FOR BATCH RP FEATURE EXTRACTION:
+    argparser.add_argument('input_path', help='input file path to search for wav/mp3') # nargs='?' to make it optional
+    argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension)', default='features/features') # nargs='?' to make it optional
+
+    args = argparser.parse_args()
+
+    # check if outpath contains path that yet needs to be created
+    outpath, _ = os.path.split(args.output_filename)
+    if not outpath == '' and not os.path.exists(outpath):
+        os.mkdir(outpath)
+
+    # BATCH RP FEATURE EXTRACTION:
 
     # SET WHICH FEATURES TO EXTRACT (must be lower case)
+    # TODO make argparse option
+    feature_types = ['rp','ssd','rh','mvd'] # sh, tssd, trh
+    #feature_types = ['rp','ssd','rh','mvd','tssd','trh']
+    #feature_types = ['rh']
 
-    #feature_types = ['rp','ssd','rh','mvd'] # sh, tssd, trh
-    feature_types = ['rp','ssd','rh','mvd','tssd','trh']
-    feature_types = ['rh']
+    extract_all_files_in_path(args.input_path,args.output_filename,feature_types)
 
-    # SET PATH WITH AUDIO FILES (INPUT)
-
-    in_path = "./music"
-
-    # OUTPUT FEATURE FILES
-
-    out_path = './feat'
-    if not os.path.exists(out_path):
-        os.mkdir(out_path)
-
-    out_file = 'GTZAN_test'
-
-    out_filename = out_path + os.sep + out_file
-
-    extract_all_files_in_path(in_path,out_filename,feature_types)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
-
-    filenamestub = out_file
-    ext = feature_types
-
-    in_filenamestub = out_path + os.sep + filenamestub
-
-    ids, features = read_feature_files(in_filenamestub,ext)
-    e = ext[0]
-    print ids[e].shape
-    print features[e].shape
-    print ids
+    #ids, features = read_feature_files(args.output_filename,feature_types)
