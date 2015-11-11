@@ -17,7 +17,9 @@ Main Authors: Thomas Lidy (audiofeature), Alexander Schindler (slychief)
 
 Analyze all audio files in a folder and store the extracted features:
 
+```
 python rp_extract_batch.py <input_path> <feature_file_name>
+```
 
 This will
 - search for MP3 or WAV files in input_path
