@@ -1,6 +1,6 @@
 # RP_extract:
 ## Rhythm Pattern Audio Feature Extractor
-## for Music Similarity, Music Classification and Music Recommendation
+for Music Similarity, Music Classification and Music Recommendation
 
 created by:
 
