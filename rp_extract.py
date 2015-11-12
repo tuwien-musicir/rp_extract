@@ -399,8 +399,8 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
                 fluctuation_strength_weighting = True,  # [R2] apply Fluctuation Strength weighting curve
                 #blurring                       = True  # [R3] Gradient+Gauss filter # TODO: not yet implemented
 
-                return_segment_features = False      # this will return features per each analyzed segment instead of aggregated ones
-
+                return_segment_features = False,     # this will return features per each analyzed segment instead of aggregated ones
+                verbose = True                       # print messages whats going on
                 ):
 
     '''Rhythm Pattern Feature Extraction
@@ -489,7 +489,8 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         if (duration < 45):
             step_width = 1
             skip_seg   = 0
-            print "Duration < 45 seconds: setting step_width to 1 and skip_leadin_fadeout to 0."
+            # TODO: do this as a warning?
+            if verbose: print "Duration < 45 seconds: setting step_width to 1 and skip_leadin_fadeout to 0."
 
         else:
             # advance by number of skip_seg segments (i.e. skip lead_in)
@@ -497,7 +498,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
     
     # calculate number of segments
     n_segments = int(np.floor( (np.floor( (wavedata.shape[0] - (skip_seg*2*segment_size)) / segment_size ) - 1 ) / step_width ) + 1)
-    print "Analyzing", n_segments, "segments"
+    if verbose: print "Analyzing", n_segments, "segments"
 
     if n_segments == 0:
         raise ValueError("Not enough data to analyze! Minumum sample length needs to be " +

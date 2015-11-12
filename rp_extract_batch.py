@@ -131,6 +131,9 @@ def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
 # otherwise the WAV file will be created in the same dir as the MP3 file
 # in both cases the file name is maintained and the extension changed to .wav
 
+# Example for MP3 to WAV batch conversion:
+# mp3_to_wav_batch('/data/music/ISMIRgenre/mp3_44khz_128kbit_stereo','/data/music/ISMIRgenre/wav')
+
 def mp3_to_wav_batch(path,outdir=None):
 
     get_relative_path = (outdir!=None) # if outdir is specified we need relative path otherwise absolute
@@ -179,7 +182,7 @@ def mp3_to_wav_batch(path,outdir=None):
 # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
 
 
-def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav','.mp3')):
+def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav','.mp3'), verbose=True):
 
     ext = feature_types
 
@@ -201,21 +204,21 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
             filename = path + os.sep + fil
             print '#',n,'/',n_files,':', filename
 
-            start = time.time()
+            #start = time.time()
 
             # read audio file (wav or mp3)
             samplerate, samplewidth, data = audiofile_read(filename)
 
-            end = time.time()
-            print end - start, "sec"
+            #end = time.time()
+            #print end - start, "sec"
 
             # audio file info
-            print samplerate, "Hz,", data.shape[1], "channels,", data.shape[0], "samples"
+            print samplerate, "Hz,", data.shape[1], "channel(s),", data.shape[0], "samples"
 
             # extract features
             # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)
 
-            start = time.time()
+            #start = time.time()
 
             feat = rp.rp_extract(data,
                               samplerate,
@@ -232,28 +235,21 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
                               transform_sone=True,
                               fluctuation_strength_weighting=True,
                               skip_leadin_fadeout=1,
-                              step_width=1)
+                              step_width=1,
+                              verbose = verbose)
 
-            end = time.time()
-
-            print "Features extracted:", feat.keys(), end - start, "sec"
+            #end = time.time()
 
             # WRITE each feature set to a CSV
-
             # TODO check if ext and feat.keys are consistent
 
-            start = time.time()
-
             # add filename before vector. 3 choices:
-
             id = fil  # filename only
             # id = filename   # full filename incl. full path
             # id = filename[len(path)+1:] # relative filename only
+
             write_feature_files(id,feat,writer)
 
-            end = time.time()
-
-            print "Data written." #, end-start
         except:
             print "ERROR analysing file: " + fil
             err += 1
@@ -264,18 +260,16 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
 
     end = time.time()
 
-    print "FEATURE EXTRACTION FINISHED.", n, "files,", end-start_abs, "sec"
-    if err > 0:
-        print err, "files had ERRORs during feature extraction."
-    print "Feature file(s):", out_file + ".*", ext
+    if verbose:
+        print "FEATURE EXTRACTION FINISHED.", n, "files,", end-start_abs, "sec"
+        if err > 0:
+            print err, "files had ERRORs during feature extraction."
+        print "Feature file(s):", out_file + ".*", ext
 
 
-# EXAMPLE CALL: please adapt to your needs (esp. in_path , out_path and out_file)
+
 
 if __name__ == '__main__':
-
-    # Example for MP3 to WAV batch conversion:
-    # mp3_to_wav_batch('/data/music/ISMIRgenre/mp3_44khz_128kbit_stereo','/data/music/ISMIRgenre/wav')
 
     argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
