@@ -2,7 +2,7 @@
 # 2015-11 by Thomas Lidy
 
 import argparse
-import pickle
+import cPickle
 import numpy as np
 from sklearn import preprocessing, svm
 
@@ -70,12 +70,45 @@ def cross_validate(model, data, classes, folds=10):
 # ISMIR 2005: SSD: 72.70
 
 
+# SAVE MODEL
+def save_model(filename,model,scaler=None,labelencoder=None):
+    with open(filename, 'wb') as f:
+        cPickle.dump(model, f, protocol=cPickle.HIGHEST_PROTOCOL)
+    if scaler:
+        filename = os.path.splitext(filename)[0] + ".scaler.pkl"
+        with open(filename, 'wb') as f:
+            cPickle.dump(scaler, f, protocol=cPickle.HIGHEST_PROTOCOL)
+    if labelencoder:
+        filename = os.path.splitext(filename)[0] + ".labelencoder.pkl"
+        with open(filename, 'wb') as f:
+            cPickle.dump(labelencoder, f, protocol=cPickle.HIGHEST_PROTOCOL)
+
+
+# LOAD MODEL
+def load_model(filename,scaler=True,labelencoder=True):
+    f = open(filename, 'rb')
+    model = cPickle.load(f)
+    f.close()
+    if scaler:
+        filename = os.path.splitext(filename)[0] + ".scaler.pkl"
+        f = open(filename, 'rb')
+        scaler = cPickle.load(f)
+        f.close()
+    if labelencoder:
+        filename = os.path.splitext(filename)[0] + ".labelencoder.pkl"
+        f = open(filename, 'rb')
+        labelencoder = cPickle.load(f)
+        f.close()
+    return (model,scaler,labelencoder)
+
+
+
 if __name__ == '__main__':
 
     argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
     argparser.add_argument('input_path', help='input file path to search for wav/mp3 files')
-    argparser.add_argument('model_file', help='model file name as input for predictions')
+    argparser.add_argument('model_file', nargs='?', help='model file name (input for predictions, or to write after training)')
     argparser.add_argument('output_filename', nargs='?', help='filename for predictions to write (if omitted, will print output') # nargs='?' to make it optional
 
     args = argparser.parse_args()
@@ -92,6 +125,7 @@ if __name__ == '__main__':
     if do_training:
         # TODO alternatively load features
         ids, feat = extract_all_files_in_path(args.input_path)
+        # TODO: store and load feature extraction parameters with model
 
         # check for label consistency TODO: do only for features extracted
         if all(ids['rh'] == ids['rp']) and all(ids['rh'] == ids['ssd']):
@@ -115,13 +149,18 @@ if __name__ == '__main__':
         # standardize
         features, scaler = standardize(features)
 
+        # TRAIN
+        model = train_model(features, class_num)
+
+        # save model
+        save_model(args.model_file, model, scaler, labelencoder)
 
 
     if do_classification:
         # LOAD MODEL
         if not do_training:
             # TODO: store and load feature extraction parameters with model
-
+            model, scaler, labelencoder = load_model(args.model_file)
 
         # EXTRACT FEATURES FROM NEW FILES
         ids, feat = extract_all_files_in_path(args.input_path)
@@ -140,3 +179,4 @@ if __name__ == '__main__':
             print i + ":\t",label
 
         # TODO write to file. use write class_dict
+        print "output file: ", args.output_filename
