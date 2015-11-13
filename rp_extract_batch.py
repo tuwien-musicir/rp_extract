@@ -200,7 +200,8 @@ def extract_all_files_in_path(path,
     err = 0 # counting errors
     n_files = len(filelist)
 
-    # initialize dict containing all accumulated feature arrays
+    # initialize filelist_extracted and dict containing all accumulated feature arrays
+    filelist_extracted = []
     feat_array = {}
 
     start_abs = time.time()
@@ -243,17 +244,15 @@ def extract_all_files_in_path(path,
                               step_width=1,
                               verbose = verbose)
 
+            # TODO check if ext and feat.keys are consistent
 
+            # WHAT TO USE AS ID (based on filename): 3 choices:
+            id = fil  # rel. filename as from find_files
+            # id = filename   # full filename incl. full path
+            # id = filename[len(path)+1:] # relative filename only (extracted from path)
 
             if out_file:
                 # WRITE each feature set to a CSV
-                # TODO check if ext and feat.keys are consistent
-
-                # add filename before vector. 3 choices:
-                id = fil  # filename only
-                # id = filename   # full filename incl. full path
-                # id = filename[len(path)+1:] # relative filename only
-
                 write_feature_files(id,feat,writer)
             else:
                 # IN MEMORY: add the extracted features for 1 file to the array dict accumulating all files
@@ -266,6 +265,8 @@ def extract_all_files_in_path(path,
                 # store features in array
                 for e in feat.keys():
                     feat_array[e] = np.append(feat_array[e], feat[e].reshape(1,-1), axis = 0) # 1 for horizontal vector, -1 means take original dimension
+
+                filelist_extracted.append(id)
 
         except:
             print "ERROR analysing file: " + fil
@@ -283,7 +284,7 @@ def extract_all_files_in_path(path,
         if out_file: print "Feature file(s):", out_file + ".*", ext
 
     if out_file is None:
-        return feat_array
+        return filelist_extracted, feat_array
 
 
 
