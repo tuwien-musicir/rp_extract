@@ -14,6 +14,7 @@ import os
 import unicsv # unicode csv library (installed via pip install unicsv)
 import time # for time measuring
 import argparse
+import numpy as np
 
 from audiofile_read import * # reading wav and mp3 files
 import rp_extract as rp # Rhythm Pattern extractor
@@ -172,17 +173,23 @@ def mp3_to_wav_batch(path,outdir=None):
 
 
 
-# finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub directories in it
-# extracts selected RP feature types
-# and saves them into separate CSV feature files (one per feature type)
 
-# path: input file path to search for audio files (including subdirectories)
-# out_file: output file name stub for feature files to write
-# feature_types: RP feature types to extract. see rp_extract.py
-# audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
+def extract_all_files_in_path(path,
+                              out_file = None,
+                              feature_types = ['rp','ssd','rh'],
+                              audiofile_types=('.wav','.mp3'),
+                              verbose=True):
+    """
+    finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub-directories in it
+    extracts selected RP feature types
+    and saves them into separate CSV feature files (one per feature type)
 
+    # path: input file path to search for audio files (including subdirectories)
+    # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
+    # feature_types: RP feature types to extract. see rp_extract.py
+    # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
 
-def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav','.mp3'), verbose=True):
+    """
 
     ext = feature_types
 
@@ -193,32 +200,30 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
     err = 0 # counting errors
     n_files = len(filelist)
 
+    # initialize dict containing all accumulated feature arrays
+    feat_array = {}
+
     start_abs = time.time()
 
-    files, writer = initialize_feature_files(out_file,ext)
+    if out_file: # only if out_file is specified
+        files, writer = initialize_feature_files(out_file,ext)
 
     for fil in filelist:  # iterate over all files
         try:
 
             n += 1
             filename = path + os.sep + fil
+            #if verbose:
             print '#',n,'/',n_files,':', filename
-
-            #start = time.time()
 
             # read audio file (wav or mp3)
             samplerate, samplewidth, data = audiofile_read(filename)
 
-            #end = time.time()
-            #print end - start, "sec"
-
             # audio file info
-            print samplerate, "Hz,", data.shape[1], "channel(s),", data.shape[0], "samples"
+            if verbose: print samplerate, "Hz,", data.shape[1], "channel(s),", data.shape[0], "samples"
 
             # extract features
             # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)
-
-            #start = time.time()
 
             feat = rp.rp_extract(data,
                               samplerate,
@@ -238,25 +243,36 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
                               step_width=1,
                               verbose = verbose)
 
-            #end = time.time()
 
-            # WRITE each feature set to a CSV
-            # TODO check if ext and feat.keys are consistent
 
-            # add filename before vector. 3 choices:
-            id = fil  # filename only
-            # id = filename   # full filename incl. full path
-            # id = filename[len(path)+1:] # relative filename only
+            if out_file:
+                # WRITE each feature set to a CSV
+                # TODO check if ext and feat.keys are consistent
 
-            write_feature_files(id,feat,writer)
+                # add filename before vector. 3 choices:
+                id = fil  # filename only
+                # id = filename   # full filename incl. full path
+                # id = filename[len(path)+1:] # relative filename only
+
+                write_feature_files(id,feat,writer)
+            else:
+                # IN MEMORY: add the extracted features for 1 file to the array dict accumulating all files
+                # TODO: only if we dont have out_file? maybe we want this as a general option
+
+                if feat_array == {}: # for first file, initialize empty array with dimension of the feature set
+                    for e in feat.keys():
+                        feat_array[e] = np.empty((0,feat[e].shape[0]))
+
+                # store features in array
+                for e in feat.keys():
+                    feat_array[e] = np.append(feat_array[e], feat[e].reshape(1,-1), axis = 0) # 1 for horizontal vector, -1 means take original dimension
 
         except:
             print "ERROR analysing file: " + fil
             err += 1
 
-    # close all output files
-
-    close_feature_files(files,ext)
+    if out_file:  # close all output files
+        close_feature_files(files,ext)
 
     end = time.time()
 
@@ -264,8 +280,10 @@ def extract_all_files_in_path(path,out_file,feature_types,audiofile_types=('.wav
         print "FEATURE EXTRACTION FINISHED.", n, "files,", end-start_abs, "sec"
         if err > 0:
             print err, "files had ERRORs during feature extraction."
-        print "Feature file(s):", out_file + ".*", ext
+        if out_file: print "Feature file(s):", out_file + ".*", ext
 
+    if out_file is None:
+        return feat_array
 
 
 

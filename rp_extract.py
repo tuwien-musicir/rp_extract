@@ -849,7 +849,7 @@ if __name__ == '__main__':
     audiofile = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
 
 
-    # LONG EXAMPLE (does essentially the same):
+    # Read audio file and extract features
     try:
 
         samplerate, samplewidth, wavedata = audiofile_read(audiofile)
