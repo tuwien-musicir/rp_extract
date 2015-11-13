@@ -302,6 +302,54 @@ def to_dataframe(feature_data, attribute_labels=None, ids=None, classes=None):
 
 
 
+def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save_features = False, output_file = None):
+    """convenient function that can either load or freshly extract features
+
+    depending if input_path is...
+    a) a path: will recursively look for .wav and .mp3 files in path and freshly extract features
+    b) a .txt file: will take a list of filenames (one per line) and freshly extract features
+    c) another file: will load features in multiple csv file feature format
+    TODO:
+    d) a .npz, .h5 or .hdf5 file: will load the features from that file
+    e) a .wav or .mp3 file: will freshly extract features from that file
+
+    TODO: The audio analysis parameters of this function call are only needed when features are to be freshly extracted.
+
+    :param input_path:
+    :return:
+    """
+    from rp_extract_batch import find_files, extract_all_files_in_path
+
+#    if not os.path.exists(input_path):
+#        raise NameError("File or path does not exist: " + input_path)
+
+    if save_features and output_file is None:
+        raise ValueError("output_file must be specified if save_features is set to True!")
+
+    # if we got a directory, we do analysis, if we got a file, we load it
+
+    # TODO: accept .wav or .mp3 as single file input
+    if os.path.isdir(input_path) or input_path.endswith('.txt'):  # FRESH ANALYSIS from input path or .txt file
+
+        print "Performing fresh segment analysis from ", input_path
+
+        if input_path.endswith('.txt'):  # treat as input file list
+            from classes_io import read_filenames
+            in_files = read_filenames(input_path)
+        else: # find files in path
+            in_files = find_files(input_path,relative_path=True)
+
+        # BATCH RP FEATURE EXTRACTION:
+        # if output_file is given, will save features, otherwise not
+        ids, feat = extract_all_files_in_path(in_files,output_file,feature_types)
+
+    else:
+        # LOAD from Feature File
+        ids, feat = read_csv_features(input_path,feature_types)
+        # TODO .npz, .h5 or .hdf5
+
+    return ids, feat
+
 
 if __name__ == '__main__':
 

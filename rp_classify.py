@@ -7,7 +7,7 @@ import numpy as np
 from sklearn import preprocessing, svm
 
 from rp_extract_batch import extract_all_files_in_path
-from rp_feature_io import read_csv_features
+from rp_feature_io import load_or_analyze_features
 from classes_io import *
 
 
@@ -111,20 +111,19 @@ if __name__ == '__main__':
     argparser.add_argument('model_file', nargs='?', help='model file name (input for predictions, or to write after training)')
     argparser.add_argument('output_filename', nargs='?', help='filename for predictions to write (if omitted, will print output') # nargs='?' to make it optional
 
+    argparser.add_argument('-t','--train',action='store_true',help='train a model with the input data',default=False) # boolean opt
+
     args = argparser.parse_args()
 
     # default model file
     if args.model_file is None:
         args.model_file = 'models/model_GTZAN.pkl'
 
-
-    # TODO future parameter for doing training
-    do_training = False
     do_classification = True
 
-    if do_training:
+    if args.train:
         # TODO alternatively load features
-        ids, feat = extract_all_files_in_path(args.input_path)
+        ids, feat = load_or_analyze_features(args.input_path)
         # TODO: store and load feature extraction parameters with model
 
         # check for label consistency TODO: do only for features extracted
@@ -158,7 +157,7 @@ if __name__ == '__main__':
 
     if do_classification:
         # LOAD MODEL
-        if not do_training:
+        if not args.train:
             # TODO: store and load feature extraction parameters with model
             model, scaler, labelencoder = load_model(args.model_file)
 
