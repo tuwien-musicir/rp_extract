@@ -292,7 +292,7 @@ if __name__ == '__main__':
 
     argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
-    argparser.add_argument('input_path', help='input file path to search for wav/mp3') # nargs='?' to make it optional
+    argparser.add_argument('input_path', help='input file path to search for wav/mp3 files to analyze') # nargs='?' to make it optional
     argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension) [default: features/features]', default='features/features') # nargs='?' to make it optional
 
     argparser.add_argument('-rp',action='store_true',help='extract Rhythm Patterns (default)',default=False) # boolean opt
