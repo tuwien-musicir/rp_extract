@@ -38,7 +38,7 @@ def train_model(train_data, train_classes, print_accuracy = True):
     # with probabilities?
     #model = svm.SVC(probability=True, random_state=0)
     # cross_validation.cross_val_score(clf, X, y, scoring='log_loss')
-    model.fit(Xtrain, Ytrain)
+    model.fit(train_data, train_classes)
 
     if print_accuracy:
         pred_train = model.predict(train_data)
