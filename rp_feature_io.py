@@ -318,7 +318,7 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     :param input_path:
     :return:
     """
-    from rp_extract_batch import find_files, extract_all_files_in_path
+    from rp_extract_batch import find_files, extract_all_files_generic
 
 #    if not os.path.exists(input_path):
 #        raise NameError("File or path does not exist: " + input_path)
@@ -333,15 +333,9 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
 
         print "Performing fresh segment analysis from ", input_path
 
-        if input_path.endswith('.txt'):  # treat as input file list
-            from classes_io import read_filenames
-            in_files = read_filenames(input_path)
-        else: # find files in path
-            in_files = find_files(input_path,relative_path=True)
-
         # BATCH RP FEATURE EXTRACTION:
         # if output_file is given, will save features, otherwise not
-        ids, feat = extract_all_files_in_path(in_files,output_file,feature_types)
+        ids, feat = extract_all_files_generic(input_path,output_file,feature_types)
 
     else:
         # LOAD from Feature File
@@ -349,6 +343,7 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
         # TODO .npz, .h5 or .hdf5
 
     return ids, feat
+
 
 
 if __name__ == '__main__':

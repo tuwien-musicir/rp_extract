@@ -174,7 +174,8 @@ def mp3_to_wav_batch(path,outdir=None):
 
 
 
-def extract_all_files_in_path(path,
+
+def extract_all_files_in_path(in_path,
                               out_file = None,
                               feature_types = ['rp','ssd','rh'],
                               audiofile_types=('.wav','.mp3'),
@@ -184,17 +185,54 @@ def extract_all_files_in_path(path,
     extracts selected RP feature types
     and saves them into separate CSV feature files (one per feature type)
 
+
     # path: input file path to search for audio files (including subdirectories)
     # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
     # feature_types: RP feature types to extract. see rp_extract.py
     # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
+    """
 
+    # get file list of all files in a path (filtered by audiofile_types)
+    filelist = find_files(in_path,audiofile_types,relative_path=True)
+
+    return extract_all_files(filelist, in_path, out_file, feature_types, verbose)
+
+
+
+def extract_all_files_generic(in_path,
+                              out_file = None,
+                              feature_types = ['rp','ssd','rh'],
+                              audiofile_types=('.wav','.mp3'),
+                              verbose=True):
+
+    if in_path.endswith('.txt'):  # treat as input file list
+        from classes_io import read_filenames
+        filelist = read_filenames(in_path)
+    else: # find files in path
+        filelist = find_files(in_path,audiofile_types,relative_path=True)
+
+    return extract_all_files(filelist, in_path, out_file, feature_types, verbose)
+
+
+
+
+def extract_all_files(filelist, path,
+                              out_file = None,
+                              feature_types = ['rp','ssd','rh'],
+                              verbose=True):
+    """
+    finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub-directories in it
+    extracts selected RP feature types
+    and saves them into separate CSV feature files (one per feature type)
+
+    # filelist: list of files for features to be extracted
+    # path: absolute path that will be added at beginning of filelist (can be '')
+    # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
+    # feature_types: RP feature types to extract. see rp_extract.py
+    # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
     """
 
     ext = feature_types
-
-    # get file list of all files in a path (filtered by audiofile_types)
-    filelist = find_files(path,audiofile_types,relative_path=True)
 
     n = 0  # counting the files that were actually analyzed
     err = 0 # counting errors
