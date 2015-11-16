@@ -204,10 +204,23 @@ def extract_all_files_generic(in_path,
                               feature_types = ['rp','ssd','rh'],
                               audiofile_types=('.wav','.mp3'),
                               verbose=True):
+    """
+    finds all files of a certain type (e.g. .wav and/or .mp3) in a path (+ sub-directories)
+    OR loads a list of files to extract from a given .txt file
+
+    extracts selected RP feature types
+    and saves them into separate CSV feature files (one per feature type)
+
+    # in_path: input file path to search for audio files (including subdirectories) OR .txt file containing a list of filenames
+    # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
+    # feature_types: RP feature types to extract. see rp_extract.py
+    # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
+    """
 
     if in_path.endswith('.txt'):  # treat as input file list
         from classes_io import read_filenames
         filelist = read_filenames(in_path)
+        in_path = '' # means that paths must be relative or absolute
     else: # find files in path
         filelist = find_files(in_path,audiofile_types,relative_path=True)
 

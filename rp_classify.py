@@ -125,22 +125,16 @@ if __name__ == '__main__':
         # TODO alternatively load features
         ids, feat = load_or_analyze_features(args.input_path)
         # TODO: store and load feature extraction parameters with model
-
-        # check for label consistency TODO: do only for features extracted
-        if all(ids['rh'] == ids['rp']) and all(ids['rh'] == ids['ssd']):
-            ids2 = ids['rh']
-        else:
-            raise ValueError("ids not matching across feature files!")
+        print ids
 
         # TODO alternatively provide class file
-        ids2 = ids['rh']
-        classes = classes_from_filename(ids2)
-        class_dict = dict(zip(ids2, classes))
+        classes = classes_from_filename(ids)
+        class_dict = dict(zip(ids, classes))
 
         # convert to numeric classes
         (class_dict_num, labelencoder) = classdict_to_numeric(class_dict, return_encoder = True)
 
-        class_num = get_classes_from_dict(class_dict_num,ids2)
+        class_num = get_classes_from_dict(class_dict_num,ids)
 
         # optionally: concatenate rh + ssd
         features = np.hstack((feat['ssd'],feat['rh']))

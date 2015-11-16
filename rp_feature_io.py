@@ -342,6 +342,17 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
         ids, feat = read_csv_features(input_path,feature_types)
         # TODO .npz, .h5 or .hdf5
 
+        # check for label consistency among loaded feature types
+        ext = ids.keys()
+
+        for e in ext[1:]:
+            print e
+            if not all(ids[ext[0]] == ids[e]):
+                raise ValueError("ids not matching across feature files!")
+
+        # if all are the same, we take the ids of first feature type
+        ids = ids[ext[0]]
+
     return ids, feat
 
 
