@@ -117,14 +117,13 @@ if __name__ == '__main__':
 
     # default model file
     if args.model_file is None:
-        args.model_file = 'models/model_GTZAN.pkl'
+        args.model_file = 'models/GTZAN.pkl'
 
     do_classification = True
 
     if args.train:
-        # TODO alternatively load features
-        ids, feat = load_or_analyze_features(args.input_path)
         # TODO: store and load feature extraction parameters with model
+        ids, feat = load_or_analyze_features(args.input_path)
         print ids
 
         # TODO alternatively provide class file
@@ -137,6 +136,7 @@ if __name__ == '__main__':
         class_num = get_classes_from_dict(class_dict_num,ids)
 
         # optionally: concatenate rh + ssd
+        # TODO don't hardcode this
         features = np.hstack((feat['ssd'],feat['rh']))
 
         # standardize
@@ -168,8 +168,10 @@ if __name__ == '__main__':
         predictions = classify(model, features_to_classify, labelencoder)
 
         # OUPUT
-        for (i, label) in zip(ids,predictions):
+        if args.output_filename:
+            print "Writing to output file: ", args.output_filename
+            write_class_file(args.output_filename, ids, predictions)
+        else:
+            # just print to stdout
+            for (i, label) in zip(ids,predictions):
             print i + ":\t",label
-
-        # TODO write to file. use write class_dict
-        print "output file: ", args.output_filename
