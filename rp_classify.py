@@ -124,7 +124,6 @@ if __name__ == '__main__':
     if args.train:
         # TODO: store and load feature extraction parameters with model
         ids, feat = load_or_analyze_features(args.input_path)
-        print ids
 
         # TODO alternatively provide class file
         classes = classes_from_filename(ids)
@@ -156,7 +155,10 @@ if __name__ == '__main__':
             model, scaler, labelencoder = load_model(args.model_file)
 
         # EXTRACT FEATURES FROM NEW FILES
-        ids, feat = extract_all_files_in_path(args.input_path)
+        ids, feat = load_or_analyze_features(args.input_path)
+
+        if len(feat) == 0:
+            raise ValueError("No features were extracted from input files. Check format.")
 
         # SELECT OR CONCATENATE FEATURES
         features_to_classify = np.hstack((feat['ssd'],feat['rh']))
@@ -174,4 +176,4 @@ if __name__ == '__main__':
         else:
             # just print to stdout
             for (i, label) in zip(ids,predictions):
-            print i + ":\t",label
+                print i + ":\t",label

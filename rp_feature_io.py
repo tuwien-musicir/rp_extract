@@ -320,6 +320,7 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     """
     from rp_extract_batch import find_files, extract_all_files_generic
 
+# not possible because of omitted file extensions in read_csv_features below
 #    if not os.path.exists(input_path):
 #        raise NameError("File or path does not exist: " + input_path)
 
@@ -329,9 +330,9 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     # if we got a directory, we do analysis, if we got a file, we load it
 
     # TODO: accept .wav or .mp3 as single file input
-    if os.path.isdir(input_path) or input_path.endswith('.txt'):  # FRESH ANALYSIS from input path or .txt file
+    if os.path.isdir(input_path) or input_path.lower().endswith(('.txt','.wav','.mp3')):  # FRESH ANALYSIS from input path or .txt file
 
-        print "Performing fresh segment analysis from ", input_path
+        print "Performing feature extraction from ", input_path
 
         # BATCH RP FEATURE EXTRACTION:
         # if output_file is given, will save features, otherwise not

@@ -217,12 +217,17 @@ def extract_all_files_generic(in_path,
     # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
     """
 
-    if in_path.endswith('.txt'):  # treat as input file list
+    if in_path.lower().endswith('.txt'):  # treat as input file list
         from classes_io import read_filenames
         filelist = read_filenames(in_path)
         in_path = '' # means that paths must be relative or absolute
-    else: # find files in path
+    elif in_path.lower().endswith(audiofile_types): # treat as single audio input file
+        filelist = [in_path]
+        in_path = ''
+    elif os.path.isdir(in_path): # find files in path
         filelist = find_files(in_path,audiofile_types,relative_path=True)
+    else:
+        raise ValueError("Cannot not process this kind of input file: " + in_path)
 
     return extract_all_files(filelist, in_path, out_file, feature_types, verbose)
 
@@ -329,7 +334,7 @@ def extract_all_files(filelist, path,
     end = time.time()
 
     if verbose:
-        print "FEATURE EXTRACTION FINISHED.", n, "files,", end-start_abs, "sec"
+        print "FEATURE EXTRACTION FINISHED. %d file(s), %.2f sec" % (n,end-start_abs)
         if err > 0:
             print err, "files had ERRORs during feature extraction."
         if out_file: print "Feature file(s):", out_file + ".*", ext
