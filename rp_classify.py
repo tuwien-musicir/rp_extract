@@ -164,7 +164,7 @@ if __name__ == '__main__':
         features_to_classify = np.hstack((feat['ssd'],feat['rh']))
 
         # SCALE FEATURES LIKE TRAINING DATA
-        features_to_classify = scaler.fit_transform(features_to_classify)
+        features_to_classify = scaler.transform(features_to_classify)
 
         # CLASSIFY
         predictions = classify(model, features_to_classify, labelencoder)
