@@ -220,12 +220,13 @@ def extract_all_files_generic(in_path,
     if in_path.lower().endswith('.txt'):  # treat as input file list
         from classes_io import read_filenames
         filelist = read_filenames(in_path)
-        in_path = '' # means that paths must be relative or absolute
+        in_path = None # no abs path to add below
     elif in_path.lower().endswith(audiofile_types): # treat as single audio input file
         filelist = [in_path]
-        in_path = ''
+        in_path = None # no abs path to add below
     elif os.path.isdir(in_path): # find files in path
         filelist = find_files(in_path,audiofile_types,relative_path=True)
+        # filelist will be relative, so we provide in_path below
     else:
         raise ValueError("Cannot not process this kind of input file: " + in_path)
 
@@ -269,7 +270,10 @@ def extract_all_files(filelist, path,
         try:
 
             n += 1
-            filename = path + os.sep + fil
+            if path:
+                filename = path + os.sep + fil
+            else:
+                filename = fil
             #if verbose:
             print '#',n,'/',n_files,':', filename
 
@@ -324,8 +328,8 @@ def extract_all_files(filelist, path,
 
                 filelist_extracted.append(id)
 
-        except:
-            print "ERROR analysing file: " + fil
+        except Exception as e:
+            print "ERROR analysing file: " + fil + ": " + str(e)
             err += 1
 
     if out_file:  # close all output files
