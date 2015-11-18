@@ -329,7 +329,6 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
 
     # if we got a directory, we do analysis, if we got a file, we load it
 
-    # TODO: accept .wav or .mp3 as single file input
     if os.path.isdir(input_path) or input_path.lower().endswith(('.txt','.wav','.mp3')):  # FRESH ANALYSIS from input path or .txt file
 
         print "Performing feature extraction from ", input_path
@@ -347,7 +346,6 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
         ext = ids.keys()
 
         for e in ext[1:]:
-            print e
             if not all(ids[ext[0]] == ids[e]):
                 raise ValueError("ids not matching across feature files!")
 
