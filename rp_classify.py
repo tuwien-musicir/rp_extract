@@ -115,16 +115,14 @@ if __name__ == '__main__':
 
     args = argparser.parse_args()
 
-    # default model file
-    if args.model_file is None:
-        args.model_file = 'models/GTZAN.pkl'
-
-    do_classification = True
 
     if args.train:
+
+        # LOAD OR EXTRACT FEATURES
         # TODO: store and load feature extraction parameters with model
         ids, feat = load_or_analyze_features(args.input_path)
 
+        # CLASSES: derive from sub-path
         # TODO alternatively provide class file
         classes = classes_from_filename(ids)
         class_dict = dict(zip(ids, classes))
@@ -134,22 +132,27 @@ if __name__ == '__main__':
 
         class_num = get_classes_from_dict(class_dict_num,ids)
 
-        # optionally: concatenate rh + ssd
+        # CONCATENATE MULTIPLE FEATURES
+        # (optional) here: concatenate ssd + rh
         # TODO don't hardcode this
         features = np.hstack((feat['ssd'],feat['rh']))
 
-        # standardize
+        # STANDARDIZE
         features, scaler = standardize(features)
 
         # TRAIN
         model = train_model(features, class_num)
 
-        # save model
+        # SAVE MODEL
         save_model(args.model_file, model, scaler, labelencoder)
 
 
-    if do_classification:
+    else: # do classification only when not training
+
         # LOAD MODEL
+        if args.model_file is None:
+            args.model_file = 'models/GTZAN.pkl'   # default model file
+
         if not args.train:
             # TODO: store and load feature extraction parameters with model
             model, scaler, labelencoder = load_model(args.model_file)
