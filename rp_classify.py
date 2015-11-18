@@ -58,16 +58,11 @@ def classify(model, features, labelencoder = None):
 # CROSS VALIDATION (for experimentation)
 def cross_validate(model, data, classes, folds=10):
     from sklearn import cross_validation
-    return cross_validation.cross_val_score(model, Xfull, Yfull, scoring='accuracy', cv=folds)
+    return cross_validation.cross_val_score(model, data, classes, scoring='accuracy', cv=folds)
     # scoring value: Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro',
     # 'f1_micro', 'f1_samples', 'f1_weighted', 'log_loss', 'mean_absolute_error', 'mean_squared_error',
     # 'median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted',
     # 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
-
-#acc = cross_validate(model, Xfull, Yfull)
-#print "Avg Accuracy (%d folds): %2.2f (stddev: %2.2f)" % (len(acc), (np.mean(acc)*100), np.std(acc)*100)
-#print acc
-# ISMIR 2005: SSD: 72.70
 
 
 # SAVE MODEL
@@ -112,11 +107,15 @@ if __name__ == '__main__':
     argparser.add_argument('output_filename', nargs='?', help='filename for predictions to write (if omitted, will print output') # nargs='?' to make it optional
 
     argparser.add_argument('-t','--train',action='store_true',help='train a model with the input data',default=False) # boolean opt
+    argparser.add_argument('-cv','--crossval',action='store_true',help='cross-validate with the input data',default=False) # boolean opt
 
     args = argparser.parse_args()
 
 
-    if args.train:
+    if args.train or args.crossval:
+
+        if args.train and not args.crossval and args.model_file is None:
+            raise ValueError("model_file must be provided to store when training a model.")
 
         # LOAD OR EXTRACT FEATURES
         # TODO: store and load feature extraction parameters with model
@@ -140,12 +139,25 @@ if __name__ == '__main__':
         # STANDARDIZE
         features, scaler = standardize(features)
 
-        # TRAIN
-        model = train_model(features, class_num)
+        # TRAIN + SAVE MODEL
+        if args.train:
 
-        # SAVE MODEL
-        save_model(args.model_file, model, scaler, labelencoder)
+            model = train_model(features, class_num)
 
+            # save model
+            save_model(args.model_file, model, scaler, labelencoder)
+
+        # CROSS-VALIDATE
+        if args.crossval:
+
+            if not args.train:
+                # if we trained, we have a model already; otherwise we initialize a fresh one
+                model = svm.SVC(kernel='linear')
+
+            acc = cross_validate(model, features, classes, folds=10)
+            print "Avg Accuracy (%d folds): %2.2f (stddev: %2.2f)" % (len(acc), (np.mean(acc)*100), np.std(acc)*100)
+            print "Fold accuracy:", acc
+            # ISMIR 2005: GTZAN: SSD: 72.70
 
     else: # do classification only when not training
 
