@@ -67,31 +67,31 @@ def cross_validate(model, data, classes, folds=10):
 
 # SAVE MODEL
 def save_model(filename,model,scaler=None,labelencoder=None):
-    with open(filename, 'wb') as f:
+    basename = os.path.splitext(filename)[0]
+    with open(basename + ".model.pkl", 'wb') as f:
         cPickle.dump(model, f, protocol=cPickle.HIGHEST_PROTOCOL)
     if scaler:
         filename = os.path.splitext(filename)[0] + ".scaler.pkl"
-        with open(filename, 'wb') as f:
+        with open(basename + ".scaler.pkl", 'wb') as f:
             cPickle.dump(scaler, f, protocol=cPickle.HIGHEST_PROTOCOL)
     if labelencoder:
         filename = os.path.splitext(filename)[0] + ".labelencoder.pkl"
-        with open(filename, 'wb') as f:
+        with open(basename + ".labelenc.pkl", 'wb') as f:
             cPickle.dump(labelencoder, f, protocol=cPickle.HIGHEST_PROTOCOL)
 
 
 # LOAD MODEL
 def load_model(filename,scaler=True,labelencoder=True):
-    f = open(filename, 'rb')
+    basename = os.path.splitext(filename)[0]
+    f = open(basename + ".model.pkl", 'rb')
     model = cPickle.load(f)
     f.close()
     if scaler:
-        filename = os.path.splitext(filename)[0] + ".scaler.pkl"
-        f = open(filename, 'rb')
+        f = open(basename + ".scaler.pkl", 'rb')
         scaler = cPickle.load(f)
         f.close()
     if labelencoder:
-        filename = os.path.splitext(filename)[0] + ".labelencoder.pkl"
-        f = open(filename, 'rb')
+        f = open(basename + ".labelenc.pkl", 'rb')
         labelencoder = cPickle.load(f)
         f.close()
     return (model,scaler,labelencoder)
@@ -162,7 +162,7 @@ if __name__ == '__main__':
 
         # LOAD MODEL
         if args.model_file is None:
-            args.model_file = 'models/GTZAN.pkl'   # default model file
+            args.model_file = 'models/GTZAN'   # default model file
 
         if not args.train:
             # TODO: store and load feature extraction parameters with model
