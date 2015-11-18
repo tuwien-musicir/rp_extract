@@ -155,9 +155,8 @@ if __name__ == '__main__':
                 model = svm.SVC(kernel='linear')
 
             acc = cross_validate(model, features, classes, folds=10)
+            print "Fold Accuracy:", acc
             print "Avg Accuracy (%d folds): %2.2f (stddev: %2.2f)" % (len(acc), (np.mean(acc)*100), np.std(acc)*100)
-            print "Fold accuracy:", acc
-            # ISMIR 2005: GTZAN: SSD: 72.70
 
     else: # do classification only when not training
 
