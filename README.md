@@ -46,6 +46,52 @@ For a step-by-step tutorial open „RP_extract Tutorial.ipynb“ in iPython Note
 
 http://nbviewer.ipython.org/github/tuwien-musicir/rp_extract/blob/master/RP_extract_Tutorial.ipynb
 
+It includes also examples on how to compute music similarity, e.g. for music recommendation or
+creating playlists of coherent music.
+
+## Genre Recognition and Classification
+
+rp_classify.py will analyze audio files and categorize them on a high-level concept (such as genre, style or mood)
+given a pre-trained classifier model that was created based on training data.
+
+It can be used on a single audio file (wav or mp3) to recognize its genre like this:
+
+```
+python rp_classify.py music/BoxCat_Games_-_10_-_Epic_Song.mp3
+```
+
+will output:
+
+```
+music/BoxCat_Games_-_10_-_Epic_Song.mp3:	pop
+```
+
+You can also use a folder as an input, to analyze and predict all wav and mp3 files contained. The full syntax is:
+
+```
+rpython p_classify.py input_path model_file output_filename
+```
+
+input_path can be: a folder, wav or mp3 file, or txt file containing a line-wise list of wav or mp3 files
+
+The pre-trained model included in this code repository (models/GTZAN) can predict these 10 genres:
+blues, classical, country, disco, hiphop, jazz, metal, pop, reggae, rock
+
+### Train a model:
+
+You can train your own model like this:
+
+```
+python rp_classify.py -t input_path model_file
+```
+
+In this case files from input_path will be read and analyzed and a model will be trained and stored in model_file.
+
+NOTE: For training a model, files in input_path must be organized in sub-folders which are named after the categories to be trained.
+ (this limitation/requirement might be relieved in future through the provision of groundtruth class files)
+
+Once you trained a model, you can then do predictions given the syntax above (without the -t parameter).
+
 
 ## More Information
 
