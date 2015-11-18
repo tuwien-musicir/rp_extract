@@ -4,9 +4,9 @@ for Music Similarity, Music Classification and Music Recommendation
 
 created by:
 
-TU Wien
-Music Information Retrieval Group
-Institute of Software Technology and Interactive Systems
+TU Wien<br>
+[Music Information Retrieval Group](http://ifs.tuwien.ac.at/mir)<br>
+Institute of Software Technology and Interactive Systems<br>
 Vienna University of Technology, Austria
 
 Main Authors: Thomas Lidy (audiofeature), Alexander Schindler (slychief)
@@ -51,7 +51,7 @@ creating playlists of coherent music.
 
 ## Genre Recognition and Classification
 
-`rp_classify.py will analyze audio files and categorize them into a high-level concept (such as genre, style or mood)
+`rp_classify.py` will analyze audio files and categorize them into a high-level concept (such as genre, style or mood)
 given a pre-trained classifier model that was created based on training data.
 
 It can be used on a single audio file (wav or mp3) to recognize its genre like this:
@@ -75,7 +75,7 @@ python rp_classify.py input_path model_file output_filename
 `input_path` can be: a folder, wav or mp3 file, or txt file containing a line-wise list of wav or mp3 files
 
 The pre-trained model included in this code repository (`models/GTZAN`) can predict these 10 genres:
-blues, classical, country, disco, hiphop, jazz, metal, pop, reggae, rock`
+blues, classical, country, disco, hiphop, jazz, metal, pop, reggae, rock
 
 `output_filename` is an optional file in which predictions will be written in a tab-separated way
 (if omitted, result will be printed to stdout).
@@ -100,4 +100,5 @@ Once you trained a model, you can do predictions given the syntax above (without
 ## More Information
 
 http://ifs.tuwien.ac.at/mir
+
 http://ifs.tuwien.ac.at/mir/downloads.html
