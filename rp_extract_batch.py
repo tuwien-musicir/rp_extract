@@ -381,11 +381,14 @@ if __name__ == '__main__':
     # if none was selected set default feature set
     if feature_types == []: feature_types = ['rp','ssd','rh']
 
+    audiofile_types = ('.wav','.mp3','.aif')
+
     print "Extracting features:", feature_types
     print "From files in:", args.input_path
+    print "File types:", audiofile_types
 
     # BATCH RP FEATURE EXTRACTION:
-    extract_all_files_in_path(args.input_path,args.output_filename,feature_types)
+    extract_all_files_in_path(args.input_path,args.output_filename,feature_types, audiofile_types)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
