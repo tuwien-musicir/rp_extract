@@ -217,6 +217,8 @@ if __name__ == '__main__':
     #exit()
     # (no output means that everything went fine)
 
+    import sys
+
     # if your MP3 decoder is not on the system PATH, add it like this:
     # path = '/path/to/ffmpeg/'
     # os.environ['PATH'] += os.pathsep + path
@@ -224,7 +226,10 @@ if __name__ == '__main__':
     # test audio file: "Epic Song" by "BoxCat Game" (included in repository)
     # Epic Song by BoxCat Games is licensed under a Creative Commons Attribution License.
     # http://freemusicarchive.org/music/BoxCat_Games/Nameless_the_Hackers_RPG_Soundtrack/BoxCat_Games_-_Nameless-_the_Hackers_RPG_Soundtrack_-_10_Epic_Song
-    file = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
+    if len(sys.argv) > 1:
+        file = sys.argv[1]
+    else:
+        file = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
 
     samplerate, samplewidth, wavedata = audiofile_read(file)
 
