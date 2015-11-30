@@ -195,10 +195,10 @@ def audiofile_read(filename,normalize=True,verbose=True):
         return(wav_read(filename,normalize,verbose))
     elif ext.lower() == '.mp3':
         return(mp3_read(filename,normalize,verbose))
-    elif ext.lower() == '.aif':
+    elif ext.lower() == '.aif' or ext.lower() == '.aiff':
         return(aif_read(filename,normalize,verbose))
     else:
-        raise NameError("File name extension must be either .wav or .mp3 or .aif when using audiofile_read. Extension found: " + ext)
+        raise NameError("File name extension must be either .wav or .mp3 or .aif or .aiff when using audiofile_read. Extension found: " + ext)
 
 
 # function to self test audiofile_read if working properly
