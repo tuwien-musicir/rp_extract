@@ -136,7 +136,7 @@ def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
 # from rp_extract_batch import mp3_to_wav_batch
 # mp3_to_wav_batch('/data/music/ISMIRgenre/mp3_44khz_128kbit_stereo','/data/music/ISMIRgenre/wav')
 
-def mp3_to_wav_batch(path,outdir=None,audiofile_types=('.mp3','.aif')):
+def mp3_to_wav_batch(path,outdir=None,audiofile_types=('.mp3','.aif','.aiff')):
 
     get_relative_path = (outdir!=None) # if outdir is specified we need relative path otherwise absolute
 
@@ -169,7 +169,7 @@ def mp3_to_wav_batch(path,outdir=None,audiofile_types=('.mp3','.aif')):
                 print "Decoding:", n, "/", n_files, ":"
                 if ext.lower() == '.mp3':
                     mp3_decode(file,wav_file)
-                elif ext.lower() == '.aif':
+                elif ext.lower() == '.aif' or ext.lower() == '.aiff':
                     cmd = ['ffmpeg','-v','1','-y','-i', file,  wav_file]
                     return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
                     if return_code != 0:
