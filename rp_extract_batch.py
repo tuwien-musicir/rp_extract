@@ -132,14 +132,15 @@ def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
 # otherwise the WAV file will be created in the same dir as the MP3 file
 # in both cases the file name is maintained and the extension changed to .wav
 
-# Example for MP3 to WAV batch conversion:
+# Example for MP3 to WAV batch conversion (in a new Python script):
+# from rp_extract_batch import mp3_to_wav_batch
 # mp3_to_wav_batch('/data/music/ISMIRgenre/mp3_44khz_128kbit_stereo','/data/music/ISMIRgenre/wav')
 
-def mp3_to_wav_batch(path,outdir=None):
+def mp3_to_wav_batch(path,outdir=None,audiofile_types=('.mp3','.aif')):
 
     get_relative_path = (outdir!=None) # if outdir is specified we need relative path otherwise absolute
 
-    filenames = find_files(path,'.mp3',get_relative_path)
+    filenames = find_files(path,audiofile_types,get_relative_path)
 
     n_files = len(filenames)
     n = 0
@@ -147,7 +148,8 @@ def mp3_to_wav_batch(path,outdir=None):
     for file in filenames:
 
         n += 1
-        wav_file = os.path.splitext(file)[0] + '.wav'
+        basename, ext = os.path.splitext(file)
+        wav_file = basename + '.wav'
 
         if outdir: # if outdir is specified we add it in front of the relative file path
             file = path + os.sep + file
@@ -165,7 +167,13 @@ def mp3_to_wav_batch(path,outdir=None):
         try:
             if not os.path.exists(wav_file):
                 print "Decoding:", n, "/", n_files, ":"
-                mp3_decode(file,wav_file)
+                if ext.lower() == '.mp3':
+                    mp3_decode(file,wav_file)
+                elif ext.lower() == '.aif':
+                    cmd = ['ffmpeg','-v','1','-y','-i', file,  wav_file]
+                    return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
+                    if return_code != 0:
+                        raise DecoderException("Problem appeared during decoding.", command=cmd)
             else:
                 print "Already existing: " + wav_file
         except:
