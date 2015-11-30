@@ -457,7 +457,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         fft_window_size = 1024
     else:
         # throw error not supported
-        raise ValueError('A sample rate of' + samplerate + "is not supported (only 11, 22 and 44 kHz).")
+        raise ValueError('A sample rate of ' + str(samplerate) + " is not supported (only 11, 22 and 44 kHz).")
     
     # calculate frequency values on y-axis (for Bark scale calculation):
     # freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
@@ -842,12 +842,16 @@ if __name__ == '__main__':
     #exit()
     # (no output means that everything went fine)
 
+    import sys
 
     # import our library for reading wav and mp3 files
     from audiofile_read import *
 
-    audiofile = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
-
+    # process file given on command line or default song (included)
+    if len(sys.argv) > 1:
+        audiofile = sys.argv[1]
+    else:
+        audiofile = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
 
     # Read audio file and extract features
     try:

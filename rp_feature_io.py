@@ -318,7 +318,7 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     :param input_path:
     :return:
     """
-    from rp_extract_batch import find_files, extract_all_files_generic
+    from rp_extract_batch import extract_all_files_generic
 
 # not possible because of omitted file extensions in read_csv_features below
 #    if not os.path.exists(input_path):
