@@ -329,13 +329,13 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
 
     # if we got a directory, we do analysis, if we got a file, we load it
 
-    if os.path.isdir(input_path) or input_path.lower().endswith(('.txt','.wav','.mp3')):  # FRESH ANALYSIS from input path or .txt file
+    if os.path.isdir(input_path) or input_path.lower().endswith(('.txt','.wav','.mp3','.aif')):  # FRESH ANALYSIS from input path or .txt file
 
         print "Performing feature extraction from ", input_path
 
         # BATCH RP FEATURE EXTRACTION:
         # if output_file is given, will save features, otherwise not
-        ids, feat = extract_all_files_generic(input_path,output_file,feature_types)
+        ids, feat = extract_all_files_generic(input_path,output_file,feature_types,audiofile_types=('.wav','.mp3','.aif'))
 
     else:
         # LOAD from Feature File

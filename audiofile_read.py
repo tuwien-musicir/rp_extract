@@ -141,6 +141,32 @@ def mp3_read(filename,normalize=True,verbose=True):
     return (samplerate, samplewidth, wavedata)
 
 
+def aif_read(filename,normalize=True,verbose=True):
+
+    tempfile = get_temp_filename(suffix='.wav')
+
+    try:
+        cmd = ['ffmpeg','-v','1','-y','-i', filename,  tempfile]
+
+        return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
+
+        if return_code != 0:
+            raise DecoderException("Problem appeared during decoding.", command=cmd)
+        if (verbose): print 'Decoded aif with:', " ".join(cmd)
+
+        samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
+
+    except OSError as e:
+        if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
+            raise DecoderException("Problem appeared during decoding.", cmd=cmd, orig_error=e)
+
+    finally: # delete temp file
+
+        if os.path.exists(tempfile):
+            os.remove(tempfile)
+
+    return (samplerate, samplewidth, wavedata)
+
 
 def audiofile_read(filename,normalize=True,verbose=True):
     ''' audiofile_read
@@ -169,8 +195,10 @@ def audiofile_read(filename,normalize=True,verbose=True):
         return(wav_read(filename,normalize,verbose))
     elif ext.lower() == '.mp3':
         return(mp3_read(filename,normalize,verbose))
+    elif ext.lower() == '.aif':
+        return(aif_read(filename,normalize,verbose))
     else:
-        raise NameError("File name extension must be either .wav or .mp3 when using audiofile_read. Extension found: " + ext)
+        raise NameError("File name extension must be either .wav or .mp3 or .aif when using audiofile_read. Extension found: " + ext)
 
 
 # function to self test audiofile_read if working properly
