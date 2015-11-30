@@ -43,7 +43,7 @@ def find_files(path,file_types=('.wav','.mp3'),relative_path = False,verbose=Fal
 
     all_files = []
 
-    for d in os.walk(path):    # finds all subdirectories and gets a list of files therein
+    for d in os.walk(unicode(path)):    # finds all subdirectories and gets a list of files therein
         # subpath: complete sub directory path (full path)
         # filelist: files in that sub path (filenames only)
         (subpath, _, filelist) = d
