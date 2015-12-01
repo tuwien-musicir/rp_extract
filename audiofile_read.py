@@ -40,16 +40,31 @@ def normalize_wav(wavedata,samplewidth):
     return (wavedata)
 
 
-# read wav files
-# returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
-def wav_read(filename,normalize=True,verbose=True):
+def wav_read(filename,normalize=True,verbose=True,auto_resample=True):
+    '''read WAV files
+
+    :param filename: input filename to read from
+    :param normalize: normalize the read values (usually signed integers) to range (-1,1)
+    :param verbose: output some information during reading
+    :param auto_resample: auto-resampling: if sample rate is different than 11, 22 or 44 kHz it will resample to 44 khZ
+    :return: tuple of 3 elements: samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
+    '''
 
     # check if file exists
     if not os.path.exists(filename):
         raise NameError("File does not exist:" + filename)
 
     samplerate, samplewidth, wavedata = wavio.readwav(filename)
+
+    if auto_resample and samplerate != 11025 and samplerate != 22050 and samplerate != 44100:
+        #print original file info
+        if verbose: print samplerate, "Hz,", wavedata.shape[1], "channel(s),", wavedata.shape[0], "samples"
+
+        # TODO: if < 44100 and > 22050 downsample to 22050 etc.
+        filename2 = resample(filename, to_samplerate=44100, normalize=True, verbose=True)
+        samplerate, samplewidth, wavedata = wavio.readwav(filename2)
+        os.remove(filename2) # delete temp file
 
     if (normalize):
         wavedata = normalize_wav(wavedata,samplewidth)
@@ -67,6 +82,27 @@ def get_temp_filename(suffix=None):
         
     return os.path.join(temp_dir, rand_filename)
 
+
+def resample(filename, to_samplerate=44100, normalize=True, verbose=True):
+
+    tempfile = get_temp_filename(suffix='.wav')
+
+    try:
+        cmd = ['ffmpeg','-v','1','-y','-i', filename, '-ar', str(to_samplerate), tempfile]
+
+        return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
+
+        if return_code != 0:
+            raise DecoderException("Problem appeared during resampling.", command=cmd)
+        if (verbose): print 'Resampled with:', " ".join(cmd)
+
+    except OSError as e:
+        if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
+            if os.path.exists(tempfile):
+                os.remove(tempfile)
+            raise DecoderException("Problem appeared during resampling.", cmd=cmd, orig_error=e)
+
+    return tempfile
 
 
 # mp3_decode:
@@ -152,7 +188,7 @@ def aif_read(filename,normalize=True,verbose=True):
 
         if return_code != 0:
             raise DecoderException("Problem appeared during decoding.", command=cmd)
-        if (verbose): print 'Decoded aif with:', " ".join(cmd)
+        if (verbose): print 'Decoded AIFF file with:', " ".join(cmd)
 
         samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
 
@@ -171,11 +207,11 @@ def aif_read(filename,normalize=True,verbose=True):
 def audiofile_read(filename,normalize=True,verbose=True):
     ''' audiofile_read
 
-    generic function capable of reading both WAV and MP3 files
+    generic function capable of reading WAV, MP3 and AIF(F) files
 
     :param filename: file name path to audio file
     :param normalize: normalize to (-1,1) if True (default), or keep original values (16 bit, 24 bit or 32 bit)
-    :param verbose: whether to print a message while decoding MP3 files or not
+    :param verbose: whether to print a message while decoding files or not
     :return: a tuple with 3 entries: samplerate in Hz (e.g. 44100), samplewidth in bytes (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
     Example:
