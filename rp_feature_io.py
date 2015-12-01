@@ -280,6 +280,8 @@ def concatenate_features(feat, feature_types = ('ssd', 'rh')):
     feature_types: tuple of strings with the names of feature types to concatenate (1 entry tuple or string is
         allowed, will return this feature type only, without concatenation)
     '''
+    import numpy as np
+
     # in case only 1 feature type instad of tuple was passed
     if isinstance(feature_types, str):
         new_feat = feat[feature_types]
