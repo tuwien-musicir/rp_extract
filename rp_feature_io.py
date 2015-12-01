@@ -271,9 +271,43 @@ def csv2hdf5(csv_filename,hdf_filename,chunk_size=1000,verbose=True):
     if verbose: print "Finished."
 
 
+# == FEATURE MANIPULATION ==
+
+def concatenate_features(feat, feature_types = ('ssd', 'rh')):
+    ''' concatenate features vectors of various feature types together
+    (all entries in feature dictionary  must have same number of instances, but can have different dimensions
+    feat: feature dictionary, containing np.arrays for various feature types (named 'ssd', 'rh', etc.)
+    feature_types: tuple of strings with the names of feature types to concatenate (1 entry tuple or string is
+        allowed, will return this feature type only, without concatenation)
+    '''
+    # in case only 1 feature type instad of tuple was passed
+    if isinstance(feature_types, str):
+        new_feat = feat[feature_types]
+    else:
+        # take the first feature type
+        new_feat = feat[feature_types[0]]
+        # and iteratively horizontally stack the remaining feature types
+        for e in feature_types[1:]:
+            new_feat = np.hstack((new_feat, feat[e]))
+    return new_feat
+
+
+def sorted_feature_subset(features, ids_orig, ids_select):
+    '''
+    selects a (sorted) subset of the original features array
+    features: a feature dictionary, containing multiple np.arrays one for each feature type ('rh', 'ssd', etc.)
+    ids_orig: original labels/ids for the featurs, MUST be same length AND order as feature arrays
+    ids_select: set of ids in different order or subset of ids to be selected from original feature arrays
+    returns: sorted subset of the original features array
+    '''
+    new_feat = {}
+    for e in features.keys():
+        dataframe = pd.DataFrame(features[e], index = ids_orig)
+        new_feat[e] = dataframe.ix[ids_select].values
+    return new_feat
+
 
 # == HELPER FUNCTIONS ==
-
 
 def to_dataframe(feature_data, ids=None, attribute_labels=None):
     '''converts np.array to Pandas dataframe with optional
