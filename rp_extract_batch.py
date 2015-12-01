@@ -20,12 +20,16 @@ from audiofile_read import * # reading wav and mp3 files
 import rp_extract as rp # Rhythm Pattern extractor
 
 
-# function to find all files of a particular file type in a given path
-# path: input path to start searching
-# file_types: a tuple of file extensions (e.g.'.wav','.mp3') (case-insensitive) or 'None' in which case ALL files in path will be returned
-# relative_path: if False, absolute paths will be returned, otherwise the path relative to the given path
 
-def find_files(path,file_types=('.wav','.mp3'),relative_path = False,verbose=False):
+def find_files(path,file_types=('.wav','.mp3'),relative_path = False,verbose=False,ignore_hidden=True):
+    ''' function to find all files of a particular file type in a given path
+
+    path: input path to start searching
+    file_types: a tuple of file extensions (e.g.'.wav','.mp3') (case-insensitive) or 'None' in which case ALL files in path will be returned
+    relative_path: if False, absolute paths will be returned, otherwise the path relative to the given path
+    verbose: will print info about files found in path if True
+    ignore_hidden: if True (default) will ignore Linux hidden files (starting with '.')
+    '''
 
     if path.endswith(os.sep):
         path = path[0:-1]   # we need to remove the file separator at the end otherwise the path handling below gets confused
@@ -47,6 +51,9 @@ def find_files(path,file_types=('.wav','.mp3'),relative_path = False,verbose=Fal
         # subpath: complete sub directory path (full path)
         # filelist: files in that sub path (filenames only)
         (subpath, _, filelist) = d
+
+        if ignore_hidden:
+            filelist = [ file for file in filelist if not file[0] == '.']
 
         if file_types:   # FILTER FILE LIST by FILE TYPE
             filelist = [ file for file in filelist if file.lower().endswith(file_types) ]
