@@ -275,6 +275,14 @@ def csv2hdf5(csv_filename,hdf_filename,chunk_size=1000,verbose=True):
 # == HELPER FUNCTIONS ==
 
 
+def to_dataframe(feature_data, ids=None, attribute_labels=None):
+    '''converts np.array to Pandas dataframe with optional
+    ids (e.g. audio filenames) to be added as rownames (index)
+    and/or attribute names to be added as column labels
+    '''
+    dataframe = pd.DataFrame(feature_data, index = ids, columns=attribute_labels)
+    return dataframe
+
 
 def to_dataframe_for_arff(feature_data, attribute_labels=None, ids=None, classes=None):
     '''converts np.array + extra ids and/or classes to Pandas dataframe
