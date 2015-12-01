@@ -140,6 +140,20 @@ def reduce_class_dict(class_dict,new_file_ids):
     new_class_dict = { key: class_dict[key] for key in new_file_ids }
     return (new_class_dict)
 
+def match_and_reduce_class_dict(class_dict,new_file_ids,strip_files = True):
+    '''check for matching file ids in a class dictionary and reduce the class dictionary to the matching ones
+    :param class_dict:
+    :param new_file_ids:
+    :return:
+    '''
+    if strip_files:
+        new_file_ids = strip_filenames(new_file_ids)
+    print len(class_dict), "files in class definition file"
+    print len(new_file_ids), "files from audio feature analysis"
+    matching = set(class_dict.keys()).intersection(new_file_ids)
+    print len(matching), "files matching"
+    new_class_dict = reduce_class_dict(class_dict,matching)
+    return (new_class_dict)
 
 def reduce_class_dict_min_instances(class_dict,min_instances=2):
     ''' reduce a {filename: class} dictionary to retain classes only with a minimum number of file instances per class
