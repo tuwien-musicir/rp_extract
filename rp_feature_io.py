@@ -43,7 +43,7 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
     import pandas as pd
 
     # we use pandas to import CSV as pandas dataframe,
-    # because it handles quoted filnames (containing ,) well (by contrast to other CSV readers)
+    # because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
     dataframe = pd.read_csv(filename, sep=',',header=None)
 
     # future option: this would be a way to set the file ids as index in the dataframe
@@ -197,7 +197,7 @@ def csv2arff(in_filenamestub,out_filenamestub,feature_types,add_class=True):
         # with ids
         #df = to_dataframe(features[ext], None, ids[ext], classes)
         # without ids
-        df = to_dataframe(features[ext], classes=classes)
+        df = to_dataframe_for_arff(features[ext], classes=classes)
 
         # WRITE ARFF
         out_filename = out_filenamestub + "." + ext + ".arff"
@@ -274,11 +274,13 @@ def csv2hdf5(csv_filename,hdf_filename,chunk_size=1000,verbose=True):
 
 # == HELPER FUNCTIONS ==
 
-# converts np.array + extra ids and/or classes to Pandas dataframe
-# ids (e.g. audio filenames) and classes can be provided optionally as list (will be excluded if omitted)
-# feature attribute labels also optionally as a list (will be generated if omitted)
 
-def to_dataframe(feature_data, attribute_labels=None, ids=None, classes=None):
+
+def to_dataframe_for_arff(feature_data, attribute_labels=None, ids=None, classes=None):
+    '''converts np.array + extra ids and/or classes to Pandas dataframe
+    ids (e.g. audio filenames) and classes can be provided optionally as list (will be excluded if omitted)
+    feature attribute labels also optionally as a list (will be generated if omitted)
+    '''
 
     if attribute_labels is None:
         attribute_labels = feature_data.dtype.names

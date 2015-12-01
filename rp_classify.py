@@ -6,7 +6,6 @@ import cPickle
 import numpy as np
 from sklearn import preprocessing, svm
 
-from rp_extract_batch import extract_all_files_in_path
 from rp_feature_io import load_or_analyze_features
 from classes_io import *
 
