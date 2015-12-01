@@ -112,48 +112,50 @@ def resample(filename, to_samplerate=44100, normalize=True, verbose=True):
 
 def mp3_decode(in_filename, out_filename=None, verbose=True):
 
+    basename, ext = os.path.splitext(in_filename)
+    ext = ext.lower()
+
     if out_filename == None:
-        out_filename = in_filename[:-4]+'.wav'
+        out_filename = basename + '.wav'
 
     # check a number of external MP3 decoder tools whether they are available on the system
 
     # for subprocess.call, we prepare the commands and the arguments as a list
     # cmd_list is a list of commands with their arguments, which will be iterated over to try to find each tool
-    cmd_list = []
+    # cmd_types is a list of file types supported by each command/tool
 
-    cmd1 = ['mpg123','-q', '-w', out_filename, in_filename]
-    cmd2 = ['ffmpeg','-v','1','-y','-i', in_filename,  out_filename]    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
+    cmd1 = ['ffmpeg','-v','1','-y','-i', in_filename,  out_filename]    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
+    cmd1_types = ('.mp3','.aif','.aiff','.m4a')
+    cmd2 = ['mpg123','-q', '-w', out_filename, in_filename]
+    cmd2_types = '.mp3'
     cmd3 = ['lame','--quiet','--decode', in_filename, out_filename]
+    cmd3_types = '.mp3'
 
-    cmd_list.append(cmd1)
-    cmd_list.append(cmd2)
-    cmd_list.append(cmd3)
+    cmd_list = [cmd1,cmd2,cmd3]
+    cmd_types = [cmd1_types,cmd2_types,cmd3_types]
 
     success = False
 
-    for cmd in cmd_list:
+    for cmd, types in zip(cmd_list,cmd_types):
 
-        try:
+        if ext in types: # only if the current command supports the file type that we are having
+            try:
+                return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
 
-            return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
+                if return_code != 0: raise DecoderException("Problem appeared during decoding.", command=cmd)
+                if verbose: print 'Decoded', ext, 'with:', " ".join(cmd)
+                success = True
 
-            if return_code != 0:
-                raise DecoderException("Problem appeared during decoding.", command=cmd)
-            if (verbose): print 'Decoded mp3 with:', " ".join(cmd)
-            #samplerate, samplewidth, wavedata = wav_read(temp,normalize)
-
-            success = True
-
-        except OSError as e:
-            if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
-                raise DecoderException("Problem appeared during decoding.", cmd=cmd, orig_error=e)
+            except OSError as e:
+                if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
+                    raise DecoderException("Problem appeared during decoding.", cmd=cmd, orig_error=e)
 
         if success:
             break  # no need to loop further
 
     if not success:
         commands = ", ".join( c[0] for c in cmd_list)
-        raise OSError("No MP3 decoder found. Check if any of these is on your system path: " + commands + \
+        raise OSError("No appropriate decoder found for" + ext + "file. Check if any of these programs is on your system path: " + commands + \
                        ". Otherwise install one of these and/or add them to the path using os.environ['PATH'] += os.pathsep + path.")
 
 
@@ -226,15 +228,20 @@ def audiofile_read(filename,normalize=True,verbose=True):
         raise NameError("File does not exist:" + filename)
 
     basename, ext = os.path.splitext(filename)
+    ext = ext.lower()
 
-    if ext.lower() == '.wav':
+    if ext == '.wav':
         return(wav_read(filename,normalize,verbose))
-    elif ext.lower() == '.mp3':
-        return(mp3_read(filename,normalize,verbose))
-    elif ext.lower() == '.aif' or ext.lower() == '.aiff':
-        return(aif_read(filename,normalize,verbose))
     else:
-        raise NameError("File name extension must be either .wav or .mp3 or .aif or .aiff when using audiofile_read. Extension found: " + ext)
+        try: # try to decode
+            tempfile = get_temp_filename(suffix='.wav')
+            mp3_decode(filename,tempfile,verbose)
+            samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
+
+        finally: # delete temp file in any case
+            if os.path.exists(tempfile):
+                os.remove(tempfile)
+    return (samplerate, samplewidth, wavedata)
 
 
 # function to self test audiofile_read if working properly
