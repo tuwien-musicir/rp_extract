@@ -105,12 +105,33 @@ def resample(filename, to_samplerate=44100, normalize=True, verbose=True):
     return tempfile
 
 
-# mp3_decode:
-# calls external MP3 decoder to convert an mp3 file to a wav file
-# mpg123, ffmpeg or lame must be installed on the system (consider adding their path  using os.environ['PATH'] += os.pathsep + path )
-# if out_filename is omitted, the input filename is used, replacing the extension by .wav
 
 def mp3_decode(in_filename, out_filename=None, verbose=True):
+    ''' mp3_decode
+
+    decoding of MP3 files
+
+    now handled by decode function (for parameters see there)
+    kept for code compatibility
+    '''
+    return decode(in_filename, out_filename, verbose)
+
+
+def decode(in_filename, out_filename=None, verbose=True):
+    ''' calls external decoder to convert an MP3, AIF(F) or M4A file to a WAV file
+
+    One of the following decoder programs must be installed on the system:
+
+    ffmpeg: for mp3, aif(f), or m4a
+    mpg123: for mp3
+    lame: for mp3
+
+    (consider adding their path  using os.environ['PATH'] += os.pathsep + path )
+
+    in_filename: input audio file name to process
+    out_filename: output filename after conversion; if omitted, the input filename is used, replacing the extension by .wav
+    verbose: print decoding command line information or not
+    '''
 
     basename, ext = os.path.splitext(in_filename)
     ext = ext.lower()
@@ -159,16 +180,16 @@ def mp3_decode(in_filename, out_filename=None, verbose=True):
                        ". Otherwise install one of these and/or add them to the path using os.environ['PATH'] += os.pathsep + path.")
 
 
-# mp3_read:
-# call mp3_decode and read from wav file ,then delete wav file
-# returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
 
 def mp3_read(filename,normalize=True,verbose=True):
-
-    tempfile = get_temp_filename(suffix='.wav')
+    ''' mp3_read:
+    call mp3_decode and read from wav file ,then delete wav file
+    returns samplereate (e.g. 44100), samplewith (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
+    '''
 
     try:
-        mp3_decode(filename,tempfile,verbose)
+        tempfile = get_temp_filename(suffix='.wav')
+        decode(filename,tempfile,verbose)
         samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
 
     finally: # delete temp file
