@@ -392,8 +392,11 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
         ext = ids.keys()
 
         for e in ext[1:]:
+            if not len(ids[ext[0]]) == len(ids[e]):
+                raise ValueError("Feature files have different number of entries! " +
+                                 ", ".join([e + ': ' + str(len(ids[e])) for e in ext]) )
             if not all(ids[ext[0]] == ids[e]):
-                raise ValueError("ids not matching across feature files!")
+                raise ValueError("Ids not matching across feature files!")
 
         # if all are the same, we take the ids of first feature type
         ids = ids[ext[0]]
