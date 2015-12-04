@@ -4,7 +4,10 @@
 import argparse
 import cPickle
 import numpy as np
+
 from sklearn import preprocessing, svm
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.svm import SVC
 
 from rp_feature_io import load_or_analyze_features
 from classes_io import *
@@ -29,14 +32,14 @@ def standardize(data, return_scaler = True):
 
 
 # TRAIN
-def train_model(train_data, train_classes, with_probabilities = False, print_accuracy = True):
-    # TRAIN
+def train_model(train_data, train_classes, print_accuracy = True): # with_probabilities = False,
+    '''train a SVM classifier model'''
     #model = svm.SVC() # defaults to kernel='rbf' (usually worse for RP/SSD/RH features)
-    model = svm.SVC(kernel='linear', probability=with_probabilities)
+    #model = svm.SVC(kernel='linear', probability=with_probabilities)
 
-    # with probabilities?
-    #model = svm.SVC(probability=True, random_state=0)
-    # cross_validation.cross_val_score(clf, X, y, scoring='log_loss')
+    # we use this syntax as it supports multi-class classification
+    model = OneVsRestClassifier(SVC(kernel='linear'))
+
     model.fit(train_data, train_classes)
 
     if print_accuracy:
