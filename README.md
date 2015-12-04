@@ -40,10 +40,11 @@ audio analysis part with `rp_extract.py`, `numpy` and `scipy` are the only requi
 
 If you want to use MP3, M4A, or AIF(F) files as input, you need to have one of the following decoders installed in your system:\n",
 
-- Linux: install ffmpeg, mpg123, or lame from your Software Install Center or package repository (see <a href=\"http://fcorti.com/2014/04/22/ffmpeg-ubuntu-14-04-lts/">install ffmpeg on Ubuntu 14.04</a>)
-- Mac: <a href=\"http://ffmpegmac.net\">FFMPeg for Mac</a> or <a href=\"http://www.thalictrum.com/en/products/lame.html\">Lame for Mac</a>
+- Linux: install ffmpeg, mpg123, or lame from your Software Install Center or package repository (how to install ffmpeg on Ubuntu 14.04: http://fcorti.com/2014/04/22/ffmpeg-ubuntu-14-04-lts )
+- Mac: FFMPeg for Mac: http://ffmpegmac.net or Lame for Mac: http://www.thalictrum.com/en/products/lame.html
 - Windows: FFMpeg.exe is already included (nothing to install)
 
+Note: use ffmpeg for mp3, m4a and aiff (lame and mpg123 only support mp3).
 
 ## Easy Getting Started
 
