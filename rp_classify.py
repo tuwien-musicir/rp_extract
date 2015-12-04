@@ -43,9 +43,11 @@ def train_model(train_data, train_classes, print_accuracy = True): # with_probab
     model.fit(train_data, train_classes)
 
     if print_accuracy:
-        pred_train = model.predict(train_data)
-        n_correct = sum(np.array(pred_train) == np.array(train_classes))
-        print "Accuracy on train set: %2.2f %%" % ( n_correct * 100.0 / len(train_classes) )
+        pred_train = model.predict(train_data) # predictions on train set
+        # for multi-class train sets we do the accuracy column-wise and then compute the mean over all accuracies
+        acc_per_column = np.sum(pred_train == train_classes, axis=0) * 100.0 / len(train_classes)
+        mean_acc = np.mean(acc_per_column)
+        print "Accuracy on train set: %2.2f %%" % mean_acc
 
     return model
 
