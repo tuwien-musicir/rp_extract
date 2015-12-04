@@ -227,13 +227,13 @@ def match_filenames(file_ids_classfile,file_ids_featurefile,strip_files=False,ve
         if len(diff) > 0:
             print
             print 'in class definition but not in audio feature files:\n'
-            for f in d: print f
+            for f in diff: print f
 
         diff = set(file_ids_featurefile) - set(file_ids_matching)
         if len(diff) > 0:
             print
             print 'in audio feature files but not in class definition:\n'
-            for f in d: print f
+            for f in diff: print f
 
     return file_ids_matching
 
