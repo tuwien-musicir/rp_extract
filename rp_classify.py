@@ -29,10 +29,10 @@ def standardize(data, return_scaler = True):
 
 
 # TRAIN
-def train_model(train_data, train_classes, print_accuracy = True):
+def train_model(train_data, train_classes, with_probabilities = False, print_accuracy = True):
     # TRAIN
     #model = svm.SVC() # defaults to kernel='rbf' (usually worse for RP/SSD/RH features)
-    model = svm.SVC(kernel='linear')
+    model = svm.SVC(kernel='linear', probability=with_probabilities)
 
     # with probabilities?
     #model = svm.SVC(probability=True, random_state=0)

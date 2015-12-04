@@ -11,6 +11,31 @@ Vienna University of Technology, Austria
 
 Main Authors: Thomas Lidy (audiofeature), Alexander Schindler (slychief)
 
+## Installation
+
+Either download as ZIP from https://github.com/tuwien-musicir/rp_extract/archive/master.zip , or:
+
+```
+git clone https://github.com/tuwien-musicir/rp_extract.git
+```
+
+### Install Dependencies
+
+On Linux Ubuntu many dependencies can be installed from the Software Center or repository like this:
+
+```
+sudo apt-get install python-numpy python-scipy python-pandas python-scikits-learn python-matplotlib
+```
+
+Use this to install the remaining dependencies on Ubuntu, respectively all dependencies on Mac and Windows:
+
+```
+sudo pip install -r requirements.txt
+```
+
+Note that some of the requirements are only needed for specific parts of the library. If all you want to use is the
+audio analysis part with `rp_extract.py`, `numpy` and `scipy` are the only requirements.
+
 
 ## Easy Getting Started
 

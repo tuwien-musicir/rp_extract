@@ -13,6 +13,8 @@ Main function is rp_extract. See function definition and description for more in
 or example usage in main function.
 
 Note: All required functions are provided by the two main scientific libraries numpy and scipy.
+
+Note: In case you alter the code to use transform2mel, librosa needs to be installed: pip install librosa
 '''
 
 
