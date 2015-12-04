@@ -55,9 +55,9 @@ python rp_extract_batch.py <input_path> <feature_file_name>
 ```
 
 This will
-- search for MP3 or WAV files in input_path
+- search for MP3 or WAV files in `input_path`
 - extract a standard set of audio features (RP, SSD, RH - see http://ifs.tuwien.ac.at/mir/audiofeatureextraction.html )
-- write them in a CSV like manner to feature_file_name (one for each feature type: .rp, .ssd, .rh)
+- write them in a CSV like manner to `feature_file_name` (don't specify a file extension, it will create 3 files, one for each feature type: .rp, .ssd, .rh)
 
 Optionally specify the type of features you want:
 
@@ -73,7 +73,7 @@ python rp_extract_batch.py -h
 
 ## Use RP_extract in your code
 
-rp_extract.py is the main feature extractor.
+`rp_extract.py` is the main feature extractor.
 It can be imported and used in your code to do segment-level audio feature analysis.
 
 For a step-by-step tutorial open „RP_extract Tutorial.ipynb“ in iPython Notebook or view the tutorial here:
@@ -109,6 +109,7 @@ python rp_classify.py input_path model_file output_filename
 `input_path` can be: a folder, wav or mp3 file, or txt file containing a line-wise list of wav or mp3 files
 
 The pre-trained model included in this code repository (`models/GTZAN`) can predict these 10 genres:
+
 blues, classical, country, disco, hiphop, jazz, metal, pop, reggae, rock
 
 `output_filename` is an optional file in which predictions will be written in a tab-separated way
@@ -128,11 +129,19 @@ In this case files from `input_path` will be read and analyzed and a model will 
 _Note_: For training a model, files in `input_path` must be organized in sub-folders which are named after the categories to be trained.
  (this limitation/requirement might be relieved in future through the provision of groundtruth class files)
 
-Once you trained a model, you can do predictions given the syntax above (without the `-t` parameter).
+Once you trained a model, you can do predictions like above:
+
+```
+python rp_classify.py input_path model_file output_filename
+```
+
+Note: Specify the `model_file` always without file extension as 3 files will be generated with different extensions.
 
 
 ## More Information
 
 http://ifs.tuwien.ac.at/mir
+
+http://ifs.tuwien.ac.at/mir/audiofeatureextraction.html
 
 http://ifs.tuwien.ac.at/mir/downloads.html
