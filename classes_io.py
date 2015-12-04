@@ -16,10 +16,13 @@ import os
 
 
 def read_class_file(filename, delimiter='\t',as_dict=True):
-    ''' Read_Class_File
+    ''' Read Class File
 
     read a comma or tab separated file providing class labels to analyzed audio files, typically in the format:
-    <audio file name or id> <class_label>
+
+    <audio file name or id>\TAB<class_label>
+
+    No CSV header allowed.
 
     :param filename: input filename to read class labels from
     :param delimiter: separator in the input file: \t by default, can be set to ',', ';' or anything else needed
@@ -34,6 +37,47 @@ def read_class_file(filename, delimiter='\t',as_dict=True):
     result = dict(reader) if as_dict else list(reader)
     fi.close()
     return(result)
+
+
+def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, pos_labels='x', neg_labels='', verbose=True):
+    '''read multi label class assignment files in the format (with CSV header):
+
+    filename    genre1  genre2  genre3
+    file1       x       x
+    file2               x       x
+    etc.
+
+    (TAB separated, but can be changed with delimiter parameter)
+
+    :param filename:
+    :param delimiter:
+    :param stripfilenames:
+    :param pos_labels:
+    :param neg_labels:
+    :param verbose:
+    :return:
+    '''
+
+    # we use pandas to import CSV as pandas dataframe,
+    # because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
+    import pandas as pd
+    dataframe = pd.read_csv(filename, sep=delimiter, index_col=0)
+
+    # CSV file is supposed to have file names without extension. otherwise do:
+    if stripfilenames:
+        dataframe.index = strip_filenames(dataframe.index) # in class data
+
+    # get categories from the header
+    categories = dataframe.columns.values.tolist()
+    if verbose:
+        print 'Categories in CSV file:', ", ".join(categories)
+
+    # replace positive lables as 1 and negative or empty as 0
+    dataframe.replace(pos_labels, 1, inplace=True)
+    dataframe.replace(neg_labels, 0, inplace=True)
+    dataframe.fillna(0, inplace=True) # treat empty cells as negative
+
+    return dataframe
 
 
 def write_class_file(filename, file_ids, class_labels, delimiter='\t'):
@@ -139,6 +183,8 @@ def reduce_class_dict(class_dict,new_file_ids):
     # we avoid this check because for key will throw an error anyway
     new_class_dict = { key: class_dict[key] for key in new_file_ids }
     return (new_class_dict)
+
+
 
 def match_and_reduce_class_dict(class_dict,new_file_ids,strip_files = True):
     '''check for matching file ids in a class dictionary and reduce the class dictionary to the matching ones
