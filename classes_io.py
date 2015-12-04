@@ -13,7 +13,9 @@
 
 
 import os
+import sys
 
+# --- READ AND WRITE ---
 
 def read_class_file(filename, delimiter='\t',as_dict=True):
     ''' Read Class File
@@ -91,6 +93,9 @@ def write_class_dict(filename, class_dict, delimiter='\t'):
     for f, c in class_dict.iteritems():
         fil.write(f + delimiter + c + '\n') # python will convert \n to os.linesep
     fil.close()
+
+
+# --- HANDLING CLASS DATA ---
 
 
 def classes_from_filename(filenames,split_char=os.sep):
@@ -185,7 +190,55 @@ def reduce_class_dict(class_dict,new_file_ids):
     return (new_class_dict)
 
 
+def check_duplicates(file_ids):
+    '''check for duplicates in file_ids from CSV or feature files'''
+    dup = set([x for x in file_ids if file_ids.count(x) > 1])
+    if len(dup) > 0:
+        print >> sys.stderr, dup
+        raise ValueError("Duplicate entries in file ids!")
 
+
+def match_filenames(file_ids_classfile,file_ids_featurefile,strip_files=False,verbose=True, print_nonmatching=True):
+    '''Match file ids in audio feature files and class files.
+
+    returns the set of overlapping filenames (file ids) of the two lists of file ids
+    (one from the class file, one from the feature file(s))
+
+    :param strip_files:
+    :return: file_ids_matched
+    '''
+    if strip_files:
+        file_ids_classfile = strip_filenames(file_ids_classfile)
+        file_ids_featurefile = strip_filenames(file_ids_featurefile)
+
+    check_duplicates(file_ids_classfile)
+    check_duplicates(file_ids_featurefile)
+
+    file_ids_matching = set(file_ids_classfile).intersection(file_ids_featurefile)
+
+    if verbose:
+        print len(file_ids_classfile), "files in class file"
+        print len(file_ids_featurefile), "files in feature file(s)"
+        print len(file_ids_matching), "files matching"
+
+    if print_nonmatching:  # output missing files
+
+        diff = set(file_ids_classfile) - set(file_ids_matching)
+        if len(diff) > 0:
+            print
+            print 'in class definition but not in audio feature files:\n'
+            for f in d: print f
+
+        diff = set(file_ids_featurefile) - set(file_ids_matching)
+        if len(diff) > 0:
+            print
+            print 'in audio feature files but not in class definition:\n'
+            for f in d: print f
+
+    return file_ids_matching
+
+
+# OBSOLETE?
 def match_and_reduce_class_dict(class_dict,new_file_ids,strip_files = True):
     '''check for matching file ids in a class dictionary and reduce the class dictionary to the matching ones
     :param class_dict:
