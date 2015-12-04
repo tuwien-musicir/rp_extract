@@ -60,9 +60,9 @@ def classify(model, features, labelencoder = None):
         return(pred)
 
 # CROSS VALIDATION (for experimentation)
-def cross_validate(model, data, classes, folds=10):
+def cross_validate(model, features, classes, folds=10):
     from sklearn import cross_validation
-    return cross_validation.cross_val_score(model, data, classes, scoring='accuracy', cv=folds)
+    return cross_validation.cross_val_score(model, features, classes, scoring='accuracy', cv=folds)
     # scoring value: Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro',
     # 'f1_micro', 'f1_samples', 'f1_weighted', 'log_loss', 'mean_absolute_error', 'mean_squared_error',
     # 'median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted',
