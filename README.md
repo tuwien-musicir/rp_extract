@@ -36,6 +36,14 @@ sudo pip install -r requirements.txt
 Note that some of the requirements are only needed for specific parts of the library. If all you want to use is the
 audio analysis part with `rp_extract.py`, `numpy` and `scipy` are the only requirements.
 
+### MP3 Decoder
+
+If you want to use MP3, M4A, or AIF(F) files as input, you need to have one of the following decoders installed in your system:\n",
+
+- Linux: install ffmpeg, mpg123, or lame from your Software Install Center or package repository (see <a href=\"http://fcorti.com/2014/04/22/ffmpeg-ubuntu-14-04-lts/">install ffmpeg on Ubuntu 14.04</a>)
+- Mac: <a href=\"http://ffmpegmac.net\">FFMPeg for Mac</a> or <a href=\"http://www.thalictrum.com/en/products/lame.html\">Lame for Mac</a>
+- Windows: FFMpeg.exe is already included (nothing to install)
+
 
 ## Easy Getting Started
 
