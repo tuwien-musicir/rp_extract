@@ -60,7 +60,7 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
         return feat
 
 
-def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
+def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,verbose=True):
     ''' Read_CSV_features:
 
     read pre-analyzed features from multiple CSV files (with feature name extensions)
@@ -88,7 +88,7 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0):
         else:
             feat[e] = read_csv_features1(filename,separate_ids,id_column)
 
-        print "Read:", e + ":\t", feat[e].shape[0], "vectors", feat[e].shape[1], "dimensions (excl. id)"
+        if verbose: print "Read:", e + ":\t", feat[e].shape[0], "audio file vectors,", feat[e].shape[1], "dimensions"
 
     if separate_ids:
         return(ids,feat)
