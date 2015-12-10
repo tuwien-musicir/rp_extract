@@ -108,13 +108,14 @@ def load_model(filename,scaler=True,labelencoder=True):
 
 if __name__ == '__main__':
 
-    argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
+    argparser = argparse.ArgumentParser(description='Classification of music files into genre, mood or other categories (with optional training of own models).') #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
-    argparser.add_argument('input_path', help='input file path to search for wav/mp3 files')
+    argparser.add_argument('input_path', help='input file path to search for wav/mp3/m4a/aif(f) files')
     argparser.add_argument('model_file', nargs='?', help='model file name (input for predictions, or to write after training)')
     argparser.add_argument('output_filename', nargs='?', help='filename for predictions to write (if omitted, will print output') # nargs='?' to make it optional
 
     argparser.add_argument('-t','--train',action='store_true',help='train a model with the input data',default=False) # boolean opt
+    argparser.add_argument('-c', '--classfile', help='class label file for training and/or cross-validation',default=None)
     argparser.add_argument('-cv','--crossval',action='store_true',help='cross-validate with the input data',default=False) # boolean opt
 
     args = argparser.parse_args()
@@ -129,10 +130,22 @@ if __name__ == '__main__':
         # TODO: store and load feature extraction parameters with model
         ids, feat = load_or_analyze_features(args.input_path)
 
-        # CLASSES: derive from sub-path
-        # TODO alternatively provide class file
-        classes = classes_from_filename(ids)
-        class_dict = dict(zip(ids, classes))
+        # CLASSES: read from file or derive from sub-path
+        if args.classfile:
+            # TODO Temp solution: strip filenames of audio features
+            ids = strip_filenames(ids)
+
+            # TODO alternatively provide multi-class file
+            print "Reading class file: ", args.classfile
+            class_dict = read_class_file(args.classfile)
+            feat, ids, class_dict = align_features_and_classes(feat, ids, class_dict)
+            if len(ids) == 0:
+                raise ValueError("No features could be matched with class file! Cannot proceed.")
+        else:
+            # try to derive classes from filename
+            # TODO make check if it makes sense
+            classes = classes_from_filename(ids)
+            class_dict = dict(zip(ids, classes))
 
         # convert to numeric classes
         (class_dict_num, labelencoder) = classdict_to_numeric(class_dict, return_encoder = True)
