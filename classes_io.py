@@ -232,7 +232,7 @@ def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,
     return file_ids_matching
 
 
-def align_features_and_classes(features, feature_ids, class_data):
+def align_features_and_classes(features, feature_ids, class_data, verbose=True):
 
     '''match the ids of the features and the class dictionary/dataframe
 
@@ -253,7 +253,7 @@ def align_features_and_classes(features, feature_ids, class_data):
     else:
         raise ValueError("Class data must be passed as Python dict or Pandas dataframe!")
 
-    ids_matched = match_filenames(feature_ids, file_ids_classfile)
+    ids_matched = match_filenames(feature_ids, file_ids_classfile, verbose=verbose, print_nonmatching=verbose)
 
     # Note: sorting or not sorting changes the results of cross-validation!
     # ids_matched = sorted(ids_matched)
@@ -269,7 +269,7 @@ def align_features_and_classes(features, feature_ids, class_data):
     # cut & resort the features according to matched ids (subset, if files are missing in class file)
     features = sorted_feature_subset(features, feature_ids, ids_matched)
 
-    print "\nRetaining", features.values()[0].shape[0], "feature rows,", n_class_entries, "class entries."
+    if verbose: print "\nRetaining", features.values()[0].shape[0], "feature rows,", n_class_entries, "class entries."
 
     return features, ids_matched, class_data
 
