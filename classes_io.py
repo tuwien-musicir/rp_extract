@@ -74,7 +74,7 @@ def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, pos_la
     if verbose:
         print 'Categories in CSV file:', ", ".join(categories)
 
-    # replace positive lables as 1 and negative or empty as 0
+    # replace positive labels as 1 and negative or empty as 0
     dataframe.replace(pos_labels, 1, inplace=True)
     dataframe.replace(neg_labels, 0, inplace=True)
     dataframe.fillna(0, inplace=True) # treat empty cells as negative
@@ -198,7 +198,7 @@ def check_duplicates(file_ids):
         raise ValueError("Duplicate entries in file ids!")
 
 
-def match_filenames(file_ids_classfile,file_ids_featurefile,strip_files=False,verbose=True, print_nonmatching=True):
+def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,verbose=True, print_nonmatching=True):
     '''Match file ids in audio feature files and class files.
 
     returns the set of overlapping filenames (file ids) of the two lists of file ids
@@ -217,8 +217,8 @@ def match_filenames(file_ids_classfile,file_ids_featurefile,strip_files=False,ve
     file_ids_matching = set(file_ids_classfile).intersection(file_ids_featurefile)
 
     if verbose:
-        print len(file_ids_classfile), "files in class file"
         print len(file_ids_featurefile), "files in feature file(s)"
+        print len(file_ids_classfile), "files in class file"
         print len(file_ids_matching), "files matching"
 
     if print_nonmatching:  # output missing files
@@ -236,6 +236,7 @@ def match_filenames(file_ids_classfile,file_ids_featurefile,strip_files=False,ve
             for f in diff: print f
 
     return file_ids_matching
+
 
 
 # OBSOLETE?

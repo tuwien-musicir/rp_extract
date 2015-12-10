@@ -1,5 +1,9 @@
+'''
+Classification of Music into Genres, Moods or other categories
+using the Rhythm Pattern audio analyzer (rp_extract.py)
 
-# 2015-11 by Thomas Lidy
+2015-11 by Thomas Lidy
+'''
 
 import argparse
 import cPickle

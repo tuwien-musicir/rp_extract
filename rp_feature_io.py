@@ -3,14 +3,11 @@
 2015 by Thomas Lidy
 
 load and save feature files from RP_extract
+manipulate, merge, cut, align features and more helpful functions
 
 supported formats:
 read and write: CSV, ARFF
 read only currently: HDF5, NPZ (Numpy Pickle)
-
-additional functions to load or get class labels for audiofiles:
-read_class_file: load a (comma or tab-separated) class label file
-classes_from_filename: derive a class label from a part of a filename or path
 '''
 
 import os
