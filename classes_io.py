@@ -238,6 +238,47 @@ def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,
     return file_ids_matching
 
 
+def align_features_and_classes(features, feature_ids, class_data):
+
+    '''match the ids of the features and the class dictionary/dataframe
+
+    finds the intersecting subset of ids among the two and reduces both the features and the class_data to the
+    matching ids, ensuring same order
+
+    features: dictionary with multiple numpy arrays, on per each feature type
+    feature_ids: list of strings containing the ids for the features (must be same length as rows in feature arrays)
+    class_data:
+    '''
+    import pandas as pd # only for multi-class files stored as dataframe
+    from rp_feature_io import sorted_feature_subset
+
+    if isinstance(class_data, dict):
+        file_ids_classfile = class_data.keys()
+    elif isinstance(class_data, pd.DataFrame):
+        file_ids_classfile = list(class_data.index)
+    else:
+        raise ValueError("Class data must be passed as Python dict or Pandas dataframe!")
+
+    ids_matched = match_filenames(feature_ids, file_ids_classfile)
+
+    # Note: sorting or not sorting changes the results of cross-validation!
+    # ids_matched = sorted(ids_matched)
+
+    if isinstance(class_data, dict):
+        class_data = reduce_class_dict(class_data, ids_matched)
+        n_class_entries = len(class_data)
+    if isinstance(class_data, pd.DataFrame):
+        # create a new reduced dataframe that contains only the matched files (in the matched order)
+        class_data = class_data.ix[ids_matched]
+        n_class_entries = class_data.shape[0]
+
+    # cut & resort the features according to matched ids (subset, if files are missing in class file)
+    features = sorted_feature_subset(features, feature_ids, ids_matched)
+
+    print "\nRetaining", features.values()[0].shape[0], "feature rows,", n_class_entries, "class entries."
+
+    return features, ids_matched, class_data
+
 
 # OBSOLETE?
 def match_and_reduce_class_dict(class_dict,new_file_ids,strip_files = True):
