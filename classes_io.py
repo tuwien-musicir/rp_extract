@@ -190,14 +190,6 @@ def reduce_class_dict(class_dict,new_file_ids):
     return (new_class_dict)
 
 
-def check_duplicates(file_ids):
-    '''check for duplicates in file_ids from CSV or feature files'''
-    dup = set([x for x in file_ids if file_ids.count(x) > 1])
-    if len(dup) > 0:
-        print >> sys.stderr, dup
-        raise ValueError("Duplicate entries in file ids!")
-
-
 def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,verbose=True, print_nonmatching=True):
     '''Match file ids in audio feature files and class files.
 
@@ -207,6 +199,8 @@ def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,
     :param strip_files:
     :return: file_ids_matched
     '''
+    from rp_feature_io import check_duplicates
+
     if strip_files:
         file_ids_classfile = strip_filenames(file_ids_classfile)
         file_ids_featurefile = strip_filenames(file_ids_featurefile)

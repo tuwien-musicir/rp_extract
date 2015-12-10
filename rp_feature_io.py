@@ -11,10 +11,20 @@ read only currently: HDF5, NPZ (Numpy Pickle)
 '''
 
 import os
+import sys
 import pandas as pd
 
 
 # == CSV ==
+
+
+def check_duplicates(file_ids):
+    '''check for duplicates in file_ids from CSV or feature files'''
+    dup = set([x for x in file_ids if file_ids.count(x) > 1])
+    if len(dup) > 0:
+        print >> sys.stderr, dup
+        raise ValueError("Duplicate entries in file ids!")
+
 
 def read_csv_features1(filename,separate_ids=True,id_column=0):
     ''' Read_CSV_features1
@@ -31,8 +41,8 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
     :param separate_ids: will split off the id column(s) from the features (containing eg. and index or filename string)
     :param id_column: specify which is/are the id column(s) as integer or list, e.g. 0 (= first column) or [0,1] (= first two columns)
             negative integers identify the columns backwards, i.e. -1 is the last column, -2 the second last column, and so on
-    :return: if separate_ids is True, it will return a tuple (ids, features) both being numpy arrays
-             (with ids containing usually identifiers and features the numeric data)
+    :return: if separate_ids is True, it will return a tuple (ids, features)
+             with ids containing usually identifiers as list of strings and features the numeric data as numpy array;
              if separate_ids is False, just the features array will returned (containing everything read from the CSV)
     '''
 
@@ -88,7 +98,20 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,verbose=Tru
         if verbose: print "Read:", e + ":\t", feat[e].shape[0], "audio file vectors,", feat[e].shape[1], "dimensions"
 
     if separate_ids:
+        # check for ID consistency
+        ext = ids.keys()
+        for e in ext[1:]:
+            if not len(ids[ext[0]]) == len(ids[e]):
+                raise ValueError("Feature files have different number of entries! " +
+                                 ", ".join([e + ': ' + str(len(ids[e])) for e in ext]) )
+            if not all(ids[ext[0]] == ids[e]):
+                raise ValueError("Ids not matching across feature files!")
+
+        # once consistent, check for duplicates
+        check_duplicates(ids[ext[0]].tolist())
+
         return(ids,feat)
+
     else:
         return feat
 
@@ -363,9 +386,9 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     """
     from rp_extract_batch import extract_all_files_generic
 
-# not possible because of omitted file extensions in read_csv_features below
-#    if not os.path.exists(input_path):
-#        raise NameError("File or path does not exist: " + input_path)
+    # not possible because of omitted file extensions in read_csv_features below
+    #    if not os.path.exists(input_path):
+    #        raise NameError("File or path does not exist: " + input_path)
 
     if save_features and output_file is None:
         raise ValueError("output_file must be specified if save_features is set to True!")
@@ -383,20 +406,11 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     else:
         # LOAD from Feature File
         ids, feat = read_csv_features(input_path,feature_types)
-        # TODO .npz, .h5 or .hdf5
 
-        # check for label consistency among loaded feature types
-        ext = ids.keys()
+        # from the ids dict, we take only the first entry and convert numpy array to list
+        ids = ids.values()[0].tolist()
 
-        for e in ext[1:]:
-            if not len(ids[ext[0]]) == len(ids[e]):
-                raise ValueError("Feature files have different number of entries! " +
-                                 ", ".join([e + ': ' + str(len(ids[e])) for e in ext]) )
-            if not all(ids[ext[0]] == ids[e]):
-                raise ValueError("Ids not matching across feature files!")
-
-        # if all are the same, we take the ids of first feature type
-        ids = ids[ext[0]]
+        # TODO: read .npz, .h5 or .hdf5
 
     return ids, feat
 
