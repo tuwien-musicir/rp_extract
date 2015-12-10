@@ -13,7 +13,7 @@ from sklearn import preprocessing, svm
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
 
-from rp_feature_io import load_or_analyze_features
+from rp_feature_io import load_or_analyze_features, concatenate_features
 from classes_io import *
 
 
@@ -120,6 +120,10 @@ if __name__ == '__main__':
 
     args = argparser.parse_args()
 
+    # SELECT FEATURE TYPES TO USE (TODO: make configurable)
+    feature_types = ('ssd','rh') # 2 feature sets
+    # feature_types =  ('rp','ssd','rh')  # 3 feature sets
+
 
     if args.train or args.crossval:
 
@@ -142,8 +146,7 @@ if __name__ == '__main__':
             if len(ids) == 0:
                 raise ValueError("No features could be matched with class file! Cannot proceed.")
         else:
-            # try to derive classes from filename
-            # TODO make check if it makes sense
+            # try to derive classes from filename (e.g. sub-directory)
             classes = classes_from_filename(ids)
             class_dict = dict(zip(ids, classes))
 
@@ -153,9 +156,8 @@ if __name__ == '__main__':
         class_num = get_classes_from_dict(class_dict_num,ids)
 
         # CONCATENATE MULTIPLE FEATURES
-        # (optional) here: concatenate ssd + rh
-        # TODO don't hardcode this
-        features = np.hstack((feat['ssd'],feat['rh']))
+        # (optional but needs to be done in same way at prediction time)
+        features = concatenate_features(feat, feature_types)
 
         # STANDARDIZE
         features, scaler = standardize(features)
@@ -196,7 +198,7 @@ if __name__ == '__main__':
             raise ValueError("No features were extracted from input files. Check format.")
 
         # SELECT OR CONCATENATE FEATURES
-        features_to_classify = np.hstack((feat['ssd'],feat['rh']))
+        features_to_classify = concatenate_features(feat, feature_types)
 
         # SCALE FEATURES LIKE TRAINING DATA
         features_to_classify = scaler.transform(features_to_classify)
