@@ -117,7 +117,7 @@ def classes_from_filename(filenames,split_char=os.sep):
     classes = [x.split(split_char, 1)[0] for x in filenames]
 
     # sanity check
-    if len(classes) == len(filenames):
+    if len(set(classes)) == len(filenames):
         print "Example file name:", filenames[0]
         print "Example class label:", classes[0]
         raise ValueError("Class label could not be derived from filename! Is the the filename containing a sub-directory?")
