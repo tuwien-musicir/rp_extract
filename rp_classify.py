@@ -115,14 +115,15 @@ if __name__ == '__main__':
     argparser.add_argument('output_filename', nargs='?', help='filename for predictions to write (if omitted, will print output') # nargs='?' to make it optional
 
     argparser.add_argument('-t','--train',action='store_true',help='train a model with the input data',default=False) # boolean opt
-    argparser.add_argument('-c', '--classfile', help='class label file for training and/or cross-validation',default=None)
+    argparser.add_argument('-c', '--classfile', help='single label class file for training and/or cross-validation (format: <filename>TAB<class_string>)',default=None)
+    argparser.add_argument('-m', '--multiclassfile', help='multi label class file for training and/or cross-validation (format: <filename>  x  x     x)',default=None)
     argparser.add_argument('-cv','--crossval',action='store_true',help='cross-validate with the input data',default=False) # boolean opt
 
     args = argparser.parse_args()
 
     # SELECT FEATURE TYPES TO USE (TODO: make configurable)
     feature_types = ('ssd','rh') # 2 feature sets
-    # feature_types =  ('rp','ssd','rh')  # 3 feature sets
+    #feature_types =  ('rp','ssd','rh')  # 3 feature sets
 
 
     if args.train or args.crossval:
@@ -135,13 +136,13 @@ if __name__ == '__main__':
         ids, feat = load_or_analyze_features(args.input_path)
 
         # CLASSES: read from file or derive from sub-path
-        if args.classfile:
-            # TODO Temp solution: strip filenames of audio features
-            ids = strip_filenames(ids)
+        if args.classfile or args.multiclassfile:
+            ids = strip_filenames(ids)  # TODO Temp solution: strip filenames of audio features
+            if args.classfile:
+                class_dict = read_class_file(args.classfile)
+            elif args.multiclassfile:
+                class_dict = read_multi_class_file(args.multiclassfile) # class_dict here is in fact a dataframe
 
-            # TODO alternatively provide multi-class file
-            print "Reading class file: ", args.classfile
-            class_dict = read_class_file(args.classfile)
             feat, ids, class_dict = align_features_and_classes(feat, ids, class_dict)
             if len(ids) == 0:
                 raise ValueError("No features could be matched with class file! Cannot proceed.")
@@ -151,9 +152,15 @@ if __name__ == '__main__':
             class_dict = dict(zip(ids, classes))
 
         # convert to numeric classes
-        (class_dict_num, labelencoder) = classdict_to_numeric(class_dict, return_encoder = True)
-
-        class_num = get_classes_from_dict(class_dict_num,ids)
+        if args.multiclassfile:
+            # multi-class files are already converted to numeric in read function
+            # - just get the numeric classes from the class dataframe's values
+            classes_num = class_dict.as_matrix()
+            # get the categories from the header
+            multi_categories = class_dict.columns.values.tolist()
+        else:
+            (class_dict_num, labelencoder) = classdict_to_numeric(class_dict, return_encoder = True)
+            classes_num = get_classes_from_dict(class_dict_num,ids)
 
         # CONCATENATE MULTIPLE FEATURES
         # (optional but needs to be done in same way at prediction time)
@@ -165,10 +172,13 @@ if __name__ == '__main__':
         # TRAIN + SAVE MODEL
         if args.train:
 
-            model = train_model(features, class_num)
+            model = train_model(features, classes_num)
 
             # save model
-            save_model(args.model_file, model, scaler, labelencoder)
+            if args.multiclassfile: # multi-class does not have a label encoder
+                save_model(args.model_file, model, scaler)
+            else:
+                save_model(args.model_file, model, scaler, labelencoder)
 
         # CROSS-VALIDATE
         if args.crossval:
@@ -182,6 +192,10 @@ if __name__ == '__main__':
             print "Avg Accuracy (%d folds): %2.2f (stddev: %2.2f)" % (len(acc), (np.mean(acc)*100), np.std(acc)*100)
 
     else: # do classification only when not training
+
+        # check for unappropriate parameters
+        if args.classfile or args.multiclassfile:
+            raise SyntaxError("Class file can only provided when training with -t parameter.")
 
         # LOAD MODEL
         if args.model_file is None:
