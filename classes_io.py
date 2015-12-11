@@ -60,8 +60,8 @@ def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, pos_la
     :return:
     '''
 
-    # we use pandas to import CSV as pandas dataframe,
-    # because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
+    # we use pandas to import CSV as pandas dataframe, because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
+    import numpy as np
     import pandas as pd
     dataframe = pd.read_csv(filename, sep=delimiter, index_col=0)
 
@@ -78,6 +78,16 @@ def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, pos_la
     dataframe.replace(pos_labels, 1, inplace=True)
     dataframe.replace(neg_labels, 0, inplace=True)
     dataframe.fillna(0, inplace=True) # treat empty cells as negative
+
+    # sanity check before we convert to integers
+    wrong_entries = np.where(np.logical_and(dataframe.values != 1, dataframe.values != 0))
+    if len(wrong_entries[0]) > 0:
+        for i,j in zip(wrong_entries[0], wrong_entries[1]):
+            print "Unrecognized entry in row", i+1, ", column", j+1, ":"
+            print dataframe.index[i] + ": '" + dataframe.iloc[i,j] + "'"
+
+    # make an in-place conversion to integer (if not possible, will throw error)
+    dataframe = dataframe.astype(int, copy=False)
 
     return dataframe
 
