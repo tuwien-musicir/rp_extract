@@ -63,7 +63,7 @@ def classify(model, features, labelencoder = None):
     else:
         return(pred)
 
-# CROSS VALIDATION (for experimentation)
+# CROSS VALIDATION
 def cross_validate(model, features, classes, folds=10):
     from sklearn import cross_validation
     return cross_validation.cross_val_score(model, features, classes, scoring='accuracy', cv=folds)
@@ -71,6 +71,18 @@ def cross_validate(model, features, classes, folds=10):
     # 'f1_micro', 'f1_samples', 'f1_weighted', 'log_loss', 'mean_absolute_error', 'mean_squared_error',
     # 'median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted',
     # 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+
+
+# CROSS VALIDATION (for multi-class predictions)
+def cross_validate_multiclass(model, features, classes, categories, folds=10):
+    from sklearn import cross_validation
+
+    # we iterate over the categories in class file columns here
+    for c in range(len(categories)):
+        cls = classes_num[:,c]
+        a = cross_validation.cross_val_score(model, features,cls, scoring='accuracy', cv=10)
+        mean_acc = np.mean(a)
+        print categories[c], mean_acc * 100
 
 
 # SAVE MODEL
