@@ -154,7 +154,7 @@ if __name__ == '__main__':
             if args.classfile:
                 class_dict = read_class_file(args.classfile)
             elif args.multiclassfile:
-                class_dict = read_multi_class_file(args.multiclassfile, pos_labels=('x','X/2')) # class_dict here is in fact a dataframe
+                class_dict = read_multi_class_file(args.multiclassfile, pos_labels=('x','x ','X/2')) # class_dict here is in fact a dataframe
 
             feat, ids, class_dict = align_features_and_classes(feat, ids, class_dict)
             if len(ids) == 0:
@@ -216,7 +216,7 @@ if __name__ == '__main__':
 
         # check for unappropriate parameters
         if args.classfile or args.multiclassfile:
-            raise SyntaxError("Class file can only provided when training with -t parameter.")
+            raise SyntaxError("Class file can only provided when training with -t parameter or cross-validating with -cv.")
 
         # LOAD MODEL
         if args.model_file is None:
@@ -241,7 +241,7 @@ if __name__ == '__main__':
         # CLASSIFY
         predictions = classify(model, features_to_classify, labelencoder)
 
-        # OUPUT
+        # OUTPUT
         if args.output_filename:
             print "Writing to output file: ", args.output_filename
             write_class_file(args.output_filename, ids, predictions)
