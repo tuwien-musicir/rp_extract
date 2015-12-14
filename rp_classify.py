@@ -111,10 +111,12 @@ def load_model(filename,scaler=True,labelencoder=True):
         f = open(basename + ".scaler.pkl", 'rb')
         scaler = cPickle.load(f)
         f.close()
+    else: scaler = None
     if labelencoder:
         f = open(basename + ".labelenc.pkl", 'rb')
         labelencoder = cPickle.load(f)
         f.close()
+    else: labelencoder = None
     return (model,scaler,labelencoder)
 
 
@@ -216,15 +218,18 @@ if __name__ == '__main__':
 
         # check for unappropriate parameters
         if args.classfile or args.multiclassfile:
-            raise SyntaxError("Class file can only provided when training with -t parameter or cross-validating with -cv.")
+            raise SyntaxError("Class file can only be provided when training with -t parameter or cross-validating with -cv.")
 
         # LOAD MODEL
         if args.model_file is None:
             args.model_file = 'models/GTZAN'   # default model file
 
-        if not args.train:
-            # TODO: store and load feature extraction parameters with model
-            model, scaler, labelencoder = load_model(args.model_file)
+        if not args.train: # if we train + classify in one step, we don't need to load the model
+            #TODO if not args.multiclassfile:
+                #model, scaler, labelencoder = load_model(args.model_file)
+            #else:
+                # no labelencoder for multiclass (return value will be None, used below)
+            model, scaler, labelencoder = load_model(args.model_file, labelencoder=False)
 
         # EXTRACT FEATURES FROM NEW FILES
         ids, feat = load_or_analyze_features(args.input_path)
