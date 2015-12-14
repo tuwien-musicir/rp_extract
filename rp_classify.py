@@ -76,13 +76,14 @@ def cross_validate(model, features, classes, folds=10):
 # CROSS VALIDATION (for multi-class predictions)
 def cross_validate_multiclass(model, features, classes, categories, folds=10):
     from sklearn import cross_validation
-
+    acc = [] # empty list
     # we iterate over the categories in class file columns here
     for c in range(len(categories)):
-        cls = classes_num[:,c]
-        a = cross_validation.cross_val_score(model, features,cls, scoring='accuracy', cv=10)
+        cls = classes[:,c]
+        a = cross_validation.cross_val_score(model, features, cls, scoring='accuracy', cv=10)
         mean_acc = np.mean(a)
-        print categories[c], mean_acc * 100
+        acc.append(mean_acc)
+    return zip(categories,acc)
 
 
 # SAVE MODEL
@@ -153,7 +154,7 @@ if __name__ == '__main__':
             if args.classfile:
                 class_dict = read_class_file(args.classfile)
             elif args.multiclassfile:
-                class_dict = read_multi_class_file(args.multiclassfile) # class_dict here is in fact a dataframe
+                class_dict = read_multi_class_file(args.multiclassfile, pos_labels=('x','X/2')) # class_dict here is in fact a dataframe
 
             feat, ids, class_dict = align_features_and_classes(feat, ids, class_dict)
             if len(ids) == 0:
@@ -194,14 +195,22 @@ if __name__ == '__main__':
 
         # CROSS-VALIDATE
         if args.crossval:
-
+            print "CROSS-VALIDATION:"
             if not args.train:
                 # if we trained, we have a model already; otherwise we initialize a fresh one
                 model = svm.SVC(kernel='linear')
 
-            acc = cross_validate(model, features, classes, folds=10)
-            print "Fold Accuracy:", acc
-            print "Avg Accuracy (%d folds): %2.2f (stddev: %2.2f)" % (len(acc), (np.mean(acc)*100), np.std(acc)*100)
+            if not args.multiclassfile:
+                acc = cross_validate(model, features, classes_num, folds=10)
+                print "Fold Accuracy:", acc
+                print "Avg Accuracy (%d folds): %2.2f (stddev: %2.2f)" % (len(acc), (np.mean(acc)*100), np.std(acc)*100)
+            else:
+                acc_zip = cross_validate_multiclass(model, features, classes_num, multi_categories, folds=10)
+                for c, a in acc_zip:
+                    print "Class: %s\t%2.2f %%" % (c,a*100)
+                acc_per_class = zip(*acc_zip)[1] # unzip to 2 lists and take second one
+                avg_acc = np.mean(acc_per_class)
+                print "Average Accuracy:\t%2.2f %%" % (avg_acc*100)
 
     else: # do classification only when not training
 
