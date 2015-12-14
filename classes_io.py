@@ -85,6 +85,7 @@ def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, pos_la
         for i,j in zip(wrong_entries[0], wrong_entries[1]):
             print "Unrecognized entry in row", i+1, ", column", j+1, ":"
             print dataframe.index[i] + ": '" + dataframe.iloc[i,j] + "'"
+        raise ValueError("CSV contains unrecognized entries. Please correct CSV file or define pos_labels when calling read_multi_class_file function.")
 
     # make an in-place conversion to integer (if not possible, will throw error)
     dataframe = dataframe.astype(int, copy=False)
@@ -130,7 +131,7 @@ def classes_from_filename(filenames,split_char=os.sep):
     if len(set(classes)) == len(filenames):
         print "Example file name:", filenames[0]
         print "Example class label:", classes[0]
-        raise ValueError("Class label could not be derived from filename! Is the the filename containing a sub-directory?")
+        raise ValueError("Class label could not be derived from filename! Filename must contain a sub-directory path to be used as class label. Otherwise provide a class label file.")
 
     return classes
 
