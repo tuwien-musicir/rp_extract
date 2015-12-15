@@ -5,6 +5,7 @@ using the Rhythm Pattern audio analyzer (rp_extract.py)
 2015-11 by Thomas Lidy
 '''
 
+import os.path
 import argparse
 import cPickle
 import numpy as np
@@ -103,21 +104,38 @@ def save_model(filename,model,scaler=None,labelencoder=None,multi_categories=Non
 
 
 # LOAD MODEL
-def load_model(filename,scaler=True,labelencoder=True):
+def load_model(filename,scaler=True,labelencoder=True,multilabels=False):
     basename = os.path.splitext(filename)[0]
+
+    # load model
     f = open(basename + ".model.pkl", 'rb')
     model = cPickle.load(f)
     f.close()
+
     if scaler:
         f = open(basename + ".scaler.pkl", 'rb')
         scaler = cPickle.load(f)
         f.close()
     else: scaler = None
+
     if labelencoder:
-        f = open(basename + ".labelenc.pkl", 'rb')
-        labelencoder = cPickle.load(f)
-        f.close()
+        labelfile = basename + ".labelenc.pkl"
+        if os.path.isfile(labelfile): # check if exists
+            f = open(labelfile, 'rb')
+            labelencoder = cPickle.load(f)
+            f.close()
+        else: labelencoder = None
     else: labelencoder = None
+
+    if multilabels:
+        multilabelfile = basename + ".multilabels.csv"
+        if os.path.isfile(multilabelfile): # check if exists
+            with open(multilabelfile) as f:
+                multi_categories = [line.rstrip('\n') for line in f]
+        else: multi_categories = None
+        # if multilabels is True we return with multi_categories otherwise we omit 4th return value
+        return (model,scaler,labelencoder,multi_categories)
+
     return (model,scaler,labelencoder)
 
 
@@ -213,9 +231,9 @@ if __name__ == '__main__':
                 avg_acc = np.mean(acc_per_class)
                 print "Average Accuracy:\t%2.2f %%" % (avg_acc*100)
 
-    else: # do classification only when not training
+    else: # do CLASSIFICATION only when not training
 
-        # check for unappropriate parameters
+        # check for inappropriate parameters
         if args.classfile or args.multiclassfile:
             raise SyntaxError("Class file can only be provided when training with -t parameter or cross-validating with -cv.")
 
@@ -225,10 +243,8 @@ if __name__ == '__main__':
 
         if not args.train: # if we train + classify in one step, we don't need to load the model
             #TODO if not args.multiclassfile:
-                #model, scaler, labelencoder = load_model(args.model_file)
-            #else:
-                # no labelencoder for multiclass (return value will be None, used below)
-            model, scaler, labelencoder = load_model(args.model_file, labelencoder=False)
+            # we always try to get a multi labels file (if we can't find it, multi_categories will be None; vice-versa for labelencoder)
+            model, scaler, labelencoder, multi_categories = load_model(args.model_file, multilabels=True)
 
         # EXTRACT FEATURES FROM NEW FILES
         ids, feat = load_or_analyze_features(args.input_path)
@@ -243,6 +259,10 @@ if __name__ == '__main__':
         features_to_classify = scaler.transform(features_to_classify)
 
         # CLASSIFY
+        print "Classification:"
+        if multi_categories:
+            print "Multiple categories to predict:", ", ".join(multi_categories)
+
         predictions = classify(model, features_to_classify, labelencoder)
 
         # OUTPUT
