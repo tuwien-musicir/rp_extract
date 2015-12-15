@@ -242,9 +242,12 @@ if __name__ == '__main__':
             args.model_file = 'models/GTZAN'   # default model file
 
         if not args.train: # if we train + classify in one step, we don't need to load the model
-            #TODO if not args.multiclassfile:
             # we always try to get a multi labels file (if we can't find it, multi_categories will be None; vice-versa for labelencoder)
             model, scaler, labelencoder, multi_categories = load_model(args.model_file, multilabels=True)
+
+        # info print
+        #if multi_categories:
+        #    print "Multiple categories to predict:", ", ".join(multi_categories)
 
         # EXTRACT FEATURES FROM NEW FILES
         ids, feat = load_or_analyze_features(args.input_path)
@@ -260,16 +263,25 @@ if __name__ == '__main__':
 
         # CLASSIFY
         print "Classification:"
-        if multi_categories:
-            print "Multiple categories to predict:", ", ".join(multi_categories)
-
         predictions = classify(model, features_to_classify, labelencoder)
 
         # OUTPUT
-        if args.output_filename:
-            print "Writing to output file: ", args.output_filename
-            write_class_file(args.output_filename, ids, predictions)
+        if not multi_categories: # single label classification
+            if args.output_filename:
+                print "Writing to output file: ", args.output_filename
+                write_class_file(args.output_filename, ids, predictions)
+            else:
+                # just print to stdout
+                for (i, label) in zip(ids,predictions):
+                    print i + ":\t",label
         else:
-            # just print to stdout
-            for (i, label) in zip(ids,predictions):
-                print i + ":\t",label
+            # in case we have multi label classification we replace back the symbol for True and False
+
+            import pandas as pd
+            pred_df = pd.DataFrame(predictions, index=ids, columns=multi_categories)
+            pred_df.replace(0, '', inplace=True)
+            pred_df.replace(1, 'x', inplace=True)
+
+            print pred_df
+
+
