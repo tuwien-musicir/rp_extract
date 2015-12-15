@@ -92,11 +92,9 @@ def save_model(filename,model,scaler=None,labelencoder=None):
     with open(basename + ".model.pkl", 'wb') as f:
         cPickle.dump(model, f, protocol=cPickle.HIGHEST_PROTOCOL)
     if scaler:
-        filename = os.path.splitext(filename)[0] + ".scaler.pkl"
         with open(basename + ".scaler.pkl", 'wb') as f:
             cPickle.dump(scaler, f, protocol=cPickle.HIGHEST_PROTOCOL)
     if labelencoder:
-        filename = os.path.splitext(filename)[0] + ".labelencoder.pkl"
         with open(basename + ".labelenc.pkl", 'wb') as f:
             cPickle.dump(labelencoder, f, protocol=cPickle.HIGHEST_PROTOCOL)
 
