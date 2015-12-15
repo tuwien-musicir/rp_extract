@@ -87,7 +87,7 @@ def cross_validate_multiclass(model, features, classes, categories, folds=10):
 
 
 # SAVE MODEL
-def save_model(filename,model,scaler=None,labelencoder=None):
+def save_model(filename,model,scaler=None,labelencoder=None,multi_categories=None):
     basename = os.path.splitext(filename)[0]
     with open(basename + ".model.pkl", 'wb') as f:
         cPickle.dump(model, f, protocol=cPickle.HIGHEST_PROTOCOL)
@@ -97,6 +97,9 @@ def save_model(filename,model,scaler=None,labelencoder=None):
     if labelencoder:
         with open(basename + ".labelenc.pkl", 'wb') as f:
             cPickle.dump(labelencoder, f, protocol=cPickle.HIGHEST_PROTOCOL)
+    if multi_categories:
+        with open(basename + ".multilabels.csv", 'w') as f:
+            f.write('\n'.join(multi_categories))
 
 
 # LOAD MODEL
@@ -171,9 +174,11 @@ if __name__ == '__main__':
             classes_num = class_dict.as_matrix()
             # get the categories from the header
             multi_categories = class_dict.columns.values.tolist()
+            labelencoder = None # no label encoder for multi-class files
         else:
             (class_dict_num, labelencoder) = classdict_to_numeric(class_dict, return_encoder = True)
             classes_num = get_classes_from_dict(class_dict_num,ids)
+            multi_categories = None
 
         # CONCATENATE MULTIPLE FEATURES
         # (optional but needs to be done in same way at prediction time)
@@ -184,14 +189,10 @@ if __name__ == '__main__':
 
         # TRAIN + SAVE MODEL
         if args.train:
-
+            print "Training model ..."
             model = train_model(features, classes_num)
-
             # save model
-            if args.multiclassfile: # multi-class does not have a label encoder
-                save_model(args.model_file, model, scaler)
-            else:
-                save_model(args.model_file, model, scaler, labelencoder)
+            save_model(args.model_file, model, scaler, labelencoder, multi_categories)
 
         # CROSS-VALIDATE
         if args.crossval:
