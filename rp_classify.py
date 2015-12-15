@@ -282,6 +282,11 @@ if __name__ == '__main__':
             pred_df.replace(0, '', inplace=True)
             pred_df.replace(1, 'x', inplace=True)
 
-            print pred_df
+            if args.output_filename:
+                print "Writing to output file: ", args.output_filename
+                with open(args.output_filename, 'w') as file:
+                    pred_df.to_csv(file, sep='\t')
 
-
+            else:
+                # just print to stdout
+                print pred_df
