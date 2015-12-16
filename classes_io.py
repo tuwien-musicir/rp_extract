@@ -154,7 +154,7 @@ def classes_to_numeric(class_labels, verbose=True, return_encoder = False):
 
     labelencoder = LabelEncoder()
     labelencoder.fit(class_labels)
-    if (verbose): print len(labelencoder.classes_), "classes:", list(labelencoder.classes_)
+    if (verbose): print len(labelencoder.classes_), "classes:", ", ".join(list(labelencoder.classes_))
     classes_num = labelencoder.transform(class_labels)
     if return_encoder:
         return (classes_num, labelencoder)

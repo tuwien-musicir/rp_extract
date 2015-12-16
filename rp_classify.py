@@ -207,7 +207,8 @@ if __name__ == '__main__':
 
         # TRAIN + SAVE MODEL
         if args.train:
-            print "Training model ..."
+            print "Training model:"
+            print "Using features:", " + ".join(feature_types)
             model = train_model(features, classes_num)
             # save model
             save_model(args.model_file, model, scaler, labelencoder, multi_categories)
@@ -222,7 +223,7 @@ if __name__ == '__main__':
             if not args.multiclassfile:
                 acc = cross_validate(model, features, classes_num, folds=10)
                 print "Fold Accuracy:", acc
-                print "Avg Accuracy (%d folds): %2.2f (stddev: %2.2f)" % (len(acc), (np.mean(acc)*100), np.std(acc)*100)
+                print "Avg Accuracy (%d folds): %2.2f %% (std.dev.: %2.2f)" % (len(acc), (np.mean(acc)*100), np.std(acc)*100)
             else:
                 acc_zip = cross_validate_multiclass(model, features, classes_num, multi_categories, folds=10)
                 for c, a in acc_zip:
@@ -263,6 +264,10 @@ if __name__ == '__main__':
 
         # CLASSIFY
         print "Classification:"
+        print "Using features:", " + ".join(feature_types)
+        if labelencoder:
+            print len(labelencoder.classes_), "possible classes:", ", ".join(list(labelencoder.classes_))
+
         predictions = classify(model, features_to_classify, labelencoder)
 
         # OUTPUT
