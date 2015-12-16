@@ -130,8 +130,8 @@ In this default case, files in `input_path` _must_ be organized in sub-folders n
 
 Alternatively, you can provide the class labels for training a new model in two alternative ways, adding an additional parameter to the command line:
 
-* `-c classfile`: expects the name of a TAB-separated file, where each line contains <audiofilename>TAB<class_label>
-* `-m multiclassfile`: also a TAB-separated file with <audiofilename> in the first columns, and additional columns with the class labels in the header (1st line) and an 'x' for each file belonging to the class, an empty TAB position otherwise.
+* `-c classfile`: expects the name of a TAB-separated file, where each line contains `<audiofilename>` `TAB` `<class_label>`
+* `-m multiclassfile`: also a TAB-separated file with `<audiofilename>` in the first column, and additional columns with the class labels in the header (1st line) and an 'x' for each file belonging to the class, an empty TAB position otherwise.
 
 Once you trained a model in one of these ways, you can do predictions like above:
 
