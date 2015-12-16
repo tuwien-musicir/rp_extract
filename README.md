@@ -55,9 +55,9 @@ python rp_extract_batch.py <input_path> <feature_file_name>
 ```
 
 This will
-- search for MP3 or WAV files in `input_path`
+- search for WAV, MP3, M4A or AIFF files in `input_path`
 - extract a standard set of audio features (RP, SSD, RH - see http://ifs.tuwien.ac.at/mir/audiofeatureextraction.html )
-- write them in a CSV like manner to `feature_file_name` (don't specify a file extension, it will create 3 files, one for each feature type: .rp, .ssd, .rh)
+- write them in CSV format to `feature_file_name` (don't specify a file extension, it will create 3 files, one for each feature type: .rp, .ssd, .rh)
 
 Optionally specify the type of features you want:
 
@@ -100,19 +100,19 @@ will output:
 music/BoxCat_Games_-_10_-_Epic_Song.mp3:	pop
 ```
 
-You can also use a folder as an input, to analyze and predict all wav and mp3 files contained. The full syntax is:
+You can also use a folder as an input, to analyze and predict all audio files contained. The full syntax is:
 
 ```
 python rp_classify.py input_path model_file output_filename
 ```
 
-`input_path` can be: a folder, wav or mp3 file, or txt file containing a line-wise list of wav or mp3 files
+`input_path` can be: a folder, wav, mp3, m4a or aif(f) file, or txt file containing a line-wise list of audio files
 
 The pre-trained model included in this code repository (`models/GTZAN`) can predict these 10 genres:
 
 blues, classical, country, disco, hiphop, jazz, metal, pop, reggae, rock
 
-`output_filename` is an optional file in which predictions will be written in a tab-separated way
+`output_filename` is an optional file in which predictions will be written in a TAB-separated way
 (if omitted, result will be printed to stdout).
 
 
@@ -126,10 +126,14 @@ python rp_classify.py -t input_path model_file
 
 In this case files from `input_path` will be read and analyzed and a model will be trained and stored in `model_file`.
 
-_Note_: For training a model, files in `input_path` must be organized in sub-folders which are named after the categories to be trained.
- (this limitation/requirement might be relieved in future through the provision of groundtruth class files)
+In this default case, files in `input_path` _must_ be organized in sub-folders named like the categories to be used for training (e.g. one folder named 'pop', one for 'electronic', one for 'classical' etc.)
 
-Once you trained a model, you can do predictions like above:
+Alternatively, you can provide the class labels for training a new model in two alternative ways, adding an additional parameter to the command line:
+
+* `-c classfile`: expects the name of a TAB-separated file, where each line contains <audiofilename>TAB<class_label>
+* `-m multiclassfile`: also a TAB-separated file with <audiofilename> in the first columns, and additional columns with the class labels in the header (1st line) and an 'x' for each file belonging to the class, an empty TAB position otherwise.
+
+Once you trained a model in one of these ways, you can do predictions like above:
 
 ```
 python rp_classify.py input_path model_file output_filename
