@@ -503,7 +503,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
     if verbose: print "Analyzing", n_segments, "segments"
 
     if n_segments == 0:
-        raise ValueError("Not enough data to analyze! Minumum sample length needs to be " +
+        raise ValueError("Not enough data to analyze! Minimum sample length needs to be " +
                          str(segment_size) + " (5.94 seconds) but it is " + str(wavedata.shape[0]) +
                          " (" + str(round(wavedata.shape[0] * 1.0 / samplerate,2)) + " seconds)")
 
