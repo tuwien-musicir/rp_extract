@@ -421,7 +421,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
     Examples:
     >>> from audiofile_read import *
     >>> samplerate, samplewidth, wavedata = audiofile_read("music/BoxCat_Games_-_10_-_Epic_Song.mp3") #doctest: +ELLIPSIS
-    Decoded mp3 with: mpg123 -q -w /....wav music/BoxCat_Games_-_10_-_Epic_Song.mp3
+    Decoded .mp3 with: mpg123 -q -w /....wav music/BoxCat_Games_-_10_-_Epic_Song.mp3
     >>> feat = rp_extract(wavedata, samplerate, extract_rp=True, extract_ssd=True, extract_rh=True)
     Analyzing 7 segments
     >>> for k in feat.keys():
@@ -840,8 +840,8 @@ if __name__ == '__main__':
 
 
     # to run self test:
-    #self_test()
-    #exit()
+    self_test()
+    exit()
     # (no output means that everything went fine)
 
     import sys
