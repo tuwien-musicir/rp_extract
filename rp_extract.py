@@ -840,8 +840,8 @@ if __name__ == '__main__':
 
 
     # to run self test:
-    self_test()
-    exit()
+    #self_test()
+    #exit()
     # (no output means that everything went fine)
 
     import sys
