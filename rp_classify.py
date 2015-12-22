@@ -158,7 +158,8 @@ if __name__ == '__main__':
 
     # SELECT FEATURE TYPES TO USE (TODO: make configurable)
     if args.rp:
-        feature_types =  ('rp','ssd','rh')  # 3 feature sets
+        #feature_types =  ('rp','ssd','rh')  # 3 feature sets
+        feature_types =  ('ssd','rp')
     else:
         feature_types = ('ssd','rh') # 2 feature sets
 
