@@ -22,7 +22,7 @@ def check_duplicates(file_ids):
     '''check for duplicates in file_ids from CSV or feature files'''
     dup = set([x for x in file_ids if file_ids.count(x) > 1])
     if len(dup) > 0:
-        print >> sys.stderr, dup
+        print >> sys.stderr, "DUPLICATE(S):", "; ".join(list(dup))
         raise ValueError("Duplicate entries in file ids!")
 
 
