@@ -152,13 +152,15 @@ if __name__ == '__main__':
     argparser.add_argument('-c', '--classfile', help='single label class file for training and/or cross-validation (format: <filename>TAB<class_string>)',default=None)
     argparser.add_argument('-m', '--multiclassfile', help='multi label class file for training and/or cross-validation (format: <filename>  x  x     x)',default=None)
     argparser.add_argument('-cv','--crossval',action='store_true',help='cross-validate with the input data',default=False) # boolean opt
+    argparser.add_argument('-rp',action='store_true',help='include RP features (default = no)',default=False) # boolean opt
 
     args = argparser.parse_args()
 
     # SELECT FEATURE TYPES TO USE (TODO: make configurable)
-    feature_types = ('ssd','rh') # 2 feature sets
-    #feature_types =  ('rp','ssd','rh')  # 3 feature sets
-
+    if args.rp:
+        feature_types =  ('rp','ssd','rh')  # 3 feature sets
+    else:
+        feature_types = ('ssd','rh') # 2 feature sets
 
     if args.train or args.crossval:
 
@@ -201,6 +203,7 @@ if __name__ == '__main__':
         # CONCATENATE MULTIPLE FEATURES
         # (optional but needs to be done in same way at prediction time)
         features = concatenate_features(feat, feature_types)
+        print "Using features:", " + ".join(feature_types)
 
         # STANDARDIZE
         features, scaler = standardize(features)
@@ -208,7 +211,6 @@ if __name__ == '__main__':
         # TRAIN + SAVE MODEL
         if args.train:
             print "Training model:"
-            print "Using features:", " + ".join(feature_types)
             model = train_model(features, classes_num)
             # save model
             save_model(args.model_file, model, scaler, labelencoder, multi_categories)
@@ -263,8 +265,8 @@ if __name__ == '__main__':
         features_to_classify = scaler.transform(features_to_classify)
 
         # CLASSIFY
-        print "Classification:"
         print "Using features:", " + ".join(feature_types)
+        print "Classification:"
         if labelencoder:
             print len(labelencoder.classes_), "possible classes:", ", ".join(list(labelencoder.classes_))
 
