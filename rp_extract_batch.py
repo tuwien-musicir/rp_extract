@@ -194,6 +194,7 @@ def extract_all_files_in_path(in_path,
                               out_file = None,
                               feature_types = ['rp','ssd','rh'],
                               audiofile_types=('.wav','.mp3'),
+                              label=False,
                               verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub-directories in it
@@ -205,12 +206,13 @@ def extract_all_files_in_path(in_path,
     # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
     # feature_types: RP feature types to extract. see rp_extract.py
     # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
+    # label: use subdirectory name as class label
     """
 
     # get file list of all files in a path (filtered by audiofile_types)
     filelist = find_files(in_path,audiofile_types,relative_path=True)
 
-    return extract_all_files(filelist, in_path, out_file, feature_types, verbose)
+    return extract_all_files(filelist, in_path, out_file, feature_types, label, verbose)
 
 
 
@@ -253,6 +255,7 @@ def extract_all_files_generic(in_path,
 def extract_all_files(filelist, path,
                               out_file = None,
                               feature_types = ['rp','ssd','rh'],
+                              label=False,
                               verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub-directories in it
@@ -264,6 +267,7 @@ def extract_all_files(filelist, path,
     # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
     # feature_types: RP feature types to extract. see rp_extract.py
     # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
+    # label: use subdirectory name as class label
     """
 
     ext = feature_types
@@ -280,6 +284,8 @@ def extract_all_files(filelist, path,
 
     if out_file: # only if out_file is specified
         files, writer = initialize_feature_files(out_file,ext)
+        
+    
 
     for fil in filelist:  # iterate over all files
         try:
@@ -328,7 +334,13 @@ def extract_all_files(filelist, path,
 
             if out_file:
                 # WRITE each feature set to a CSV
-                write_feature_files(id,feat,writer)
+                
+                id2 = None
+                
+                if label:
+                    id2 = id.replace("\\","/").split("/")[-2].strip()
+                
+                write_feature_files(id,feat,writer,id2)
             else:
                 # IN MEMORY: add the extracted features for 1 file to the array dict accumulating all files
                 # TODO: only if we dont have out_file? maybe we want this as a general option
@@ -370,12 +382,13 @@ if __name__ == '__main__':
     argparser.add_argument('input_path', help='input file path to search for wav/mp3 files to analyze') # nargs='?' to make it optional
     argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension) [default: features/features]', default='features/features') # nargs='?' to make it optional
 
-    argparser.add_argument('-rp',action='store_true',help='extract Rhythm Patterns (default)',default=False) # boolean opt
-    argparser.add_argument('-rh',action='store_true',help='extract Rhythm Histograms (default)',default=False) # boolean opt
-    argparser.add_argument('-trh',action='store_true',help='extract Temporal Rhythm Histograms',default=False) # boolean opt
-    argparser.add_argument('-ssd',action='store_true',help='extract Statistical Spectrum Descriptors (default)',default=False) # boolean opt
-    argparser.add_argument('-tssd',action='store_true',help='extract Temporal Statistical Spectrum Descriptors',default=False) # boolean opt
-    argparser.add_argument('-mvd',action='store_true',help='extract Modulation Frequency Variance Descriptors',default=False) # boolean opt
+    argparser.add_argument('-rp',   action='store_true',help='extract Rhythm Patterns (default)',default=False) # boolean opt
+    argparser.add_argument('-rh',   action='store_true',help='extract Rhythm Histograms (default)',default=False) # boolean opt
+    argparser.add_argument('-trh',  action='store_true',help='extract Temporal Rhythm Histograms',default=False) # boolean opt
+    argparser.add_argument('-ssd',  action='store_true',help='extract Statistical Spectrum Descriptors (default)',default=False) # boolean opt
+    argparser.add_argument('-tssd', action='store_true',help='extract Temporal Statistical Spectrum Descriptors',default=False) # boolean opt
+    argparser.add_argument('-mvd',  action='store_true',help='extract Modulation Frequency Variance Descriptors',default=False) # boolean opt
+    argparser.add_argument('-label',action='store_true',help='use subdirectory name as class label',default=False) # boolean opt
 
     args = argparser.parse_args()
 
@@ -403,7 +416,7 @@ if __name__ == '__main__':
     print "File types:", audiofile_types
 
     # BATCH RP FEATURE EXTRACTION:
-    extract_all_files_in_path(args.input_path,args.output_filename,feature_types, audiofile_types)
+    extract_all_files_in_path(args.input_path,args.output_filename,feature_types, audiofile_types, args.label)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
