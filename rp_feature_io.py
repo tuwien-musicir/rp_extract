@@ -67,7 +67,7 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
         return feat
 
 
-def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,verbose=True):
+def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,single_id_list=False,verbose=True):
     ''' Read_CSV_features:
 
     read pre-analyzed features from multiple CSV files (with feature name extensions)
@@ -78,9 +78,17 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,verbose=Tru
     # separate_ids: if False, it will return a single matrix containing the id column
     #               if True, it will return a tuple: (ids, features) separating the id column from the features
     # id_column: which of the CSV columns contains the ids (default = 0, i.e. first column)
+    # single_id_list: if separate_ids and single_id_list are True, this will return a single id list instead of a dictionary
     #
-    # returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
-    #          each of them is a python dict containing an entry per feature extension (ext)
+    # returns:  if separate_ids == False:
+                    a Python dict containing one entry per feature extension (ext), which is
+                    a NumPy matrix containing all data including ids
+                if separate_ids == True:
+                    a tuple of (ids, features) where both are Python dicts containing one entry per feature extension (ext)
+                    ids:  with all the ideas as a Numpy array containing strings
+                          (if single_id_list == True, ids will be reduced to a single Python list, cause the arrays are supposed to be all identical)
+                    features: NumPy matrix containing all numeric feature data
+
     '''
 
     # initialize empty dicts
@@ -109,6 +117,10 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,verbose=Tru
 
         # once consistent, check for duplicates
         check_duplicates(ids[ext[0]].tolist())
+
+        if single_id_list:
+            # from the ids dict, we take only the first entry and convert the NumPy array to a list
+            ids = ids.values()[0].tolist()
 
         return(ids,feat)
 
