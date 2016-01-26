@@ -299,6 +299,37 @@ def align_features_and_classes(features, feature_ids, class_data, strip_files=Fa
     return features, ids_matched, class_data
 
 
+
+def align_predictions_and_groundtruth(pred_df, groundtruth_df, strip = True, lower = False, verbose=True):
+    # a) check column names
+    if pred_df.columns.tolist() != groundtruth_df.columns.tolist():
+        raise ValueError('Column names in groundtruth and predictions do not match!')
+
+    # b) align filenames
+    filenames1 = list(pred_df.index)
+    filenames2 = list(groundtruth_df.index)
+
+    if strip:
+        filenames1 = strip_filenames(filenames1)
+        filenames2 = strip_filenames(filenames2)
+
+    if lower:
+        filenames1 = [s.lower() for s in filenames1]
+        filenames2 = [s.lower() for s in filenames2]
+
+    # assign altered index back, otherwise .loc below does not work
+    pred_df.index = filenames1
+    groundtruth_df.index = filenames2
+
+    files_matched = match_filenames(filenames1, filenames2, verbose=verbose, print_nonmatching=verbose)
+
+    # from the given dataframes, cut & sort only the matched file ids to align them
+    pred_df_sorted = pred_df.loc[files_matched]
+    groundtruth_df_sorted = groundtruth_df.loc[files_matched]
+
+    return (pred_df_sorted, groundtruth_df_sorted)
+
+
 # OBSOLETE?
 def match_and_reduce_class_dict(class_dict,new_file_ids,strip_files = True):
     '''check for matching file ids in a class dictionary and reduce the class dictionary to the matching ones
