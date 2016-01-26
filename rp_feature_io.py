@@ -128,6 +128,36 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,single_id_l
         return feat
 
 
+def read_multiple_feature_files(list_of_filenames, common_path = '', feature_types =('rh','ssd','rp'), verbose=True):
+    '''Reads multiple feature input files and appends them to make a single feature matrix per feature type
+    and a single list of file ids.
+
+    list_of_filenames: Python list with file names (without extension) of multiple feature files (absolute or relative path)
+    common_path: will be added at the beginning of each file name, unless it is '' (default), then file names are treated as absolulte
+    feature_types: feature types (i.e. file extensions) to be read in
+    returns: tuple of (ids, features), where ids is a list of filenames that belong to the feature vects,
+        features is a dict which contains one element per feature type which is a Numpy array which contains feature vectors row-wise
+    '''
+    import numpy as np
+
+    if isinstance(list_of_filenames, str): # make list if only 1 string is passed
+        list_of_filenames = [list_of_filenames]
+
+    ids_out = []
+    feat_out = {}
+
+    for filen in list_of_filenames:
+        ids, feat = read_csv_features(common_path + os.sep + filen, feature_types, verbose=verbose, single_id_list=True)
+        ids_out.extend(ids)
+
+        for e in feat.keys(): # for each element in dict add to the feat_out dict
+            if e not in feat_out.keys(): # first file: create array
+                feat_out[e] = feat[e]
+            else: # others: append
+                feat_out[e] = np.append(feat_out[e],feat[e],axis=0)
+
+    return ids_out, feat_out
+
 
 # == ARFF ==
 
