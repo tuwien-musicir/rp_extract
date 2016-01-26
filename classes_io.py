@@ -208,7 +208,7 @@ def reduce_class_dict(class_dict,new_file_ids):
     return (new_class_dict)
 
 
-def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,verbose=True, print_nonmatching=True):
+def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False, lower=False, verbose=True, print_nonmatching=True):
     '''Match file ids in audio feature files and class files.
 
     returns the set of overlapping filenames (file ids) of the two lists of file ids
@@ -222,6 +222,10 @@ def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,
     if strip_files:
         file_ids_classfile = strip_filenames(file_ids_classfile)
         file_ids_featurefile = strip_filenames(file_ids_featurefile)
+
+    if lower:
+        file_ids_classfile = [s.lower() for s in file_ids_classfile]
+        file_ids_featurefile = [s.lower() for s in file_ids_featurefile]
 
     check_duplicates(file_ids_classfile)
     check_duplicates(file_ids_featurefile)
@@ -250,7 +254,7 @@ def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,
     return list(file_ids_matching)
 
 
-def align_features_and_classes(features, feature_ids, class_data, verbose=True):
+def align_features_and_classes(features, feature_ids, class_data, strip_files=False, lower=False, verbose=True):
 
     '''match the ids of the features and the class dictionary/dataframe
 
@@ -259,7 +263,10 @@ def align_features_and_classes(features, feature_ids, class_data, verbose=True):
 
     features: dictionary with multiple numpy arrays, on per each feature type
     feature_ids: list of strings containing the ids for the features (must be same length as rows in feature arrays)
-    class_data:
+    class_data: class dict or dataframe containing single or multi-class information (respectively), with file id in first resp. index column
+    strip_files: whether or not to remove file extensions before matching
+    lower: whether or not to lower-case all characters before matching
+    verbose: output statistics how many are being matched and the list of non-matched files
     '''
     import pandas as pd # only for multi-class files stored as dataframe
     from rp_feature_io import sorted_feature_subset
@@ -271,7 +278,7 @@ def align_features_and_classes(features, feature_ids, class_data, verbose=True):
     else:
         raise ValueError("Class data must be passed as Python dict or Pandas dataframe!")
 
-    ids_matched = match_filenames(feature_ids, file_ids_classfile, verbose=verbose, print_nonmatching=verbose)
+    ids_matched = match_filenames(feature_ids, file_ids_classfile, strip_files, lower, verbose=verbose, print_nonmatching=verbose)
 
     # Note: sorting or not sorting changes the results of cross-validation!
     # ids_matched = sorted(ids_matched)
