@@ -247,7 +247,7 @@ def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,
             print 'in audio feature files but not in class definition:\n'
             for f in diff: print f
 
-    return file_ids_matching
+    return list(file_ids_matching)
 
 
 def align_features_and_classes(features, feature_ids, class_data, verbose=True):
