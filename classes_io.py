@@ -256,7 +256,8 @@ def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,
 
 def align_features_and_classes(features, feature_ids, class_data, strip_files=False, lower=False, verbose=True):
 
-    '''match the ids of the features and the class dictionary/dataframe
+    '''match the ids of the features and the class dictionary/dataframe which could be in different order,
+    or match only case insensitive or without extension.
 
     finds the intersecting subset of ids among the two and reduces both the features and the class_data to the
     matching ids, ensuring same order
@@ -283,6 +284,7 @@ def align_features_and_classes(features, feature_ids, class_data, strip_files=Fa
     # Note: sorting or not sorting changes the results of cross-validation!
     # ids_matched = sorted(ids_matched)
 
+    # TODO: URGENT: this will not work if strip_files or lower changes the actual file ids vs. ids_matched!!
     if isinstance(class_data, dict):
         class_data = reduce_class_dict(class_data, ids_matched)
         n_class_entries = len(class_data)
