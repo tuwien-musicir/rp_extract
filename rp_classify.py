@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
         # CLASSES: read from file or derive from sub-path
         if args.classfile or args.multiclassfile:
-            ids = strip_filenames(ids)  # TODO Temp solution: strip filenames of audio features
+            #ids = strip_filenames(ids)  # TODO Temp solution: strip filenames of audio features
             if args.classfile:
                 class_dict = read_class_file(args.classfile)
             elif args.multiclassfile:
