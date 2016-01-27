@@ -416,7 +416,7 @@ if __name__ == '__main__':
     print "File types:", audiofile_types
 
     # BATCH RP FEATURE EXTRACTION:
-    extract_all_files_in_path(args.input_path,args.output_filename,feature_types, audiofile_types, args.label)
+    extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types, args.label)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
