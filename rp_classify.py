@@ -152,17 +152,32 @@ if __name__ == '__main__':
     argparser.add_argument('-c', '--classfile', help='single label class file for training and/or cross-validation (format: <filename>TAB<class_string>)',default=None)
     argparser.add_argument('-m', '--multiclassfile', help='multi label class file for training and/or cross-validation (format: <filename>  x  x     x)',default=None)
     argparser.add_argument('-cv','--crossval',action='store_true',help='cross-validate with the input data',default=False) # boolean opt
-    argparser.add_argument('-rp',action='store_true',help='include RP features (default = no)',default=False) # boolean opt
+
+    argparser.add_argument('-rh',   action='store_true',help='extract Rhythm Histograms (default)',default=False) # boolean opt
+    argparser.add_argument('-ssd',  action='store_true',help='extract Statistical Spectrum Descriptors (default)',default=False) # boolean opt
+    argparser.add_argument('-rp',   action='store_true',help='extract Rhythm Patterns',default=False) # boolean opt
+    argparser.add_argument('-trh',  action='store_true',help='extract Temporal Rhythm Histograms',default=False) # boolean opt
+    argparser.add_argument('-tssd', action='store_true',help='extract Temporal Statistical Spectrum Descriptors',default=False) # boolean opt
+    argparser.add_argument('-mvd',  action='store_true',help='extract Modulation Frequency Variance Descriptors',default=False) # boolean opt
+    argparser.add_argument('-3',   action='store_true',help='(shortcut flag:) extract RH + SSD + RH',default=False) # boolean opt
 
     args = argparser.parse_args()
+    argsdict = vars(args)  # needed only for numeric flag (-3)
 
-    # SELECT FEATURE TYPES TO USE (TODO: make configurable)
-    if args.rp:
-        #feature_types =  ('rp','ssd','rh')  # 3 feature sets
-        feature_types =  ('ssd','rp')
-    else:
-        feature_types = ('ssd','rh') # 2 feature sets
+    # select the feature types according to given option(s) or default
+    feature_types = []
+    if args.rh: feature_types.append('rh')
+    if args.ssd: feature_types.append('ssd')
+    if args.rp: feature_types.append('rp')
+    if argsdict['3']:feature_types = ['ssd','rh','rp']  # keep it at this position to avoid duplicate definition
+    if args.trh: feature_types.append('trh')
+    if args.tssd: feature_types.append('tssd')
+    if args.mvd: feature_types.append('mvd')
 
+    # if none was selected set DEFAULT feature set
+    if feature_types == []: feature_types = ['ssd','rh']
+
+    # TRAINING / CROSS-VALIDATION
     if args.train or args.crossval:
 
         if args.train and not args.crossval and args.model_file is None:
