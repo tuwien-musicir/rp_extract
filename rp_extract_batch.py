@@ -11,6 +11,7 @@ Batch MP3 to WAV conversion
 '''
 
 import os
+import gc # garbage collector
 import unicsv # unicode csv library (installed via pip install unicsv)
 import time # for time measuring
 import argparse
@@ -284,7 +285,6 @@ def extract_all_files(filelist, path,
 
     if out_file: # only if out_file is specified
         files, writer = initialize_feature_files(out_file,ext)
-        
     
 
     for fil in filelist:  # iterate over all files
@@ -354,6 +354,8 @@ def extract_all_files(filelist, path,
                     feat_array[e] = np.append(feat_array[e], feat[e].reshape(1,-1), axis = 0) # 1 for horizontal vector, -1 means take original dimension
 
                 filelist_extracted.append(id)
+
+            gc.collect() # after every file we do garbage collection, otherwise our memory is used up quickly for some reason
 
         except Exception as e:
             print "ERROR analysing file: " + fil + ": " + str(e)
