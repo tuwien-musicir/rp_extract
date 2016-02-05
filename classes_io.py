@@ -208,7 +208,7 @@ def reduce_class_dict(class_dict,new_file_ids):
     return (new_class_dict)
 
 
-def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,verbose=True, print_nonmatching=True):
+def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False, lower=False, verbose=True, print_nonmatching=True):
     '''Match file ids in audio feature files and class files.
 
     returns the set of overlapping filenames (file ids) of the two lists of file ids
@@ -222,6 +222,10 @@ def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,
     if strip_files:
         file_ids_classfile = strip_filenames(file_ids_classfile)
         file_ids_featurefile = strip_filenames(file_ids_featurefile)
+
+    if lower:
+        file_ids_classfile = [s.lower() for s in file_ids_classfile]
+        file_ids_featurefile = [s.lower() for s in file_ids_featurefile]
 
     check_duplicates(file_ids_classfile)
     check_duplicates(file_ids_featurefile)
@@ -247,19 +251,23 @@ def match_filenames(file_ids_featurefile, file_ids_classfile, strip_files=False,
             print 'in audio feature files but not in class definition:\n'
             for f in diff: print f
 
-    return file_ids_matching
+    return list(file_ids_matching)
 
 
-def align_features_and_classes(features, feature_ids, class_data, verbose=True):
+def align_features_and_classes(features, feature_ids, class_data, strip_files=False, lower=False, verbose=True):
 
-    '''match the ids of the features and the class dictionary/dataframe
+    '''match the ids of the features and the class dictionary/dataframe which could be in different order,
+    or match only case insensitive or without extension.
 
     finds the intersecting subset of ids among the two and reduces both the features and the class_data to the
     matching ids, ensuring same order
 
     features: dictionary with multiple numpy arrays, on per each feature type
     feature_ids: list of strings containing the ids for the features (must be same length as rows in feature arrays)
-    class_data:
+    class_data: class dict or dataframe containing single or multi-class information (respectively), with file id in first resp. index column
+    strip_files: whether or not to remove file extensions before matching
+    lower: whether or not to lower-case all characters before matching
+    verbose: output statistics how many are being matched and the list of non-matched files
     '''
     import pandas as pd # only for multi-class files stored as dataframe
     from rp_feature_io import sorted_feature_subset
@@ -271,11 +279,12 @@ def align_features_and_classes(features, feature_ids, class_data, verbose=True):
     else:
         raise ValueError("Class data must be passed as Python dict or Pandas dataframe!")
 
-    ids_matched = match_filenames(feature_ids, file_ids_classfile, verbose=verbose, print_nonmatching=verbose)
+    ids_matched = match_filenames(feature_ids, file_ids_classfile, strip_files, lower, verbose=verbose, print_nonmatching=verbose)
 
     # Note: sorting or not sorting changes the results of cross-validation!
     # ids_matched = sorted(ids_matched)
 
+    # TODO: URGENT: this will not work if strip_files or lower changes the actual file ids vs. ids_matched!!
     if isinstance(class_data, dict):
         class_data = reduce_class_dict(class_data, ids_matched)
         n_class_entries = len(class_data)
@@ -290,6 +299,37 @@ def align_features_and_classes(features, feature_ids, class_data, verbose=True):
     if verbose: print "\nRetaining", features.values()[0].shape[0], "feature rows,", n_class_entries, "class entries."
 
     return features, ids_matched, class_data
+
+
+
+def align_predictions_and_groundtruth(pred_df, groundtruth_df, strip = True, lower = False, verbose=True):
+    # a) check column names
+    if pred_df.columns.tolist() != groundtruth_df.columns.tolist():
+        raise ValueError('Column names in groundtruth and predictions do not match!')
+
+    # b) align filenames
+    filenames1 = list(pred_df.index)
+    filenames2 = list(groundtruth_df.index)
+
+    if strip:
+        filenames1 = strip_filenames(filenames1)
+        filenames2 = strip_filenames(filenames2)
+
+    if lower:
+        filenames1 = [s.lower() for s in filenames1]
+        filenames2 = [s.lower() for s in filenames2]
+
+    # assign altered index back, otherwise .loc below does not work
+    pred_df.index = filenames1
+    groundtruth_df.index = filenames2
+
+    files_matched = match_filenames(filenames1, filenames2, verbose=verbose, print_nonmatching=verbose)
+
+    # from the given dataframes, cut & sort only the matched file ids to align them
+    pred_df_sorted = pred_df.loc[files_matched]
+    groundtruth_df_sorted = groundtruth_df.loc[files_matched]
+
+    return (pred_df_sorted, groundtruth_df_sorted)
 
 
 # OBSOLETE?

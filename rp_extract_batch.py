@@ -386,10 +386,11 @@ if __name__ == '__main__':
 
     argparser.add_argument('-rp',   action='store_true',help='extract Rhythm Patterns (default)',default=False) # boolean opt
     argparser.add_argument('-rh',   action='store_true',help='extract Rhythm Histograms (default)',default=False) # boolean opt
-    argparser.add_argument('-trh',  action='store_true',help='extract Temporal Rhythm Histograms',default=False) # boolean opt
     argparser.add_argument('-ssd',  action='store_true',help='extract Statistical Spectrum Descriptors (default)',default=False) # boolean opt
+    argparser.add_argument('-trh',  action='store_true',help='extract Temporal Rhythm Histograms',default=False) # boolean opt
     argparser.add_argument('-tssd', action='store_true',help='extract Temporal Statistical Spectrum Descriptors',default=False) # boolean opt
     argparser.add_argument('-mvd',  action='store_true',help='extract Modulation Frequency Variance Descriptors',default=False) # boolean opt
+
     argparser.add_argument('-label',action='store_true',help='use subdirectory name as class label',default=False) # boolean opt
 
     args = argparser.parse_args()
@@ -418,7 +419,7 @@ if __name__ == '__main__':
     print "File types:", audiofile_types
 
     # BATCH RP FEATURE EXTRACTION:
-    extract_all_files_in_path(args.input_path,args.output_filename,feature_types, audiofile_types, args.label)
+    extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types, args.label)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
