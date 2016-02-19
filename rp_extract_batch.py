@@ -390,6 +390,7 @@ if __name__ == '__main__':
     argparser.add_argument('-trh',  action='store_true',help='extract Temporal Rhythm Histograms',default=False) # boolean opt
     argparser.add_argument('-tssd', action='store_true',help='extract Temporal Statistical Spectrum Descriptors',default=False) # boolean opt
     argparser.add_argument('-mvd',  action='store_true',help='extract Modulation Frequency Variance Descriptors',default=False) # boolean opt
+    argparser.add_argument('-a','--all', action='store_true',help='extract ALL of the aforementioned features',default=False) # boolean opt
 
     argparser.add_argument('-label',action='store_true',help='use subdirectory name as class label',default=False) # boolean opt
 
@@ -408,6 +409,7 @@ if __name__ == '__main__':
     if args.ssd: feature_types.append('ssd')
     if args.tssd: feature_types.append('tssd')
     if args.mvd: feature_types.append('mvd')
+    if args.all: feature_types = ['rp','ssd','rh','tssd','trh','mvd']
 
     # if none was selected set default feature set
     if feature_types == []: feature_types = ['rp','ssd','rh']
