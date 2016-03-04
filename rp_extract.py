@@ -432,8 +432,9 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
 
 
     # PARAMETER INITIALIZATION
-    # non-exhibited parameter
+    # non-exhibited parameters
     include_DC = False
+    FLATTEN_ORDER = 'F' # order how matrices are flattened to vector: 'F' for Matlab/Fortran, 'C' for C order (IMPORTANT TO USE THE SAME WHEN reading+reshaping the features)
 
     # segment_size should always be ~6 sec, fft_window_size should always be ~ 23ms
 
@@ -621,7 +622,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         # SSD: Statistical Spectrum Descriptors
         if (extract_ssd or extract_tssd):
             ssd = calc_statistical_features(matrix)
-            ssd_list.append(ssd.flatten(1))
+            ssd_list.append(ssd.flatten(FLATTEN_ORDER))
 
         # v210715
         # Python: 2.97307486   5.10356599   0.65305978   2.35489911   2.439558     0.009812     8.1447095 
@@ -685,12 +686,12 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         # MVD: Modulation Variance Descriptors
         if extract_mvd:
             mvd = calc_statistical_features(rp.transpose()) # verified
-            mvd_list.append(mvd.flatten(1))
+            mvd_list.append(mvd.flatten(FLATTEN_ORDER))
 
         # RH: Rhythm Histograms - OPTION 1: before fluctuation_strength_weighting (as in Matlab)
         if extract_rh:
             rh = np.sum(np.abs(rhythm_patterns[:,feature_part_xaxis2]),axis=0) #without DC component # verified
-            rh_list.append(rh.flatten(1))
+            rh_list.append(rh.flatten(FLATTEN_ORDER))
 
         # final steps for RP:
 
@@ -716,7 +717,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         # RH: Rhythm Histograms - OPTION 2 (after Fluctuation weighting)
         if extract_rh2:
             rh2 = np.sum(rp,axis=0) #TODO: adapt to do always without DC component
-            rh2_list.append(rh2.flatten(1))
+            rh2_list.append(rh2.flatten(FLATTEN_ORDER))
 
 
         # Gradient+Gauss filter
@@ -728,7 +729,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
             #
             #rp = blur1 * rp * blur2;
 
-        rp_list.append(rp.flatten(order='F'))
+        rp_list.append(rp.flatten(FLATTEN_ORDER))
 
         seg_pos = seg_pos + segment_size * step_width
 
@@ -760,10 +761,10 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
     # NOTE: no return_segment_features for temporal features as they measure variation of features over time
 
     if extract_tssd:
-        features["tssd"] = calc_statistical_features(np.asarray(ssd_list).transpose()).flatten(1)
+        features["tssd"] = calc_statistical_features(np.asarray(ssd_list).transpose()).flatten(FLATTEN_ORDER)
 
     if extract_trh:
-        features["trh"]  = calc_statistical_features(np.asarray(rh_list).transpose()).flatten(1)
+        features["trh"]  = calc_statistical_features(np.asarray(rh_list).transpose()).flatten(FLATTEN_ORDER)
 
     if return_segment_features:
         # also include the segment positions in the result
@@ -778,26 +779,24 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
 def self_test():
     import doctest
     #doctest.testmod()
-    doctest.run_docstring_examples(rp_extract, globals())
+    doctest.run_docstring_examples(rp_extract, globals(), verbose=True)
 
 
 
 if __name__ == '__main__':
 
-
-    # to run self test:
-    #self_test()
-    #exit()
-    # (no output means that everything went fine)
-
     import sys
-
-    # import our library for reading wav and mp3 files
-    from audiofile_read import *
+    from audiofile_read import *       # import our library for reading wav and mp3 files
 
     # process file given on command line or default song (included)
     if len(sys.argv) > 1:
-        audiofile = sys.argv[1]
+        if sys.argv[1] == '-test': # RUN DOCSTRING SELF TEST
+            print "Doing self test. If nothing is printed, it is ok."
+            import doctest
+            doctest.run_docstring_examples(rp_extract, globals()) #, verbose=True)
+            exit()   # Note: no output means that everything went fine
+        else:
+            audiofile = sys.argv[1]
     else:
         audiofile = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
 
