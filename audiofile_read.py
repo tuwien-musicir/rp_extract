@@ -180,6 +180,25 @@ def decode(in_filename, out_filename=None, verbose=True):
                        ". Otherwise install one of these and/or add them to the path using os.environ['PATH'] += os.pathsep + path.")
 
 
+# testing decoding to memory instead of file: did NOT bring any speedup!
+# Also note:  sample rate and number of channels not returned with this method. can be derived with
+# ffprobe -v quiet -show_streams -of json <input_file>
+# which already converts plain text to json, but then the json needs to be parsed.
+def decode_to_memory(in_filename, verbose=True):
+    cmd1 = ['ffmpeg','-v','1','-y','-i', in_filename, "-f", "f32le", "pipe:1"]    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
+    # "pipe:1" sends output to std_out (probably Linux only)
+    # original:  call = [cmd, "-v", "quiet", "-i", infile, "-f", "f32le", "-ar", str(sample_rate), "-ac", "1", "pipe:1"]
+    # for Windows: \\.\pipe\from_ffmpeg  # http://stackoverflow.com/questions/32157774/ffmpeg-output-pipeing-to-named-windows-pipe
+    cmd1_types = ('.mp3','.aif','.aiff','.m4a')
+
+    ext = ''
+    if verbose: print 'Decoding', ext, 'with:', " ".join(cmd1)
+
+    import numpy as np
+    decoded_wav = subprocess.check_output(cmd1)
+    wavedata = np.frombuffer(decoded_wav, dtype=np.float32)
+    return wavedata
+
 
 def mp3_read(filename,normalize=True,verbose=True):
     ''' mp3_read:
@@ -269,7 +288,18 @@ if __name__ == '__main__':
     else:
         file = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
 
+    # import time
+    # start = time.time()
     samplerate, samplewidth, wavedata = audiofile_read(file)
+    # print time.time() - start
+    # print wavedata.shape
+    #
+    # start = time.time()
+    # wavedata2 = decode_to_memory(file)
+    # print time.time() - start
+    # print wavedata2.shape
+    #
+    # print "EQUAL" if wavedata == wavedata2 else "NOT EQUAL"
 
     print "Successfully read audio file:"
     print samplerate, "Hz,", samplewidth*8, "bit,", wavedata.shape[1], "channels,", wavedata.shape[0], "samples"
