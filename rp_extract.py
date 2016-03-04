@@ -317,6 +317,8 @@ def transform2db(matrix):
 # Transform to Phon (assumes matrix is in dB scale)
 def transform2phon(matrix):
 
+    old_npsetting = np.seterr(invalid='ignore') # avoid 'RuntimeWarning: invalid value encountered in divide' at ifac division below
+
     # number of bark bands, matrix length in time dim
     n_bands = matrix.shape[0]
     t       = matrix.shape[1]
@@ -349,7 +351,11 @@ def transform2phon(matrix):
     # phons has been initialized globally above
 
     matrix[:,0:t] = phons.transpose().ravel()[levels - 2] + (ifac * (phons.transpose().ravel()[levels - 1] - phons.transpose().ravel()[levels - 2])) # OPT: pre-calc diff
+
+    np.seterr(invalid=old_npsetting['invalid']) # restore RuntimeWarning setting for np division error
+
     return(matrix)
+
 
 # Transform to Sone scale (assumes matrix is in Phon scale)
 def transform2sone(matrix):
