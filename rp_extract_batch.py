@@ -311,7 +311,6 @@ def extract_all_files(filelist, path,
                               samplerate,
                               extract_rp   = ('rp' in ext),          # extract Rhythm Patterns features
                               extract_ssd  = ('ssd' in ext),           # extract Statistical Spectrum Descriptor
-                              extract_sh   = ('sh' in ext),          # extract Statistical Histograms
                               extract_tssd = ('tssd' in ext),          # extract temporal Statistical Spectrum Descriptor
                               extract_rh   = ('rh' in ext),           # extract Rhythm Histogram features
                               extract_trh  = ('trh' in ext),          # extract temporal Rhythm Histogram features

@@ -214,16 +214,6 @@ def calc_spectrogram(wavsegment,fft_window_size,fft_overlap = 0.5,real_values=Tr
 
 # FEATURE FUNCTIONS
 
-def calc_spectral_histograms(mat):
-
-    result = []
-    
-    for i in range(24):
-        result.append(np.histogram(np.clip(mat[i,:],0,10), np.arange(0,11, 2), density=False)[0])
-    
-    return np.asarray(result)
-
-
 def calc_statistical_features(matrix):
 
     result = np.zeros((matrix.shape[0],7))
@@ -379,7 +369,6 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
                 # which features to extract
                 extract_rp   = False,          # extract Rhythm Patterns features
                 extract_ssd  = False,          # extract Statistical Spectrum Descriptor
-                extract_sh   = False,          # extract Statistical Histograms
                 extract_tssd = False,          # extract temporal Statistical Spectrum Descriptor
                 extract_rh   = False,          # extract Rhythm Histogram features
                 extract_rh2  = False,          # extract Rhythm Histogram features including Fluctuation Strength Weighting
@@ -656,12 +645,6 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         #       : 3,43736757   2,39117736   1,59656951   6,86710630   3,23366165   1,10199096  11,89486723
         #       : 3,18467212   2,39951286   1,99223621   8,83991021   2,88200015   0,93978494  11,28733449
         #       : 2,90997546   1,85776617   1,97246361   8,36742039   2,68074853   0,81790606   9,64262886
-        
-        
-        # SH: Statistical Spectrum Histograms
-        if (extract_sh):
-            sh = calc_spectral_histograms(matrix)
-            sh_list.append(sh)
 
         # values verified
 
@@ -750,7 +733,6 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         seg_pos = seg_pos + segment_size * step_width
 
 
-
     if extract_rp:
         if return_segment_features:
             features["rp"] = np.array(rp_list)
@@ -762,48 +744,12 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
             features["ssd"] = np.array(ssd_list)
         else:
             features["ssd"]  = np.mean(np.asarray(ssd_list), axis=0)
-
-
-    if extract_sh:
-
-        if len(sh_list) > 1:
-            
-            sh_list = np.asarray(sh_list) / 511.0
-            
-            sh = []
-            
-            #print sh_list.shape
-            
-            for i in range(sh_list.shape[1]):
-            
-                t = sh_list[:,i,:]
-            
-                x     = np.arange(0,t.shape[1])
-                y     = np.arange(0,t.shape[0])
-                new_x = np.linspace(0,t.shape[0],10)
-                
-                #print t.shape
-                
-                newKernel = interpolate.interp2d(x,y,t,kind='linear')
-                
-                new_t = newKernel(x,new_x)
-                
-                sh.append(new_t)
-            
-            if return_segment_features:
-                features["sh"] = np.array(sh)   # TODO check Alex: sh or sh_list here?
-            else:
-                features["sh"] = np.asarray(sh).flatten('C')
-        
-        else:
-            features["sh"] = []
         
     if extract_rh:
         if return_segment_features:
             features["rh"] = np.array(rh_list)
         else:
             features["rh"] = np.median(np.asarray(rh_list), axis=0)
-
 
     if extract_mvd:
         if return_segment_features:
@@ -904,8 +850,6 @@ if __name__ == '__main__':
 
     # EXAMPLE on how to store RP features in CSV file
     # import pandas as pd
-
     # filename = "features.rp.csv"
     # rp = pd.DataFrame(feat["rp"].reshape([1,feat["rp"].shape[0]]))
     # rp.to_csv(filename)
-    # print rp.to_json()
