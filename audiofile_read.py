@@ -59,10 +59,11 @@ def wav_read(filename,normalize=True,verbose=True,auto_resample=True):
 
     if auto_resample and samplerate != 11025 and samplerate != 22050 and samplerate != 44100:
         #print original file info
-        if verbose: print samplerate, "Hz,", wavedata.shape[1], "channel(s),", wavedata.shape[0], "samples"
+        if verbose:
+            print samplerate, "Hz,", wavedata.shape[1], "channel(s),", wavedata.shape[0], "samples"
 
         # TODO: if < 44100 and > 22050 downsample to 22050 etc.
-        filename2 = resample(filename, to_samplerate=44100, normalize=True, verbose=True)
+        filename2 = resample(filename, to_samplerate=44100, normalize=True, verbose=verbose)
         samplerate, samplewidth, wavedata = wavio.readwav(filename2)
         os.remove(filename2) # delete temp file
 
@@ -89,18 +90,27 @@ def resample(filename, to_samplerate=44100, normalize=True, verbose=True):
 
     try:
         cmd = ['ffmpeg','-v','1','-y','-i', filename, '-ar', str(to_samplerate), tempfile]
+        if verbose:
+            print "Resampling to", to_samplerate, "..."
+            #print " ".join(cmd)
 
         return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
 
         if return_code != 0:
             raise DecoderException("Problem appeared during resampling.", command=cmd)
-        if (verbose): print 'Resampled with:', " ".join(cmd)
+        #if verbose: print 'Resampled with:', " ".join(cmd)
 
     except OSError as e:
-        if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
-            if os.path.exists(tempfile):
-                os.remove(tempfile)
-            raise DecoderException("Problem appeared during resampling.", cmd=cmd, orig_error=e)
+        if os.path.exists(tempfile):
+            os.remove(tempfile)
+
+        if e.errno == 2:     # probably ffmpeg binary not found
+            try:
+                subprocess.call(cmd[0])  # check if we can just call the binary
+            except OSError as e:
+                raise DecoderException("Decoder not found. Please install " + cmd[0], command=cmd, orig_error=e)
+
+        raise DecoderException("Unknown problem appeared during resampling.", command=cmd, orig_error=e)
 
     return tempfile
 
@@ -169,7 +179,7 @@ def decode(in_filename, out_filename=None, verbose=True):
 
             except OSError as e:
                 if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
-                    raise DecoderException("Problem appeared during decoding.", cmd=cmd, orig_error=e)
+                    raise DecoderException("Problem appeared during decoding.", command=cmd, orig_error=e)
 
         if success:
             break  # no need to loop further
