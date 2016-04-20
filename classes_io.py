@@ -124,6 +124,12 @@ def classes_from_filename(filenames,split_char=os.sep):
     >>>classes = classes_from_filename(ids[ext],'.')
     '''
 
+    # we try to catch here the case that file was created on Windows but is used on Linux or vice-versa (so we reverse the split_char)
+    if split_char==os.sep:
+        example_file = filenames[0]
+        if os.sep == '/' and example_file.count(os.sep)==0: split_char = '\\'
+        if os.sep == '\\' and example_file.count(os.sep)==0: split_char = '/'
+
     # this example works for GTZAN collection: class is first part of filename before '.'
     classes = [x.split(split_char, 1)[0] for x in filenames]
 
