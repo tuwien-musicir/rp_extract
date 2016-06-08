@@ -360,10 +360,11 @@ def match_and_reduce_class_dict(class_dict,new_file_ids,strip_files = True):
     new_class_dict = reduce_class_dict(class_dict,matching)
     return (new_class_dict)
 
-def reduce_class_dict_min_instances(class_dict,min_instances=2):
+def reduce_class_dict_min_instances(class_dict, min_instances=2, raiseError=False):
     ''' reduce a {filename: class} dictionary to retain classes only with a minimum number of file instances per class
     :param class_dict: a {filename: class} dictionary
     :param min_instances: minimum file instances per class required (default = 2)
+    :param raiseError: will produce error instead of reducing the class_dict, if requirement is not fulfilled
     :return: {filename: class} dictionary with entries removed where class does not fulfil minimum requirement
     '''
 
@@ -375,7 +376,11 @@ def reduce_class_dict_min_instances(class_dict,min_instances=2):
         if val >= min_instances: retain_classes.append(key)
     #retain_classes
     diff = len(set(classes)) - len(retain_classes)
-    if diff > 0: print "Removing", diff, "classes for required minimum of", min_instances, "instances per class."
+    if diff > 0:
+        if raiseError:
+            raise ValueError("Class requirement of minimum of", min_instances, "instances per class not fulfilled.")
+        else:
+            print "Removing", diff, "classes for required minimum of", min_instances, "instances per class."
 
     new_class_dict = {}
     for key, val in class_dict.iteritems():
