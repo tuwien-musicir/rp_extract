@@ -141,6 +141,12 @@ def classes_from_filename(filenames,split_char=os.sep):
 
     return classes
 
+def classdict_from_filename(filenames,split_char=os.sep):
+    '''derive class labels from filenames or relative paths and create a class dict out of both of them'''
+    classes = classes_from_filename(filenames,split_char)  # get classes from relative path
+    class_dict = dict(zip(filenames, classes))    # Note: if the lists are big you should use from itertools import izip
+    return class_dict
+
 
 def classes_to_numeric(class_labels, verbose=True, return_encoder = False):
     '''Classes_to_Numeric
