@@ -17,7 +17,7 @@ import sys
 
 # --- READ AND WRITE ---
 
-def read_class_file(filename, delimiter='\t',as_dict=True):
+def read_class_file(filename, delimiter='\t', as_dict=True):
     ''' Read Class File
 
     read a comma or tab separated file providing class labels to analyzed audio files, typically in the format:
@@ -38,7 +38,7 @@ def read_class_file(filename, delimiter='\t',as_dict=True):
     reader = csv.reader(fi, delimiter=delimiter)
     result = dict(reader) if as_dict else list(reader)
     fi.close()
-    return(result)
+    return result
 
 
 def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, pos_labels='x', neg_labels='', verbose=True):
