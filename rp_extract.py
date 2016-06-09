@@ -254,10 +254,10 @@ def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_m
     mel_spectrogram: Mel spectrogram: np.array of shape(n_mel_bands,frames) maintaining the number of frames in the original spectrogram
     '''
 
-    import librosa.filters
+    from librosa.filters import mel
 
     # Syntax: librosa.filters.mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False)
-    mel_basis = librosa.filters.mel(samplerate,fft_window_size, n_mels=n_mel_bands,fmin=freq_min,fmax=freq_max)
+    mel_basis = mel(samplerate,fft_window_size, n_mels=n_mel_bands,fmin=freq_min,fmax=freq_max)
 
     freq_bin_max = mel_basis.shape[1] # will be fft_window_size / 2 + 1
 
@@ -271,6 +271,7 @@ def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_m
 
     # IMPLEMENTATION WITH DOT PRODUCT (15% faster)
     # multiply the mel filter of each band with the spectogram frame (dot product executes it on all frames)
+    # filter will be adapted in a way so that frequencies beyond freq_max will be discarded
     mel_spectrogram = np.dot(mel_basis,spectrogram[0:freq_bin_max,:])
     return (mel_spectrogram)
 
