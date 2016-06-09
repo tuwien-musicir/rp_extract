@@ -2,40 +2,27 @@
 
 # 2015-04 by Thomas Lidy and Alexander Schindler
 
-import matplotlib.pyplot as plt
-
-import pylab
 import numpy as np
 from numpy.lib import stride_tricks
-
-# from pylab import pcolor, show, colorbar, xticks, yticks
-
-# from numpy import corrcoef, sum, log, arange
-
-# there is a pre-packaged namespace that contains the whole Numpy-Scipy-Matplotlib stack in one piece:
-# from pylab import *
-# however: `%matplotlib` prevents importing * from pylab and numpy
-
-
-# enable inline graphics / plots in ipython notebook
-# get_ipython().magic(u'pylab inline')
+import matplotlib.pyplot as plt
 
 
 def plotmatrix(features,xlabel=None,ylabel=None):
-    pylab.figure()
-    pylab.imshow(features, origin='lower', aspect='auto', interpolation='nearest')
+    plt.figure()
+    plt.imshow(features, origin='lower', aspect='auto', interpolation='nearest')
     if xlabel: plt.xlabel(xlabel)
-    if ylabel: pylab.ylabel(ylabel)
-    pylab.show()
-
+    if ylabel: plt.ylabel(ylabel)
+    plt.show()
 
 # alternate version using pcolor
+# from pylab import pcolor, show, colorbar, xticks, yticks
 #def plotmatrix2(features):
 #pcolor(features)
 # #colorbar()
 # #yticks(arange(0.5,10.5),range(0,10))
 #  #xticks(arange(0.5,10.5),range(0,10))
 #show()
+
 
 def plotrp(features, reshape=True, rows=24, cols=60):
     if reshape:
@@ -47,11 +34,11 @@ def plotssd(features, reshape=True, rows=24, cols=7):
     if reshape:
         features = features.reshape(rows, cols, order='F')
 
-    pylab.figure()
-    pylab.imshow(features, origin='lower', aspect='auto', interpolation='nearest')
-    pylab.xticks(range(0, cols), ['mean', 'var', 'skew', 'kurt', 'median', 'min', 'max'])
-    pylab.ylabel('Frequency [Bark]')
-    pylab.show()
+    plt.figure()
+    plt.imshow(features, origin='lower', aspect='auto', interpolation='nearest')
+    plt.xticks(range(0, cols), ['mean', 'var', 'skew', 'kurt', 'median', 'min', 'max'])
+    plt.ylabel('Frequency [Bark]')
+    plt.show()
 
 
 def plotrh(hist,showbpm=True):
@@ -65,7 +52,7 @@ def plotrh(hist,showbpm=True):
         #print type(xrange)
         plotrange = range(1, hist.shape[0]+1, 5) # 5 = step
         bpm = np.around(np.array(plotrange) * mod_freq_res * 60.0, 0)
-        pylab.xticks(plotrange, bpm)
+        plt.xticks(plotrange, bpm)
         plt.xlabel('bpm')
     else:
         plt.xlabel('Mod. Frequency Index')
