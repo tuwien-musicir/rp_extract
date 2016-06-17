@@ -358,7 +358,17 @@ def match_and_reduce_class_dict(class_dict,new_file_ids,strip_files = True):
     matching = set(class_dict.keys()).intersection(new_file_ids)
     print len(matching), "files matching"
     new_class_dict = reduce_class_dict(class_dict,matching)
-    return (new_class_dict)
+    return new_class_dict
+
+
+def reduce_class_dict_to_classes(class_dict,reduced_list_of_classes):
+    '''reduce a {filename: class} dictionary to a subset of classes given in list 'reduced_list_of_classes' '''
+    new_class_dict = {}
+    for key, val in class_dict.iteritems():
+        if val in reduced_list_of_classes:
+            new_class_dict[key] = val
+    return new_class_dict
+
 
 def reduce_class_dict_min_instances(class_dict, min_instances=2, raiseError=False):
     ''' reduce a {filename: class} dictionary to retain classes only with a minimum number of file instances per class
@@ -382,13 +392,13 @@ def reduce_class_dict_min_instances(class_dict, min_instances=2, raiseError=Fals
         else:
             print "Removing", diff, "classes for required minimum of", min_instances, "instances per class."
 
-    new_class_dict = {}
-    for key, val in class_dict.iteritems():
-        if val in retain_classes:
-            new_class_dict[key] = val
+    new_class_dict = reduce_class_dict_to_classes(class_dict, retain_classes)
 
-    if diff > 0: print "Removed", len(class_dict) - len(new_class_dict), "file instances from class dictionary."
-    return (new_class_dict)
+    if diff > 0:
+        print "Removed", len(class_dict) - len(new_class_dict), "file instances from class dictionary."
+
+    return new_class_dict
+
 
 def get_class_counts(class_dict,printit=False):
     '''print number of instances per class in a class_dict'''
@@ -397,7 +407,7 @@ def get_class_counts(class_dict,printit=False):
     if (printit):
         for key, val in class_stats.iteritems():
             print key+":",val
-    return (class_stats)
+    return class_stats
 
 
 
@@ -411,7 +421,7 @@ def get_filenames_for_class(class_dict,classname):
     key_list = []
     for key,val in class_dict.iteritems():
         if val == classname: key_list.append(key)
-    return(key_list)
+    return key_list
 
 
 def get_baseline(class_dict, printit = True):
