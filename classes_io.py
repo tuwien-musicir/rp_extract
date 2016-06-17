@@ -17,7 +17,7 @@ import sys
 
 # --- READ AND WRITE ---
 
-def read_class_file(filename, delimiter='\t', as_dict=True):
+def read_class_file(filename, delimiter='\t', as_dict=True, cut_path=False, cut_ext=False):
     ''' Read Class File
 
     read a comma or tab separated file providing class labels to analyzed audio files, typically in the format:
@@ -30,6 +30,8 @@ def read_class_file(filename, delimiter='\t', as_dict=True):
     :param delimiter: separator in the input file: \t by default, can be set to ',', ';' or anything else needed
     :param as_dict: True by default, will return a dict with file ids as key and class label as value
             if False, it will return a list of lists, each list entry containing a "tuple" of file id and label
+    :param cut_path: will cut off relative path of file ids in class_file (only possible when as_dict is True)
+    :param cut_ext: will cut off file extension of file ids in class_file (only possible when as_dict is True)
     :return:
     '''
 
@@ -38,6 +40,10 @@ def read_class_file(filename, delimiter='\t', as_dict=True):
     reader = csv.reader(fi, delimiter=delimiter)
     result = dict(reader) if as_dict else list(reader)
     fi.close()
+
+    if as_dict and (cut_path or cut_ext):
+        result = strip_filenames_in_dict(result, cut_path, cut_ext)
+
     return result
 
 
@@ -461,7 +467,7 @@ def write_filenames(filename, filelist):
     fil.close()
 
 
-def strip_filenames(filenames,cut_path=True, cut_ext=True):
+def strip_filenames(filenames, cut_path=True, cut_ext=True):
     '''Strip_Filenames
 
     strips off the preceding paths and/or the extensions of all given filenames in an array of filenames
@@ -475,3 +481,11 @@ def strip_filenames(filenames,cut_path=True, cut_ext=True):
     if (cut_ext): filenames = ([splitext(f)[0] for f in filenames])
     return(filenames)
 
+def strip_filenames_in_dict(class_dict, cut_path=True, cut_ext=True):
+    from os.path import basename, splitext
+    new_class_dict = {}
+    for key, val in class_dict.iteritems():
+        if (cut_path): key = basename(key)
+        if (cut_ext): key = splitext(key)[0]
+        new_class_dict[key] = val
+    return new_class_dict
