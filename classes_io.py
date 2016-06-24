@@ -455,7 +455,7 @@ def read_filenames(filename):
     '''
 
     with open(filename) as f:
-        content = [line.rstrip('\n') for line in f]
+        content = [line.rstrip('\r\n') for line in f]
     return(content)
 
 
