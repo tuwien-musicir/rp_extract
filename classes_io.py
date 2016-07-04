@@ -201,6 +201,14 @@ def classdict_to_numeric(class_dict, return_encoder = False):
         return new_class_dict
 
 
+def classdict_to_numeric_with_encoder(class_dict, labelencoder):
+    '''encode a the values in a given class dictionary with a given label encoder to numeric classes'''
+
+    classes_num = labelencoder.transform(class_dict.values())
+    return dict(zip(class_dict.keys(), classes_num))
+
+
+
 def get_classes_from_dict(class_dict,filenames):
     '''Get_Classes_From_Dict
 
