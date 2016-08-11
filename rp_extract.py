@@ -294,6 +294,7 @@ def transform2bark(matrix, freq_axis, max_bands=None):
     matrix_out = np.zeros((max_band,matrix.shape[1]),dtype=matrix.dtype)
 
     for b in range(max_band-1):
+        # TODO: VisibleDeprecationWarning: boolean index did not match indexed array along dimension 0; dimension is 1024 but corresponding boolean dimension is 513
         matrix_out[b] = np.sum(matrix[((freq_axis >= barks[b]) & (freq_axis < barks[b+1]))], axis=0)
 
     return(matrix_out)
