@@ -156,7 +156,7 @@ def decode(in_filename, out_filename=None, verbose=True):
     # cmd_types is a list of file types supported by each command/tool
 
     cmd1 = ['ffmpeg','-v','1','-y','-i', in_filename,  out_filename]    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
-    cmd1_types = ('.mp3','.aif','.aiff','.m4a')
+    cmd1_types = ('.mp3','.m4a','.aif','.aiff','.flac')
     cmd2 = ['mpg123','-q', '-w', out_filename, in_filename]
     cmd2_types = '.mp3'
     cmd3 = ['lame','--quiet','--decode', in_filename, out_filename]
@@ -188,6 +188,11 @@ def decode(in_filename, out_filename=None, verbose=True):
         commands = ", ".join( c[0] for c in cmd_list)
         raise OSError("No appropriate decoder found for" + ext + "file. Check if any of these programs is on your system path: " + commands + \
                        ". Otherwise install one of these and/or add them to the path using os.environ['PATH'] += os.pathsep + path.")
+
+
+def get_supported_audio_formats():
+    # TODO: update this list here every time a new format is added; to avoid this, make a more elegant solution getting the list of formats from where the commands are defined above
+    return ('.mp3','.m4a','.aif','.aiff','.flac')
 
 
 # testing decoding to memory instead of file: did NOT bring any speedup!
@@ -259,7 +264,7 @@ def audiofile_read(filename,normalize=True,verbose=True):
     else:
         try: # try to decode
             tempfile = get_temp_filename(suffix='.wav')
-            mp3_decode(filename,tempfile,verbose)
+            decode(filename,tempfile,verbose)
             samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
 
         finally: # delete temp file in any case
