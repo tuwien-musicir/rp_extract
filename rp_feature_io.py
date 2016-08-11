@@ -416,10 +416,10 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     depending if input_path is...
     a) a path: will recursively look for .wav and .mp3 files in path and freshly extract features
     b) a .txt file: will take a list of filenames (one per line) and freshly extract features
-    c) another file: will load features in multiple csv file feature format
+    c) a .wav, .mp3 or .aif file: will freshly extract features from that file
+    d) another file: will load features in multiple csv file feature format
     TODO:
-    d) a .npz, .h5 or .hdf5 file: will load the features from that file
-    e) a .wav or .mp3 file: will freshly extract features from that file
+    e) a .npz, .h5 or .hdf5 file: will load the features from that file
 
     TODO: The audio analysis parameters of this function call are only needed when features are to be freshly extracted.
 
@@ -435,18 +435,25 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     if save_features and output_file is None:
         raise ValueError("output_file must be specified if save_features is set to True!")
 
-    # if we got a directory, we do analysis, if we got a file, we load it
 
-    if os.path.isdir(input_path) or input_path.lower().endswith(('.txt','.wav','.mp3','.aif')):  # FRESH ANALYSIS from input path or .txt file
+    # we accept and check for all audio file types supported
+    from audiofile_read import get_supported_audio_formats
+    audiofile_types = get_supported_audio_formats()
+    file_types = list(audiofile_types)
+    file_types.append('.txt')
+    file_types = tuple(file_types)
+
+    # if we got a directory, we do analysis, if we got a file of one of the accepted file_types, we load it
+    if os.path.isdir(input_path) or input_path.lower().endswith(file_types):  # FRESH ANALYSIS from input path or .txt file
 
         print "Performing feature extraction from ", input_path
 
         # BATCH RP FEATURE EXTRACTION:
         # if output_file is given, will save features, otherwise not
-        ids, feat = extract_all_files_generic(input_path,output_file,feature_types,audiofile_types=('.wav','.mp3','.aif'))
+        ids, feat = extract_all_files_generic(input_path,output_file,feature_types,audiofile_types=audiofile_types)
 
     else:
-        # LOAD from Feature File
+        # LOAD features from Feature File
         ids, feat = read_csv_features(input_path,feature_types)
 
         # from the ids dict, we take only the first entry and convert numpy array to list
