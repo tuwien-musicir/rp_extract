@@ -105,10 +105,38 @@ def write_class_file(filename, file_ids, class_labels, delimiter='\t'):
         fil.write(f + delimiter + c + '\n') # python will convert \n to os.linesep
     fil.close()
 
+
 def write_class_dict(filename, class_dict, delimiter='\t'):
     fil = open(filename,'w')
     for f, c in class_dict.iteritems():
         fil.write(f + delimiter + c + '\n') # python will convert \n to os.linesep
+    fil.close()
+
+
+def write_multi_class_table(filename, ids, predictions, class_columns, pos_label='x', neg_label=''):
+        import pandas as pd
+        pred_df = pd.DataFrame(predictions, index=ids, columns=class_columns)
+        pred_df.replace(0, neg_label, inplace=True)
+        pred_df.replace(1, pos_label, inplace=True)
+
+        with open(filename, 'w') as file:
+            pred_df.to_csv(file, sep='\t')
+
+def multi_class_table_tolist(dataframe, pos_label='x', delimiter=','):
+    '''convert a multi-class table (dataframe with 'x' on positive classes) to a comma-separated list of (positive) classes'''
+    import pandas as pd
+    list_of_lists = []
+    for idx, row in dataframe.iterrows():
+        row_list = [c for c, r in row.iteritems() if r==pos_label]
+        row_string = delimiter.join(row_list)
+        list_of_lists.append(row_string)
+    return dataframe.index, list_of_lists
+
+
+def write_multi_class_list(filename, ids, class_lists, delimiter='\t')
+    fil = open(filename,'w')
+    for id, classes in zip(ids, class_lists):
+        fil.write(id + delimiter + classes + '\n')
     fil.close()
 
 

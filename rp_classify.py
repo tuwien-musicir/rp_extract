@@ -293,7 +293,9 @@ if __name__ == '__main__':
         predictions = classify(model, features_to_classify, labelencoder)
 
         # OUTPUT
-        if not multi_categories: # single label classification
+        if not multi_categories:
+
+            # single label classification
             if args.output_filename:
                 print "Writing to output file: ", args.output_filename
                 write_class_file(args.output_filename, ids, predictions)
@@ -302,18 +304,16 @@ if __name__ == '__main__':
                 for (i, label) in zip(ids,predictions):
                     print i + ":\t",label
         else:
-            # in case we have multi label classification we replace back the symbol for True and False
-
-            import pandas as pd
-            pred_df = pd.DataFrame(predictions, index=ids, columns=multi_categories)
-            pred_df.replace(0, '', inplace=True)
-            pred_df.replace(1, 'x', inplace=True)
+            # multi label classification
 
             if args.output_filename:
                 print "Writing to output file: ", args.output_filename
-                with open(args.output_filename, 'w') as file:
-                    pred_df.to_csv(file, sep='\t')
+                write_multi_class_table(args.output_filename, ids, predictions, class_columns=multi_categories)
 
             else:
                 # just print to stdout
+                import pandas as pd
+                pred_df = pd.DataFrame(predictions, index=ids, columns=multi_categories)
+                pred_df.replace(0, '', inplace=True)
+                pred_df.replace(1, 'x', inplace=True)
                 print pred_df
