@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
         # LOAD OR EXTRACT FEATURES
         # TODO: store and load feature extraction parameters with model
-        ids, feat = load_or_analyze_features(args.input_path)
+        ids, feat = load_or_analyze_features(args.input_path, feature_types)
 
         # CLASSES: read from file or derive from sub-path
         if args.classfile or args.multiclassfile:
@@ -269,7 +269,7 @@ if __name__ == '__main__':
         #    print "Multiple categories to predict:", ", ".join(multi_categories)
 
         # EXTRACT FEATURES FROM NEW FILES
-        ids, feat = load_or_analyze_features(args.input_path)
+        ids, feat = load_or_analyze_features(args.input_path, feature_types)
 
         if len(feat) == 0:
             raise ValueError("No features were extracted from input files. Check format.")
