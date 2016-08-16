@@ -153,13 +153,15 @@ if __name__ == '__main__':
     argparser.add_argument('-m', '--multiclassfile', help='multi label class file for training and/or cross-validation (format: <filename>  x  x     x)',default=None)
     argparser.add_argument('-cv','--crossval',action='store_true',help='cross-validate with the input data',default=False) # boolean opt
 
-    argparser.add_argument('-rh',   action='store_true',help='extract Rhythm Histograms (default)',default=False) # boolean opt
-    argparser.add_argument('-ssd',  action='store_true',help='extract Statistical Spectrum Descriptors (default)',default=False) # boolean opt
-    argparser.add_argument('-rp',   action='store_true',help='extract Rhythm Patterns',default=False) # boolean opt
-    argparser.add_argument('-trh',  action='store_true',help='extract Temporal Rhythm Histograms',default=False) # boolean opt
-    argparser.add_argument('-tssd', action='store_true',help='extract Temporal Statistical Spectrum Descriptors',default=False) # boolean opt
-    argparser.add_argument('-mvd',  action='store_true',help='extract Modulation Frequency Variance Descriptors',default=False) # boolean opt
-    argparser.add_argument('-3',   action='store_true',help='(shortcut flag:) extract RH + SSD + RH',default=False) # boolean opt
+    argparser.add_argument('-mot','--multiclasstable',action='store_true',help='write multi-class table instead of list',default=False) # boolean opt
+
+    argparser.add_argument('-rh',   action='store_true',help='use Rhythm Histograms (default)',default=False) # boolean opt
+    argparser.add_argument('-ssd',  action='store_true',help='use Statistical Spectrum Descriptors (default)',default=False) # boolean opt
+    argparser.add_argument('-rp',   action='store_true',help='use Rhythm Patterns',default=False) # boolean opt
+    argparser.add_argument('-trh',  action='store_true',help='use Temporal Rhythm Histograms',default=False) # boolean opt
+    argparser.add_argument('-tssd', action='store_true',help='use Temporal Statistical Spectrum Descriptors',default=False) # boolean opt
+    argparser.add_argument('-mvd',  action='store_true',help='use Modulation Frequency Variance Descriptors',default=False) # boolean opt
+    argparser.add_argument('-3',    action='store_true',help='(shortcut flag:) use RH + SSD + RH',default=False) # boolean opt
 
     args = argparser.parse_args()
     argsdict = vars(args)  # needed only for numeric flag (-3)
@@ -308,7 +310,14 @@ if __name__ == '__main__':
 
             if args.output_filename:
                 print "Writing to output file: ", args.output_filename
-                write_multi_class_table(args.output_filename, ids, predictions, class_columns=multi_categories)
+
+                if args.multiclasstable:
+                    write_multi_class_table(args.output_filename, ids, predictions, class_columns=multi_categories)
+                else:
+                    import pandas as pd
+                    pred_df = pd.DataFrame(predictions, index=ids, columns=multi_categories)
+                    ids, class_lists = multi_class_table_tolist(pred_df)
+                    write_multi_class_list(args.output_filename, ids, class_lists)
 
             else:
                 # just print to stdout

@@ -122,7 +122,8 @@ def write_multi_class_table(filename, ids, predictions, class_columns, pos_label
         with open(filename, 'w') as file:
             pred_df.to_csv(file, sep='\t')
 
-def multi_class_table_tolist(dataframe, pos_label='x', delimiter=','):
+
+def multi_class_table_tolist(dataframe, pos_label=1, delimiter=','):
     '''convert a multi-class table (dataframe with 'x' on positive classes) to a comma-separated list of (positive) classes'''
     import pandas as pd
     list_of_lists = []
