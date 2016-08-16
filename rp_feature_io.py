@@ -22,7 +22,7 @@ def check_duplicates(file_ids):
     '''check for duplicates in file_ids from CSV or feature files'''
     dup = set([x for x in file_ids if file_ids.count(x) > 1])
     if len(dup) > 0:
-        print >> sys.stderr, "DUPLICATE(S):", "; ".join(list(dup))
+        print >> sys.stderr, len(dup), "DUPLICATE(S):", "; ".join(list(dup))
         raise ValueError("Duplicate entries in file ids!")
 
 
@@ -62,7 +62,7 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
     if separate_ids:
         ids = feat[:,id_column]
         feat = np.delete(feat,id_column,1).astype(np.float) # delete id columns and return feature vectors as float type
-        return (ids,feat)
+        return ids, feat
     else:
         return feat
 
