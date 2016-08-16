@@ -18,12 +18,17 @@ import pandas as pd
 # == CSV ==
 
 
-def check_duplicates(file_ids):
+def check_duplicates(file_ids,raise_error=True):
     '''check for duplicates in file_ids from CSV or feature files'''
     dup = set([x for x in file_ids if file_ids.count(x) > 1])
     if len(dup) > 0:
-        print >> sys.stderr, len(dup), "DUPLICATE(S):", "; ".join(list(dup))
-        raise ValueError("Duplicate entries in file ids!")
+        message = "Duplicate entries in file ids! " + \
+                  str(len(dup)) + " duplicate(s):\n" + "; ".join(list(dup))
+        if raise_error:
+            raise ValueError(message)
+        else:
+            import warnings
+            warnings.warn(message)
 
 
 def read_csv_features1(filename,separate_ids=True,id_column=0):
@@ -67,7 +72,8 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
         return feat
 
 
-def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,single_id_list=False,verbose=True):
+def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,single_id_list=False,
+                      error_on_duplicates=True,verbose=True):
     ''' Read_CSV_features:
 
     read pre-analyzed features from multiple CSV files (with feature name extensions)
@@ -116,7 +122,7 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,single_id_l
                 raise ValueError("Ids not matching across feature files!")
 
         # once consistent, check for duplicates
-        check_duplicates(ids[ext[0]].tolist())
+        check_duplicates(ids[ext[0]].tolist(),raise_error=error_on_duplicates)
 
         if single_id_list:
             # from the ids dict, we take only the first entry and convert the NumPy array to a list
@@ -454,7 +460,7 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
 
     else:
         # LOAD features from Feature File
-        ids, feat = read_csv_features(input_path,feature_types)
+        ids, feat = read_csv_features(input_path,feature_types,error_on_duplicates=False)
 
         # from the ids dict, we take only the first entry and convert numpy array to list
         ids = ids.values()[0].tolist()
