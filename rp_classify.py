@@ -278,6 +278,10 @@ if __name__ == '__main__':
         features_to_classify = concatenate_features(feat, feature_types)
 
         # SCALE FEATURES LIKE TRAINING DATA
+        if features_to_classify.shape[1] != len(scaler.scale_):
+            raise ValueError("Features have "+ str(features_to_classify.shape[1]) + " dimensions, but "
+                             "StandardScaler was saved with " + str(len(scaler.scale_)) + " dimensions. Feature mismatch!")
+
         features_to_classify = scaler.transform(features_to_classify)
 
         # CLASSIFY
