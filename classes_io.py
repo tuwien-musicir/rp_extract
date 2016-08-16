@@ -133,7 +133,7 @@ def multi_class_table_tolist(dataframe, pos_label='x', delimiter=','):
     return dataframe.index, list_of_lists
 
 
-def write_multi_class_list(filename, ids, class_lists, delimiter='\t')
+def write_multi_class_list(filename, ids, class_lists, delimiter='\t'):
     fil = open(filename,'w')
     for id, classes in zip(ids, class_lists):
         fil.write(id + delimiter + classes + '\n')
