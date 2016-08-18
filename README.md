@@ -13,6 +13,12 @@ Main Authors: Thomas Lidy (audiofeature), Alexander Schindler (slychief)
 
 ## Installation
 
+### Operating Systems
+
+Linux, Mac and Windows are supported. We recommend Ubuntu 14.04 or 16.04.
+
+### Download
+
 Either download as ZIP from https://github.com/tuwien-musicir/rp_extract/archive/master.zip , or:
 
 ```
