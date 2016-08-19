@@ -413,7 +413,7 @@ if __name__ == '__main__':
     # if none was selected set default feature set
     if feature_types == []: feature_types = ['rp','ssd','rh']
 
-    audiofile_types = ('.wav','.mp3','.aif','.aiff','.m4a')
+    audiofile_types = get_supported_audio_formats()
 
     print "Extracting features:", feature_types
     print "From files in:", args.input_path
