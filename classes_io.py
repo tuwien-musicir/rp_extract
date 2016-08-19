@@ -131,7 +131,9 @@ def multi_class_table_tolist(dataframe, pos_label=1, delimiter=','):
         row_list = [c for c, r in row.iteritems() if r==pos_label]
         row_string = delimiter.join(row_list)
         list_of_lists.append(row_string)
-    return dataframe.index, list_of_lists
+
+    ids = dataframe.index.values.tolist()
+    return ids, list_of_lists
 
 
 def write_multi_class_list(filename, ids, class_lists, delimiter='\t'):
