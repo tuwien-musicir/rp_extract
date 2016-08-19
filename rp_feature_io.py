@@ -14,7 +14,7 @@ import os
 import sys
 import pandas as pd
 
-import unicsv # unicode csv library (installed via pip install unicsv)
+# see further imports in CSVFeatureWriter.open() and HDF5FeatureWriter.open()
 
 
 # === PART 1: new FeatureWriter classes ===
@@ -40,9 +40,15 @@ class CSVFeatureWriter(FeatureWriter):
         self.ext = None  # file extensions i.e. feature types
 
     def open(self,base_filename,ext,append=False):
-        '''ext: list of file extensions i.e. feature types to open files for'''
+        '''
+        base_filename: path and filename that will be extended by . and feature extension
+        ext: list of file extensions i.e. feature types to open files for
+        append: whether to append to existing feature files (or overwrite)
+        '''
 
-        self.ext = ext
+        import unicsv # unicode csv library (installed via pip install unicsv)
+
+        self.ext = ext   # keep extensions
         self.files = {}  # files is a dict of one file handle per extension
         self.writer = {} # writer is a dict of one file writer per extension
 
@@ -57,9 +63,10 @@ class CSVFeatureWriter(FeatureWriter):
     def write_features(self,id,feat,id2=None):
         # id: string id (e.g. filename) of extracted file
         # feat: dict containing 1 entry per feature type (must match file extensions)
+        # id2: optional secondary identifier to be stored alongside id
         if self.writer is None:
             raise RuntimeError("File or writer is not open yet. Call open first!")
-        # TODO: check if feat.keys() == self.ext
+        # TODO: check if all feat.keys() == self.ext
 
         for e in feat.keys():
             f=feat[e].tolist()
@@ -71,6 +78,105 @@ class CSVFeatureWriter(FeatureWriter):
     def close(self):
         for e in self.ext:
             self.files[e].close()
+
+
+class HDF5FeatureWriter(FeatureWriter):
+
+    def __init__(self,float32=False):
+        '''float32: if set to True, 32 bit data is stored, otherwise 64 bit'''
+        self.files = None
+        self.h5tables = None
+        self.ext = None  # file extensions i.e. feature types
+        self.file_ids = []
+        self.file_ids2 = []
+
+        import tables # define data types to store in HDF5
+        self.data_type = tables.Float32Atom() if float32 else tables.Float64Atom()
+        # alternative: derive from np array: tables.Atom.from_dtype(myarray.dtype)
+        self.string_type = tables.StringAtom(itemsize=256)
+        # NOTE: not nice: character limit of 256 chars for file path
+        # solution for avoiding String limit is:
+        #class FileInfo(tables.IsDescription):
+        #    file_id = tables.StringCol(256)
+        #    seg_pos = tables.IntCol()
+        #table = h5file.create_table(h5file.root, 'file_ids_table', FileInfo)
+
+    def open(self,base_filename,ext,feat,append=False):
+        '''
+        base_filename: path and filename that will be extended by . and feature extension and .h5
+        ext: list of file extensions i.e. feature types to open files for
+        feat: an example feature vector dict containing 1 entry of a feature vector per feature type
+              the vectors are not written here, just used to determine their dimensions
+        append: whether to append to existing feature files (or overwrite) (not implemented)
+        '''
+
+        import tables  # pytables HDF5 library (installed via pip install tables)
+        #from tables.exceptions import HDF5ExtError
+
+        if append:
+            raise NotImplementedError("Appending not yet implemented for HDF5 files!")
+
+        self.ext = ext   # keep extensions
+        self.files = {}  # files is a dict of one file handle per extension
+        self.h5tables = {} # writer is a dict of one file writer per extension
+
+        for e in ext:
+            vec_dim = len(feat[e])
+            shape=(0,vec_dim) # define feature dimension but not yet number of instances
+
+            # create file and table
+            outfile = base_filename + '.' + e + '.h5'
+            h5file = tables.openFile(outfile, 'w')
+            self.files[e] = h5file
+            h5table = h5file.createEArray(h5file.root, 'vec', self.data_type, shape)
+            self.h5tables[e] = h5table
+            h5table.attrs.vec_dim = vec_dim
+            h5table.attrs.vec_type = e.upper()
+
+    #def store_attribures(self,attributes):
+        # TODO store audio analysis parameters as table attributes
+        #for e in ext:
+            #table = self.h5tables[e]
+            #h5table.attrs.bands = n_bands
+            #h5table.attrs.frames = frames
+            #h5table.attrs.Mel = useMel
+            #h5table.attrs.Bark = useBark
+            #h5table.attrs.transform = transform
+            #h5table.attrs.log_transform = log_transform
+
+    def write_features(self,id,feat,id2=None):
+        # id: string id (e.g. filename) of extracted file
+        # feat: dict containing 1 entry per feature type (must match file extensions)
+        # id2: optional secondary identifier to be stored alongside id
+        for e in feat.keys():
+            self.h5tables[e].append(feat[e].reshape((1,-1))) # make it a row vector instead of column
+
+        # ids are stored until the end and written at close() time
+        self.file_ids.append(id)
+        if id2 is not None:
+            self.file_ids2.append(id2)
+
+    def write_string_ids(self,table_name,file_ids):
+        # create table in each HDF5 file for storing file_ids
+        # table_name: name of table to create in HDF5 file
+        # file_ids: list of file ids (one entry per feature entry in vec table created by open and write_features
+        for e in self.ext:
+            shape = (1,len(file_ids))
+            table = self.files[e].createCArray(self.files[e].root, table_name, self.string_type, shape)
+            table[:] = file_ids
+
+    def close(self):
+        # write file ids before closing into a separate table(s) in same HDF5 file
+        if self.file_ids != []:
+            self.write_string_ids('file_ids',self.file_ids)
+        if self.file_ids2 != []:
+            self.write_string_ids('file_ids2',self.file_ids2)
+
+        for e in self.ext:
+            self.files[e].close()
+
+
+
 
 
 # === PART 2: old individual functions for reading/writing features ===

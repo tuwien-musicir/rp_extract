@@ -30,7 +30,7 @@ git clone https://github.com/tuwien-musicir/rp_extract.git
 On Linux Ubuntu many dependencies can be installed from the Software Center or repository like this:
 
 ```
-sudo apt-get install python-numpy python-scipy python-pandas python-scikits-learn python-matplotlib
+sudo apt-get install python-numpy python-scipy python-pandas python-scikits-learn
 ```
 
 Use this to install the remaining dependencies on Ubuntu, respectively all dependencies on Mac and Windows:
@@ -42,7 +42,9 @@ sudo pip install -r requirements.txt
 Note that some of the requirements are only needed for specific parts of the library. If all you want to use is the
 audio analysis part with `rp_extract.py`, `numpy` and `scipy` are the only requirements.
 
-### MP3 Decoder
+### Optional Dependencies
+
+#### MP3 Decoder
 
 If you want to use MP3, M4A, FLAC or AIF(F) files as input, you need to have one of the following decoders installed in your system:
 (Note: lame and mpg123 only support MP3, ffmpeg supports MP3 and all other formats)
@@ -51,6 +53,27 @@ If you want to use MP3, M4A, FLAC or AIF(F) files as input, you need to have one
 - Mac: FFMPeg for Mac: http://ffmpegmac.net or Lame for Mac: http://www.thalictrum.com/en/products/lame.html
 - Windows: FFMpeg.exe is already included (nothing to install)
 
+#### Other
+
+For plotting (using `rp_plot.py`)
+```
+sudo apt-get install python-matplotlib
+```
+
+For HDF5 file output instead of CSV:
+
+Ubuntu Linux:
+```
+sudo apt-get install libhdf5-serial-dev python-tables
+```
+
+Mac OS X:
+(homebrew must be installed first)
+```
+brew tap homebrew/science
+brew install hdf5
+sudo pip install tables
+```
 
 ## Easy Getting Started
 

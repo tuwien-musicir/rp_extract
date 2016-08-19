@@ -18,7 +18,7 @@ import argparse
 import numpy as np
 
 from audiofile_read import * # reading wav and mp3 files
-from rp_feature_io import CSVFeatureWriter
+from rp_feature_io import CSVFeatureWriter, HDF5FeatureWriter
 import rp_extract as rp # Rhythm Pattern extractor
 
 
@@ -168,6 +168,8 @@ def extract_all_files_generic(in_path,
                               out_file = None,
                               feature_types = ['rp','ssd','rh'],
                               audiofile_types=('.wav','.mp3'),
+                              label=False,
+                              out_HDF5 = False,
                               verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path (+ sub-directories)
@@ -180,6 +182,7 @@ def extract_all_files_generic(in_path,
     # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
     # feature_types: RP feature types to extract. see rp_extract.py
     # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
+    # out_HDF5: whether to store as HDF5 file format (otherwise CSV)
     """
 
     if in_path.lower().endswith('.txt'):  # treat as input file list
@@ -195,7 +198,7 @@ def extract_all_files_generic(in_path,
     else:
         raise ValueError("Cannot not process this kind of input file: " + in_path)
 
-    return extract_all_files(filelist, in_path, out_file, feature_types, verbose)
+    return extract_all_files(filelist, in_path, out_file, feature_types, label, out_HDF5, verbose)
 
 
 
@@ -204,6 +207,7 @@ def extract_all_files(filelist, path,
                               out_file = None,
                               feature_types = ['rp','ssd','rh'],
                               label=False,
+                              out_HDF5 = False,
                               verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub-directories in it
@@ -214,8 +218,8 @@ def extract_all_files(filelist, path,
     # path: absolute path that will be added at beginning of filelist (can be '')
     # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
     # feature_types: RP feature types to extract. see rp_extract.py
-    # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
     # label: use subdirectory name as class label
+    # out_HDF5: whether to store as HDF5 file format (otherwise CSV)
     """
 
     ext = feature_types
@@ -231,8 +235,11 @@ def extract_all_files(filelist, path,
     start_abs = time.time()
 
     if out_file: # only if out_file is specified
-        FeatureWriter = CSVFeatureWriter()
-        FeatureWriter.open(out_file,ext)
+        if out_HDF5:
+            FeatureWriter = HDF5FeatureWriter()
+        else:
+            FeatureWriter = CSVFeatureWriter()
+            FeatureWriter.open(out_file,ext)
     
 
     for fil in filelist:  # iterate over all files
@@ -280,17 +287,22 @@ def extract_all_files(filelist, path,
             # id = filename[len(path)+1:] # relative filename only (extracted from path)
 
             if out_file:
-                # WRITE each feature set to a CSV
+                # WRITE each feature set to a CSV or HDF5 file
                 
                 id2 = None
                 
                 if label:
                     id2 = id.replace("\\","/").split("/")[-2].strip()
 
+                if out_HDF5 and n==1:
+                    # for HDF5 we need to know the vector dimension
+                    # thats why we cannot open the file earlier
+                    FeatureWriter.open(out_file,ext,feat)
+
                 FeatureWriter.write_features(id,feat,id2)
             else:
                 # IN MEMORY: add the extracted features for 1 file to the array dict accumulating all files
-                # TODO: only if we dont have out_file? maybe we want this as a general option
+                # TODO: only if we don't have out_file? maybe we want this as a general option
 
                 if feat_array == {}: # for first file, initialize empty array with dimension of the feature set
                     for e in feat.keys():
@@ -317,7 +329,9 @@ def extract_all_files(filelist, path,
         print "FEATURE EXTRACTION FINISHED. %d file(s), %.2f sec" % (n,end-start_abs)
         if err > 0:
             print err, "files had ERRORs during feature extraction."
-        if out_file: print "Feature file(s):", out_file + ".*", ext
+        if out_file:
+            opt_ext = '.h5' if out_HDF5 else ''
+            print "Feature file(s):", out_file + "." + str(ext) + opt_ext
 
     if out_file is None:
         return filelist_extracted, feat_array
@@ -338,6 +352,8 @@ if __name__ == '__main__':
     argparser.add_argument('-tssd', action='store_true',help='extract Temporal Statistical Spectrum Descriptors',default=False) # boolean opt
     argparser.add_argument('-mvd',  action='store_true',help='extract Modulation Frequency Variance Descriptors',default=False) # boolean opt
     argparser.add_argument('-a','--all', action='store_true',help='extract ALL of the aforementioned features',default=False) # boolean opt
+
+    argparser.add_argument('-h5','--hdf5', action='store_true',help='store output to HDF5 files instead of CSV',default=False) # boolean opt
 
     argparser.add_argument('-label',action='store_true',help='use subdirectory name as class label',default=False) # boolean opt
 
@@ -368,7 +384,7 @@ if __name__ == '__main__':
     print "File types:", audiofile_types
 
     # BATCH RP FEATURE EXTRACTION:
-    extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types, args.label)
+    extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types, args.label, args.hdf5)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
