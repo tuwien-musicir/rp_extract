@@ -312,8 +312,10 @@ if __name__ == '__main__':
                 print "Writing to output file: ", args.output_filename
 
                 if args.multiclasstable:
+                    # write as table with x entries for positive categories
                     write_multi_class_table(args.output_filename, ids, predictions, class_columns=multi_categories)
                 else:
+                    # write as comma-separated list of positive classes
                     import pandas as pd
                     pred_df = pd.DataFrame(predictions, index=ids, columns=multi_categories)
                     ids, class_lists = multi_class_table_tolist(pred_df)
