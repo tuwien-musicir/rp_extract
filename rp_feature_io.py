@@ -14,6 +14,67 @@ import os
 import sys
 import pandas as pd
 
+import unicsv # unicode csv library (installed via pip install unicsv)
+
+
+# === PART 1: new FeatureWriter classes ===
+
+ABSTRACT_NOT_IMPLEMENTED_MSG = 'Not implemented in abstract class. Use a subclass of FeatureWriter!'
+
+class FeatureWriter(object):
+    '''BaseModel class which defines and initializes rudimentary network parameters and methods'''
+
+    def __init__(self):
+        raise NotImplementedError(ABSTRACT_NOT_IMPLEMENTED_MSG)
+
+    def open(self,base_filename,ext,append):
+        raise NotImplementedError(ABSTRACT_NOT_IMPLEMENTED_MSG)
+
+
+class CSVFeatureWriter(FeatureWriter):
+
+    def __init__(self):
+    #    super(CSVFeatureWriter, self).__init__()
+        self.files = None
+        self.writer = None
+        self.ext = None  # file extensions i.e. feature types
+
+    def open(self,base_filename,ext,append=False):
+        '''ext: list of file extensions i.e. feature types to open files for'''
+
+        self.ext = ext
+        self.files = {}  # files is a dict of one file handle per extension
+        self.writer = {} # writer is a dict of one file writer per extension
+
+        # append write new (will overwrite)
+        mode = 'a' if append else 'w'
+
+        for e in ext:
+            filename = base_filename + '.' + e
+            self.files[e] = open(filename, mode)
+            self.writer[e] = unicsv.UnicodeCSVWriter(self.files[e]) #, quoting=csv.QUOTE_ALL)
+
+    def write_features(self,id,feat,id2=None):
+        # id: string id (e.g. filename) of extracted file
+        # feat: dict containing 1 entry per feature type (must match file extensions)
+        if self.writer is None:
+            raise RuntimeError("File or writer is not open yet. Call open first!")
+        # TODO: check if feat.keys() == self.ext
+
+        for e in feat.keys():
+            f=feat[e].tolist()
+            f.insert(0,id)      # add filename/id before vector (to include path, change fil to filename)
+            if id2 is not None: # add secondary identifier
+                f.insert(1,id2)
+            self.writer[e].writerow(f)
+
+    def close(self):
+        for e in self.ext:
+            self.files[e].close()
+
+
+# === PART 2: old individual functions for reading/writing features ===
+
 
 # == CSV ==
 

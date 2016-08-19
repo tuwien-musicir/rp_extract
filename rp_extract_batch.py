@@ -18,8 +18,15 @@ import argparse
 import numpy as np
 
 from audiofile_read import * # reading wav and mp3 files
+from rp_feature_io import CSVFeatureWriter
 import rp_extract as rp # Rhythm Pattern extractor
 
+
+# NOTE: this function has been moved to rp_feature_io.py and is maintained here for backwards compatibility
+
+def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
+    from rp_feature_io import read_csv_features
+    return read_csv_features(filenamestub,ext,separate_ids,id_column)
 
 
 def find_files(path,file_types=('.wav','.mp3'),relative_path = False,verbose=False,ignore_hidden=True):
@@ -70,66 +77,6 @@ def find_files(path,file_types=('.wav','.mp3'),relative_path = False,verbose=Fal
         all_files.extend(filelist)
 
     return all_files
-
-
-# these 3 functions are to incrementally save the features line by line into CSV files
-
-def initialize_feature_files(base_filename,ext,append=False):
-    files = {}  # files is a dict of one file handle per extension
-    writer = {} # files is a dict of one file writer per extension
-
-    if append:
-        mode = 'a' # append
-    else:
-        mode = 'w' # write new (will overwrite)
-
-    for e in ext:
-        filename = base_filename + '.' + e
-        files[e] = open(filename, mode)
-        writer[e] = unicsv.UnicodeCSVWriter(files[e]) #, quoting=csv.QUOTE_ALL)
-
-    return (files,writer)
-
-
-def write_feature_files(id,feat,writer,id2=None):
-    # id: string id (e.g. filename) of extracted file
-    # feat: dict containing 1 entry per feature type (must match file extensions)
-
-    for e in feat.keys():
-        f=feat[e].tolist()
-        f.insert(0,id)        # add filename before vector (to include path, change fil to filename)
-        if not id2==None:
-            f.insert(1,id2)
-        writer[e].writerow(f)
-
-
-def close_feature_files(files,ext):
-    for e in ext:
-        files[e].close()
-
-
-# read_feature_files:
-# reads pre-analyzed features from CSV files
-# in write_feature_files we use unicsv to store the features
-# it will quote strings containing , and other characters if needed only (automatically)
-# here we use pandas to import CSV as a pandas dataframe,
-# because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
-
-# parameters:
-# filenamestub: full path to feature file name WITHOUT .extension
-# ext: a list of file .extensions (e.g. 'rh','ssd','rp') to be read in
-# separate_ids: if False, it will return a single matrix containing the id column
-#               if True, it will return a tuple: (ids, features) separating the id column from the features
-# id_column: which of the CSV columns contains the ids (default = 0, i.e. first column)
-#
-# returns: single numpy matrix including ids, or tuple of (ids, features) with ids and features separately
-#          each of them is a python dict containing an entry per feature extension (ext)
-
-# NOTE: this function has been moved to rp_feature_io.py and is maintained here for backwards compatibility
-
-def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
-    from rp_feature_io import read_csv_features
-    return read_csv_features(filenamestub,ext,separate_ids,id_column)
 
 
 
@@ -284,7 +231,8 @@ def extract_all_files(filelist, path,
     start_abs = time.time()
 
     if out_file: # only if out_file is specified
-        files, writer = initialize_feature_files(out_file,ext)
+        FeatureWriter = CSVFeatureWriter()
+        FeatureWriter.open(out_file,ext)
     
 
     for fil in filelist:  # iterate over all files
@@ -338,8 +286,8 @@ def extract_all_files(filelist, path,
                 
                 if label:
                     id2 = id.replace("\\","/").split("/")[-2].strip()
-                
-                write_feature_files(id,feat,writer,id2)
+
+                FeatureWriter.write_features(id,feat,id2)
             else:
                 # IN MEMORY: add the extracted features for 1 file to the array dict accumulating all files
                 # TODO: only if we dont have out_file? maybe we want this as a general option
@@ -361,7 +309,7 @@ def extract_all_files(filelist, path,
             err += 1
 
     if out_file:  # close all output files
-        close_feature_files(files,ext)
+        FeatureWriter.close()
 
     end = time.time()
 
