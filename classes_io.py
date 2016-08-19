@@ -125,7 +125,7 @@ def write_multi_class_table(filename, ids, predictions, class_columns, pos_label
 
 def multi_class_table_tolist(dataframe, pos_label=1, delimiter=','):
     '''convert a multi-class table (dataframe with 'x' on positive classes) to a comma-separated list of (positive) classes'''
-    import pandas as pd
+
     list_of_lists = []
     for idx, row in dataframe.iterrows():
         row_list = [c for c, r in row.iteritems() if r==pos_label]
@@ -134,6 +134,18 @@ def multi_class_table_tolist(dataframe, pos_label=1, delimiter=','):
 
     ids = dataframe.index.values.tolist()
     return ids, list_of_lists
+
+
+def multi_class_table_todict(dataframe, pos_label=1):
+    '''convert a multi-class table (dataframe with 'x' on positive classes) to a dict
+     containing comma-separated lists of (positive) classes for each audio file'''
+
+    class_dict = {}
+    for id, row in dataframe.iterrows():
+        row_list = [c for c, r in row.iteritems() if r==pos_label]
+        class_dict[id] = row_list
+
+    return class_dict
 
 
 def write_multi_class_list(filename, ids, class_lists, delimiter='\t'):
