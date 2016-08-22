@@ -616,9 +616,10 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     depending if input_path is...
     a) a path: will recursively look for .wav and .mp3 files in path and freshly extract features
     b) a .txt file: will take a list of filenames (one per line) and freshly extract features
-    c) a .wav, .mp3 or .aif file: will freshly extract features from that file
-    d) another file: will load features in multiple csv file feature format
-    TODO:
+    c) a .wav, .mp3, flac or .aif(f) file: will freshly extract features from that file
+    d) a set of *.h5 or *.hdf5: will load features in HDF5 format (from multiple files)
+    e) another file: will try to load features in multiple csv file feature format
+    TODO: .npz
     e) a .npz, .h5 or .hdf5 file: will load the features from that file
 
     TODO: The audio analysis parameters of this function call are only needed when features are to be freshly extracted.
@@ -639,12 +640,14 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     # we accept and check for all audio file types supported
     from audiofile_read import get_supported_audio_formats
     audiofile_types = get_supported_audio_formats()
-    file_types = list(audiofile_types)
-    file_types.append('.txt')
-    file_types = tuple(file_types)
+
+    # these file times mean fresh extract
+    extract_file_types = list(audiofile_types)
+    extract_file_types.append('.txt')
+    extract_file_types = tuple(extract_file_types)
 
     # if we got a directory, we do analysis, if we got a file of one of the accepted file_types, we load it
-    if os.path.isdir(input_path) or input_path.lower().endswith(file_types):  # FRESH ANALYSIS from input path or .txt file
+    if os.path.isdir(input_path) or input_path.lower().endswith(extract_file_types):  # FRESH ANALYSIS from input path or .txt file
 
         print "Performing feature extraction from ", input_path
 
@@ -654,12 +657,15 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
 
     else:
         # LOAD features from Feature File
+
+        # TODO glob to detect if .h5 or .hdf5 present
+
         ids, feat = read_csv_features(input_path,feature_types,error_on_duplicates=False)
 
         # from the ids dict, we take only the first entry and convert numpy array to list
         ids = ids.values()[0].tolist()
 
-        # TODO: read .npz, .h5 or .hdf5
+        # TODO: add reading .npz,
 
     return ids, feat
 
