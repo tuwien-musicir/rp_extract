@@ -232,6 +232,7 @@ if __name__ == '__main__':
             model = train_model(features, classes_num)
             # save model
             save_model(args.model_file, model, scaler, labelencoder, multi_categories)
+            print "Saved model to", args.model_file + ".*"
 
         # CROSS-VALIDATE
         if args.crossval:
