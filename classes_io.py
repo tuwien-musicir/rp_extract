@@ -148,10 +148,14 @@ def multi_class_table_todict(dataframe, pos_label=1):
     return class_dict
 
 
-def write_multi_class_list(filename, ids, class_lists, delimiter='\t'):
+def write_multi_class_list(filename, ids, class_lists, ids2=None, delimiter='\t'):
     fil = open(filename,'w')
-    for id, classes in zip(ids, class_lists):
-        fil.write(id + delimiter + classes + '\n')
+    if ids2 is None:
+        for id, classes in zip(ids, class_lists):
+            fil.write(id + delimiter + classes + '\n')
+    else:
+        for id, id2, classes in zip(ids, ids2, class_lists):
+            fil.write(id + delimiter + id2 + delimiter + classes + '\n')
     fil.close()
 
 
