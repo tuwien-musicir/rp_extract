@@ -397,12 +397,16 @@ def save_arff(filename,dataframe,relation_name=None):
 # == HDF5 ==
 
 
-def load_hdf5_features(hdf_filename):
+def load_hdf5_features(hdf_filename, verbose=True):
     '''read HFD5 file written with HDF5FeatureWriter() class'''
     import tables  # pytables HDF5 library (installed via pip install tables)
     hdf5_file = tables.openFile(hdf_filename, mode='r')
     # we slice [:] all the data back into memory, then operate on it
     feat = hdf5_file.root.vec[:]    # feature vector table is called 'vec' in HDF5FeatureWriter() class
+
+    # just for info purposes
+    if verbose and hdf5_file.root.vec.attrs.__contains__('vec_type'):
+        print "HDF5 Feature Type:", hdf5_file.root.vec.attrs.vec_type
 
     if  hdf5_file.root.__contains__('file_ids'):
         # slicing [:] and getting the first column [0] to a list
@@ -702,4 +706,4 @@ if __name__ == '__main__':
         features, ids = load_hdf5_features(args.input_path)
         print "number of files:", len(ids)
         print "feature dimensions:", features.shape
-        print ids
+        #print ids
