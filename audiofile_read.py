@@ -53,7 +53,7 @@ def wav_read(filename,normalize=True,verbose=True,auto_resample=True):
 
     # check if file exists
     if not os.path.exists(filename):
-        raise NameError("File does not exist:" + filename)
+        raise NameError("File does not exist: " + filename)
 
     samplerate, samplewidth, wavedata = wavio.readwav(filename)
 
@@ -256,9 +256,11 @@ def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False):
 
     '''
 
-    # check if file exists
+    # check if file exists or has 0 bytes
     if not os.path.exists(filename):
         raise NameError("File does not exist:" + filename)
+    if os.path.getsize(filename) == 0:
+        raise ValueError("File has 0 bytes: " + filename)
 
     basename, ext = os.path.splitext(filename)
     ext = ext.lower()
