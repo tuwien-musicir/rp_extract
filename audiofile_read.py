@@ -141,6 +141,7 @@ def decode(in_filename, out_filename=None, verbose=True):
     in_filename: input audio file name to process
     out_filename: output filename after conversion; if omitted, the input filename is used, replacing the extension by .wav
     verbose: print decoding command line information or not
+    returns: decoder command used (without parameters)
     '''
 
     basename, ext = os.path.splitext(in_filename)
@@ -189,6 +190,7 @@ def decode(in_filename, out_filename=None, verbose=True):
         raise OSError("No appropriate decoder found for" + ext + "file. Check if any of these programs is on your system path: " + commands + \
                        ". Otherwise install one of these and/or add them to the path using os.environ['PATH'] += os.pathsep + path.")
 
+    return cmd[0]
 
 def get_supported_audio_formats():
     # TODO: update this list here every time a new format is added; to avoid this, make a more elegant solution getting the list of formats from where the commands are defined above
@@ -235,7 +237,7 @@ def mp3_read(filename,normalize=True,verbose=True):
 
 
 
-def audiofile_read(filename,normalize=True,verbose=True):
+def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False):
     ''' audiofile_read
 
     generic function capable of reading WAV, MP3 and AIF(F) files
@@ -243,7 +245,9 @@ def audiofile_read(filename,normalize=True,verbose=True):
     :param filename: file name path to audio file
     :param normalize: normalize to (-1,1) if True (default), or keep original values (16 bit, 24 bit or 32 bit)
     :param verbose: whether to print a message while decoding files or not
-    :return: a tuple with 3 entries: samplerate in Hz (e.g. 44100), samplewidth in bytes (e.g. 2 for 16 bit) and wavedata (simple array for mono, 2-dim. array for stereo)
+    :param include_decoder: includes a 4th return value: string which decoder has been used to decode the audio file
+    :return: a tuple with 3 or 4 entries: samplerate in Hz (e.g. 44100), samplewidth in bytes (e.g. 2 for 16 bit),
+            wavedata (simple array for mono, 2-dim. array for stereo), and optionally a decoder string
 
     Example:
     >>> samplerate, samplewidth, wavedata = audiofile_read("music/BoxCat_Games_-_10_-_Epic_Song.mp3",verbose=False)
@@ -260,17 +264,22 @@ def audiofile_read(filename,normalize=True,verbose=True):
     ext = ext.lower()
 
     if ext == '.wav':
-        return(wav_read(filename,normalize,verbose))
+        samplerate, samplewidth, wavedata = wav_read(filename,normalize,verbose)
+        decoder = 'wavio.py'
     else:
         try: # try to decode
             tempfile = get_temp_filename(suffix='.wav')
-            decode(filename,tempfile,verbose)
+            decoder = decode(filename,tempfile,verbose)
             samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
 
         finally: # delete temp file in any case
             if os.path.exists(tempfile):
                 os.remove(tempfile)
-    return (samplerate, samplewidth, wavedata)
+
+    if include_decoder:
+        return samplerate, samplewidth, wavedata, decoder
+    else:
+        return samplerate, samplewidth, wavedata
 
 
 # function to self test audiofile_read if working properly
