@@ -14,6 +14,7 @@ import os
 import gc # garbage collector
 import unicsv # unicode csv library (installed via pip install unicsv)
 import time # for time measuring
+import datetime # for time printing
 import argparse
 import numpy as np
 
@@ -27,6 +28,17 @@ import rp_extract as rp # Rhythm Pattern extractor
 def read_feature_files(filenamestub,ext,separate_ids=True,id_column=0):
     from rp_feature_io import read_csv_features
     return read_csv_features(filenamestub,ext,separate_ids,id_column)
+
+
+def timestr(seconds):
+    ''' returns HH:MM:ss formatted time string for given seconds
+    (seconds can be a float with milliseconds included, but only the integer part will be used)
+    :return: string
+    '''
+    if seconds is None:
+        return "--:--:--"
+    else:
+        return str(datetime.timedelta(seconds=int(seconds)))
 
 
 def find_files(path,file_types=('.wav','.mp3'),relative_path = False,verbose=False,ignore_hidden=True):
@@ -232,7 +244,7 @@ def extract_all_files(filelist, path,
     filelist_extracted = []
     feat_array = {}
 
-    start_abs = time.time()
+    start_time = time.time()
 
     if out_file: # only if out_file is specified
         if out_HDF5:
@@ -244,14 +256,20 @@ def extract_all_files(filelist, path,
 
     for fil in filelist:  # iterate over all files
         try:
+            if n > 0:
+                elaps_time = time.time() - start_time
+                remain_time = elaps_time * n_files / n - elaps_time # n is the number of files done here
+            else:
+                remain_time = None
 
             n += 1
+
             if path:
                 filename = path + os.sep + fil
             else:
                 filename = fil
             #if verbose:
-            print '#',n,'/',n_files,':', filename
+            print '#',n,'/',n_files,'(ETA: ' + timestr(remain_time) + "):", filename
 
             # read audio file (wav or mp3)
             samplerate, samplewidth, data = audiofile_read(filename)
@@ -323,10 +341,10 @@ def extract_all_files(filelist, path,
     if out_file:  # close all output files
         FeatureWriter.close()
 
-    end = time.time()
+    end_time = time.time()
 
     if verbose:
-        print "FEATURE EXTRACTION FINISHED. %d file(s), %.2f sec" % (n,end-start_abs)
+        print "FEATURE EXTRACTION FINISHED.", n, "file(s), duration:", timestr(end_time-start_time)
         if err > 0:
             print err, "files had ERRORs during feature extraction."
         if out_file:
