@@ -397,7 +397,21 @@ def save_arff(filename,dataframe,relation_name=None):
 # == HDF5 ==
 
 
+def load_hdf5_features(hdf_filename):
+    '''read HFD5 file written with HDF5FeatureWriter() class'''
+    import tables  # pytables HDF5 library (installed via pip install tables)
+    hdf5_file = tables.openFile(hdf_filename, mode='r')
+    # we slice [:] all the data back into memory, then operate on it
+    feat = hdf5_file.root.vec[:]    # feature vector table is called 'vec' in HDF5FeatureWriter() class
+    # sliceing [:] and getting the first column [0] to a list
+    ids = hdf5_file.root.file_ids[:][0].tolist() # file id table is called 'file_ids' in HDF5FeatureWriter() class
+    # TODO check if file_ids2 is present and also read
+    hdf5_file.close()
+    return feat, ids
+
+
 def load_hdf5_pandas(hdf_filename):
+    '''read HFD5 file written with csv2hdf5()'''
     store = pd.HDFStore(hdf_filename)
     # .as_matrix(columns=None) converts to Numpy array (of undefined data column types)
     data = store['data'].as_matrix(columns=None)
@@ -640,27 +654,43 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
 
 if __name__ == '__main__':
 
-    # test CSV to ARFF
+    import argparse
+    argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
-    in_path = '/data/music/GTZAN/vec'
-    out_path = './feat'
-    filenamestub = 'GTZAN.python'
+    argparser.add_argument('input_path', help='input file path to search for wav/mp3 files to analyze') # nargs='?' to make it optional
+    #argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension) [default: features/features]', default='features/features') # nargs='?' to make it optional
 
-    feature_types = ['rp','ssd','rh','mvd']
+    argparser.add_argument('-arff',   action='store_true',help='test loading of ARFF file',default=False) # boolean opt
+    argparser.add_argument('-csv2arff', action='store_true',help='convert CSV file to ARFF file',default=False) # boolean opt
+    argparser.add_argument('-h5','--hdf5', action='store_true',help='test loading of HDF5 file',default=False) # boolean opt
 
-    in_filenamestub = in_path + os.sep + filenamestub
-    out_filenamestub = out_path + os.sep + filenamestub
+    args = argparser.parse_args()
 
-    csv2arff(in_filenamestub,out_filenamestub,feature_types)
+    if args.csv2arff: # test CSV to ARFF
 
-    # try to load ARFF
+        out_path = './feat' # TODO make parameter
+        filenamestub = 'GTZAN.python' # TODO make parameter
 
-    feat_type = 'ssd'
+        feature_types = ['rp','ssd','rh','mvd']
 
-    arff_file = out_filenamestub + '.' + feat_type + '.arff'
+        out_filenamestub = out_path + os.sep + filenamestub
 
-    features, classes  = load_arff(arff_file)
+        csv2arff(args.input_path,out_filenamestub,feature_types)
 
-    print "Reading ", arff_file
-    print "classes:" , classes.shape
-    print "feature dimensions:", features.shape
+    if args.arff: # try to load ARFF
+
+        print "Reading ", args.input_path
+
+        features, classes  = load_arff(args.input_path)
+
+        print "classes:" , classes.shape
+        print "feature dimensions:", features.shape
+
+    if args.hdf5: # try to load HDF5
+
+        print "Reading ", args.input_path
+
+        features, ids = load_hdf5_features(args.input_path)
+        print "number of files:", len(ids)
+        print "feature dimensions:", features.shape
+        print ids
