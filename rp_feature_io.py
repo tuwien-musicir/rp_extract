@@ -403,11 +403,20 @@ def load_hdf5_features(hdf_filename):
     hdf5_file = tables.openFile(hdf_filename, mode='r')
     # we slice [:] all the data back into memory, then operate on it
     feat = hdf5_file.root.vec[:]    # feature vector table is called 'vec' in HDF5FeatureWriter() class
-    # sliceing [:] and getting the first column [0] to a list
-    ids = hdf5_file.root.file_ids[:][0].tolist() # file id table is called 'file_ids' in HDF5FeatureWriter() class
-    # TODO check if file_ids2 is present and also read
-    hdf5_file.close()
-    return feat, ids
+
+    if  hdf5_file.root.__contains__('file_ids'):
+        # slicing [:] and getting the first column [0] to a list
+        ids = hdf5_file.root.file_ids[:][0].tolist() # file id table is called 'file_ids' in HDF5FeatureWriter() class
+    else:
+        ids = None
+
+    if hdf5_file.root.__contains__('file_ids2'): # check if file_ids2 is present and also read and return
+        ids2 = hdf5_file.root.file_ids2[:][0].tolist()
+        hdf5_file.close()
+        return feat, ids, ids2
+    else:
+        hdf5_file.close()
+        return feat, ids
 
 
 def load_hdf5_pandas(hdf_filename):
