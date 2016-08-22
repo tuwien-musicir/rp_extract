@@ -182,6 +182,7 @@ def extract_all_files_generic(in_path,
                               audiofile_types=('.wav','.mp3'),
                               label=False,
                               out_HDF5 = False,
+                              log_AudioTypes = False,
                               verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path (+ sub-directories)
@@ -220,6 +221,7 @@ def extract_all_files(filelist, path,
                               feature_types = ['rp','ssd','rh'],
                               label=False,
                               out_HDF5 = False,
+                              log_AudioTypes = False,
                               verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub-directories in it
@@ -236,7 +238,7 @@ def extract_all_files(filelist, path,
 
     ext = feature_types
 
-    n = 0  # counting the files that were actually analyzed
+    n = 0   # counting the files that were actually analyzed
     err = 0 # counting errors
     n_files = len(filelist)
 
@@ -247,6 +249,12 @@ def extract_all_files(filelist, path,
     start_time = time.time()
 
     if out_file: # only if out_file is specified
+
+        if log_AudioTypes:
+            log_filename = out_file + '.audiotypes.log'
+            audio_logfile = open(log_filename, 'w') # TODO allow append mode 'a'
+            audio_logwriter = unicsv.UnicodeCSVWriter(audio_logfile) #, quoting=csv.QUOTE_ALL)
+
         if out_HDF5:
             FeatureWriter = HDF5FeatureWriter()
         else:
@@ -272,10 +280,17 @@ def extract_all_files(filelist, path,
             print '#',n,'/',n_files,'(ETA: ' + timestr(remain_time) + "):", filename
 
             # read audio file (wav or mp3)
-            samplerate, samplewidth, data = audiofile_read(filename)
+            samplerate, samplewidth, data, decoder = audiofile_read(filename, include_decoder=True)
 
             # audio file info
             if verbose: print samplerate, "Hz,", data.shape[1], "channel(s),", data.shape[0], "samples"
+
+            if log_AudioTypes:
+                if n == 1: # write CSV header
+                    log_info = ["filename","decoder","samplerate (kHz)","samplewidth (bit)","n channels","n samples"]
+                    audio_logwriter.writerow(log_info)
+                log_info = [filename,decoder,samplerate,samplewidth*8,data.shape[1],data.shape[0]]
+                audio_logwriter.writerow(log_info)
 
             # extract features
             # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)
@@ -341,6 +356,9 @@ def extract_all_files(filelist, path,
     if out_file:  # close all output files
         FeatureWriter.close()
 
+        if log_AudioTypes:
+            audio_logfile.close()
+
     end_time = time.time()
 
     if verbose:
@@ -402,7 +420,8 @@ if __name__ == '__main__':
     print "File types:", audiofile_types
 
     # BATCH RP FEATURE EXTRACTION:
-    extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types, args.label, args.hdf5)
+    extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types,
+                              args.label, args.hdf5, log_AudioTypes = True)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
