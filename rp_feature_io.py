@@ -397,7 +397,7 @@ def save_arff(filename,dataframe,relation_name=None):
 # == HDF5 ==
 
 
-def load_hdf5(hdf_filename):
+def load_hdf5_pandas(hdf_filename):
     store = pd.HDFStore(hdf_filename)
     # .as_matrix(columns=None) converts to Numpy array (of undefined data column types)
     data = store['data'].as_matrix(columns=None)
