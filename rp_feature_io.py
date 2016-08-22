@@ -417,10 +417,10 @@ def load_hdf5_features(hdf_filename, verbose=True):
     if hdf5_file.root.__contains__('file_ids2'): # check if file_ids2 is present and also read and return
         ids2 = hdf5_file.root.file_ids2[:][0].tolist()
         hdf5_file.close()
-        return feat, ids, ids2
+        return ids, feat, ids2
     else:
         hdf5_file.close()
-        return feat, ids
+        return ids, feat
 
 
 def load_hdf5_pandas(hdf_filename):
@@ -674,6 +674,7 @@ if __name__ == '__main__':
     #argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension) [default: features/features]', default='features/features') # nargs='?' to make it optional
 
     argparser.add_argument('-arff',   action='store_true',help='test loading of ARFF file',default=False) # boolean opt
+    argparser.add_argument('-csv',   action='store_true',help='test loading of CSV file',default=False) # boolean opt
     argparser.add_argument('-csv2arff', action='store_true',help='convert CSV file to ARFF file',default=False) # boolean opt
     argparser.add_argument('-h5','--hdf5', action='store_true',help='test loading of HDF5 file',default=False) # boolean opt
 
@@ -690,20 +691,21 @@ if __name__ == '__main__':
 
         csv2arff(args.input_path,out_filenamestub,feature_types)
 
-    if args.arff: # try to load ARFF
-
+    else:
         print "Reading ", args.input_path
 
-        features, classes  = load_arff(args.input_path)
+        if args.arff: # try to load ARFF
+            features, classes  = load_arff(args.input_path)
+            print "classes:" , classes.shape
 
-        print "classes:" , classes.shape
+        if args.csv: # try to load HDF5
+            ids, features = read_csv_features1(args.input_path)
+            print "number of files:", len(ids)
+
+        if args.hdf5: # try to load HDF5
+            ids, features = load_hdf5_features(args.input_path)
+            print "number of files:", len(ids)
+
         print "feature dimensions:", features.shape
-
-    if args.hdf5: # try to load HDF5
-
-        print "Reading ", args.input_path
-
-        features, ids = load_hdf5_features(args.input_path)
-        print "number of files:", len(ids)
-        print "feature dimensions:", features.shape
+        #print features
         #print ids
