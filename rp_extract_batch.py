@@ -182,7 +182,8 @@ def extract_all_files_generic(in_path,
                               audiofile_types=('.wav','.mp3'),
                               label=False,
                               out_HDF5 = False,
-                              log_AudioTypes = False,
+                              log_AudioTypes = True,
+                              log_Errors = True,
                               verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path (+ sub-directories)
@@ -211,7 +212,7 @@ def extract_all_files_generic(in_path,
     else:
         raise ValueError("Cannot not process this kind of input file: " + in_path)
 
-    return extract_all_files(filelist, in_path, out_file, feature_types, label, out_HDF5, verbose)
+    return extract_all_files(filelist, in_path, out_file, feature_types, label, out_HDF5, log_AudioTypes, log_Errors, verbose)
 
 
 
@@ -221,7 +222,8 @@ def extract_all_files(filelist, path,
                               feature_types = ['rp','ssd','rh'],
                               label=False,
                               out_HDF5 = False,
-                              log_AudioTypes = False,
+                              log_AudioTypes = True,
+                              log_Errors = True,
                               verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub-directories in it
@@ -254,6 +256,10 @@ def extract_all_files(filelist, path,
             log_filename = out_file + '.audiotypes.log'
             audio_logfile = open(log_filename, 'w') # TODO allow append mode 'a'
             audio_logwriter = unicsv.UnicodeCSVWriter(audio_logfile) #, quoting=csv.QUOTE_ALL)
+        if log_Errors:
+            log_filename = out_file + '.errors.log'
+            error_logfile = open(log_filename, 'w') # TODO allow append mode 'a'
+            error_logwriter = unicsv.UnicodeCSVWriter(error_logfile) #, quoting=csv.QUOTE_ALL)
 
         if out_HDF5:
             FeatureWriter = HDF5FeatureWriter()
@@ -284,13 +290,6 @@ def extract_all_files(filelist, path,
 
             # audio file info
             if verbose: print samplerate, "Hz,", data.shape[1], "channel(s),", data.shape[0], "samples"
-
-            if log_AudioTypes:
-                if n == 1: # write CSV header
-                    log_info = ["filename","decoder","samplerate (kHz)","samplewidth (bit)","n channels","n samples"]
-                    audio_logwriter.writerow(log_info)
-                log_info = [filename,decoder,samplerate,samplewidth*8,data.shape[1],data.shape[0]]
-                audio_logwriter.writerow(log_info)
 
             # extract features
             # Note: the True/False flags are determined by checking if a feature is listed in 'ext' (see settings above)
@@ -347,17 +346,30 @@ def extract_all_files(filelist, path,
 
                 filelist_extracted.append(id)
 
+            # write list of analyzed audio files alongsize audio metadata (kHz, bit, etc.)
+            if log_AudioTypes:
+                if n == 1: # write CSV header
+                    log_info = ["filename","decoder","samplerate (kHz)","samplewidth (bit)","n channels","n samples"]
+                    audio_logwriter.writerow(log_info)
+                log_info = [filename,decoder,samplerate,samplewidth*8,data.shape[1],data.shape[0]]
+                audio_logwriter.writerow(log_info)
+
             gc.collect() # after every file we do garbage collection, otherwise our memory is used up quickly for some reason
 
         except Exception as e:
             print "ERROR analysing file: " + fil + ": " + str(e)
             err += 1
+            if log_Errors:
+                error_logwriter.writerow([fil,str(e)])
 
     if out_file:  # close all output files
         FeatureWriter.close()
 
         if log_AudioTypes:
             audio_logfile.close()
+
+    if log_Errors:
+        error_logfile.close()
 
     end_time = time.time()
 
