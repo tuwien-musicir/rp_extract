@@ -180,6 +180,7 @@ def extract_all_files_generic(in_path,
                               out_file = None,
                               feature_types = ['rp','ssd','rh'],
                               audiofile_types=('.wav','.mp3'),
+                              path_prefix = None,
                               label=False,
                               out_HDF5 = False,
                               log_AudioTypes = True,
@@ -202,7 +203,7 @@ def extract_all_files_generic(in_path,
     if in_path.lower().endswith('.txt'):  # treat as input file list
         from classes_io import read_filenames
         filelist = read_filenames(in_path)
-        in_path = None # no abs path to add below
+        in_path = path_prefix # in case path_prefix is passed it is added to files in extract_all_files
     elif in_path.lower().endswith(audiofile_types): # treat as single audio input file
         filelist = [in_path]
         in_path = None # no abs path to add below
@@ -390,8 +391,10 @@ if __name__ == '__main__':
 
     argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
-    argparser.add_argument('input_path', help='input file path to search for wav/mp3 files to analyze') # nargs='?' to make it optional
+    argparser.add_argument('input_path', help='audio file, audio filelist (.txt), or input path to search for audio files to analyze') # nargs='?' to make it optional
     argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension) [default: features/features]', default='features/features') # nargs='?' to make it optional
+
+    argparser.add_argument('-pre','--pathprefix',help='optional path prefix, if input_path is a filelist containing relative paths', default='')
 
     argparser.add_argument('-rp',   action='store_true',help='extract Rhythm Patterns (default)',default=False) # boolean opt
     argparser.add_argument('-rh',   action='store_true',help='extract Rhythm Histograms (default)',default=False) # boolean opt
@@ -433,7 +436,7 @@ if __name__ == '__main__':
 
     # BATCH RP FEATURE EXTRACTION:
     extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types,
-                              args.label, args.hdf5, log_AudioTypes = True)
+                              args.pathprefix, args.label, args.hdf5, log_AudioTypes = True)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
