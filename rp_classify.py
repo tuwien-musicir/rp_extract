@@ -81,7 +81,7 @@ def cross_validate_multiclass(model, features, classes, categories, folds=10):
     # we iterate over the categories in class file columns here
     for c in range(len(categories)):
         cls = classes[:,c]
-        a = cross_validation.cross_val_score(model, features, cls, scoring='accuracy', cv=10)
+        a = cross_validation.cross_val_score(model, features, cls, scoring='accuracy', cv=folds)
         mean_acc = np.mean(a)
         acc.append(mean_acc)
     return zip(categories,acc)
