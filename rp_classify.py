@@ -2,13 +2,14 @@
 Classification of Music into Genres, Moods or other categories
 using the Rhythm Pattern audio analyzer (rp_extract.py)
 
-2015-11 by Thomas Lidy
+2015-11 - 2016-08 by Thomas Lidy
 '''
 
 import os.path
 import argparse
 import cPickle
 import numpy as np
+import sys
 
 from sklearn import preprocessing, svm
 from sklearn.multiclass import OneVsRestClassifier
@@ -80,12 +81,16 @@ def cross_validate_multiclass(model, features, classes, categories, folds=10, me
     acc = [] # empty list
     # we iterate over the categories in class file columns here
     for c in range(len(categories)):
-        if verbose: print '.',
+        if verbose:
+            print '.',
+            sys.stdout.flush()
         cls = classes[:,c]
         a = cross_validation.cross_val_score(model, features, cls, scoring=measure, cv=folds)
         mean_acc = np.mean(a)
         acc.append(mean_acc)
-    if verbose: print
+    if verbose:
+        print
+        sys.stdout.flush()
     return zip(categories,acc)
 
 
