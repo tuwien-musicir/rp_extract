@@ -357,7 +357,6 @@ def align_features_and_classes(features, feature_ids, class_data, strip_files=Fa
     # Note: sorting or not sorting changes the results of cross-validation!
     # ids_matched = sorted(ids_matched)
 
-    # TODO: URGENT: this will not work if strip_files or lower changes the actual file ids vs. ids_matched!!
     if isinstance(class_data, dict):
         class_data = reduce_class_dict(class_data, ids_matched)
         n_class_entries = len(class_data)
@@ -365,6 +364,9 @@ def align_features_and_classes(features, feature_ids, class_data, strip_files=Fa
         # create a new reduced dataframe that contains only the matched files (in the matched order)
         class_data = class_data.ix[ids_matched]
         n_class_entries = class_data.shape[0]
+
+    if strip_files: # even if don already in match_filenames, we need to strip here again for sorted_feature_subset below
+        feature_ids = strip_filenames(feature_ids)
 
     # cut & resort the features according to matched ids (subset, if files are missing in class file)
     features = sorted_feature_subset(features, feature_ids, ids_matched)
