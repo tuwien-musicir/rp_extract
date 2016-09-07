@@ -172,8 +172,9 @@ class HDF5FeatureWriter(FeatureWriter):
         if self.file_ids2 != []:
             self.write_string_ids('file_ids2',self.file_ids2)
 
-        for e in self.ext:
-            self.files[e].close()
+        if self.ext is not None: # if its None, files are not open yet
+            for e in self.ext:
+                self.files[e].close()
 
 
 
