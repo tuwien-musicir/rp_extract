@@ -127,12 +127,12 @@ def mp3_decode(in_filename, out_filename=None, verbose=True):
     return decode(in_filename, out_filename, verbose)
 
 
-def decode(in_filename, out_filename=None, verbose=True):
-    ''' calls external decoder to convert an MP3, AIF(F) or M4A file to a WAV file
+def decode(in_filename, out_filename=None, verbose=True, no_extension_check=False):
+    ''' calls external decoder to convert an MP3, FLAC, AIF(F) or M4A file to a WAV file
 
     One of the following decoder programs must be installed on the system:
 
-    ffmpeg: for mp3, aif(f), or m4a
+    ffmpeg: for mp3, flac, aif(f), or m4a
     mpg123: for mp3
     lame: for mp3
 
@@ -170,7 +170,8 @@ def decode(in_filename, out_filename=None, verbose=True):
 
     for cmd, types in zip(cmd_list,cmd_types):
 
-        if ext in types: # only if the current command supports the file type that we are having
+        # we decode only if the current command supports the file type that we are having (except no_extension_check is True)
+        if ext in types or no_extension_check:
             try:
                 return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
 
@@ -187,14 +188,14 @@ def decode(in_filename, out_filename=None, verbose=True):
 
     if not success:
         commands = ", ".join( c[0] for c in cmd_list)
-        raise OSError("No appropriate decoder found for" + ext + "file. Check if any of these programs is on your system path: " + commands + \
+        raise OSError("No appropriate decoder found for" + ext + " file. Check if any of these programs is on your system path: " + commands + \
                        ". Otherwise install one of these and/or add them to the path using os.environ['PATH'] += os.pathsep + path.")
 
     return cmd[0]
 
 def get_supported_audio_formats():
     # TODO: update this list here every time a new format is added; to avoid this, make a more elegant solution getting the list of formats from where the commands are defined above
-    return ('.mp3','.m4a','.aif','.aiff','.flac')
+    return ('.wav','.mp3','.m4a','.aif','.aiff','.flac')
 
 
 # testing decoding to memory instead of file: did NOT bring any speedup!
@@ -237,7 +238,7 @@ def mp3_read(filename,normalize=True,verbose=True):
 
 
 
-def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False):
+def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False,no_extension_check=False):
     ''' audiofile_read
 
     generic function capable of reading WAV, MP3 and AIF(F) files
@@ -246,6 +247,7 @@ def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False):
     :param normalize: normalize to (-1,1) if True (default), or keep original values (16 bit, 24 bit or 32 bit)
     :param verbose: whether to print a message while decoding files or not
     :param include_decoder: includes a 4th return value: string which decoder has been used to decode the audio file
+    :param no_extension_check: does not check file format via extension. means that decoder is called on ALL files.
     :return: a tuple with 3 or 4 entries: samplerate in Hz (e.g. 44100), samplewidth in bytes (e.g. 2 for 16 bit),
             wavedata (simple array for mono, 2-dim. array for stereo), and optionally a decoder string
 
@@ -265,13 +267,13 @@ def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False):
     basename, ext = os.path.splitext(filename)
     ext = ext.lower()
 
-    if ext == '.wav':
+    if ext == '.wav' and not no_extension_check==True:
         samplerate, samplewidth, wavedata = wav_read(filename,normalize,verbose)
-        decoder = 'wavio.py'
+        decoder = 'wavio.py' # for log file
     else:
         try: # try to decode
             tempfile = get_temp_filename(suffix='.wav')
-            decoder = decode(filename,tempfile,verbose)
+            decoder = decode(filename,tempfile,verbose,no_extension_check)
             samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
 
         finally: # delete temp file in any case

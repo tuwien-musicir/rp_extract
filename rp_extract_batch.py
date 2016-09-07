@@ -181,6 +181,7 @@ def extract_all_files_generic(in_path,
                               feature_types = ['rp','ssd','rh'],
                               audiofile_types=('.wav','.mp3'),
                               path_prefix = None,
+                              no_extension_check=False,
                               label=False,
                               out_HDF5 = False,
                               log_AudioTypes = True,
@@ -197,6 +198,7 @@ def extract_all_files_generic(in_path,
     # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
     # feature_types: RP feature types to extract. see rp_extract.py
     # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
+    # no_extension_check: does not check file format via extension. means that decoder is called on ALL files.
     # out_HDF5: whether to store as HDF5 file format (otherwise CSV)
     """
 
@@ -208,23 +210,26 @@ def extract_all_files_generic(in_path,
         filelist = [in_path]
         in_path = None # no abs path to add below
     elif os.path.isdir(in_path): # find files in path
+        if no_extension_check: audiofile_types = None # override filetypes to include all files (no extension check)
         filelist = find_files(in_path,audiofile_types,relative_path=True)
         # filelist will be relative, so we provide in_path below
     else:
         raise ValueError("Cannot not process this kind of input file: " + in_path)
 
-    return extract_all_files(filelist, in_path, out_file, feature_types, label, out_HDF5, log_AudioTypes, log_Errors, verbose)
+    return extract_all_files(filelist, in_path, out_file, feature_types, label,
+                             no_extension_check, out_HDF5, log_AudioTypes, log_Errors, verbose)
 
 
 
 
 def extract_all_files(filelist, path,
-                              out_file = None,
-                              feature_types = ['rp','ssd','rh'],
+                              out_file=None,
+                              feature_types =['rp','ssd','rh'],
                               label=False,
-                              out_HDF5 = False,
-                              log_AudioTypes = True,
-                              log_Errors = True,
+                              no_extension_check=False,
+                              out_HDF5=False,
+                              log_AudioTypes=True,
+                              log_Errors=True,
                               verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub-directories in it
@@ -236,6 +241,7 @@ def extract_all_files(filelist, path,
     # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
     # feature_types: RP feature types to extract. see rp_extract.py
     # label: use subdirectory name as class label
+    # no_extension_check: does not check file format via extension. means that decoder is called on ALL files.
     # out_HDF5: whether to store as HDF5 file format (otherwise CSV)
     """
 
@@ -287,7 +293,7 @@ def extract_all_files(filelist, path,
             print '#',n,'/',n_files,'(ETA: ' + timestr(remain_time) + "):", filename
 
             # read audio file (wav or mp3)
-            samplerate, samplewidth, data, decoder = audiofile_read(filename, include_decoder=True)
+            samplerate, samplewidth, data, decoder = audiofile_read(filename, include_decoder=True, no_extension_check=no_extension_check)
 
             # audio file info
             if verbose: print samplerate, "Hz,", data.shape[1], "channel(s),", data.shape[0], "samples"
@@ -395,6 +401,7 @@ if __name__ == '__main__':
     argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension) [default: features/features]', default='features/features') # nargs='?' to make it optional
 
     argparser.add_argument('-pre','--pathprefix',help='optional path prefix, if input_path is a filelist containing relative paths', default='')
+    argparser.add_argument('-noext','--noextensioncheck', action='store_true',help='do not check audio file format via extension; means that decoder is called on ALL files',default=False) # boolean opt
 
     argparser.add_argument('-rp',   action='store_true',help='extract Rhythm Patterns (default)',default=False) # boolean opt
     argparser.add_argument('-rh',   action='store_true',help='extract Rhythm Histograms (default)',default=False) # boolean opt
@@ -436,7 +443,7 @@ if __name__ == '__main__':
 
     # BATCH RP FEATURE EXTRACTION:
     extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types,
-                              args.pathprefix, args.label, args.hdf5, log_AudioTypes = True)
+                              args.pathprefix, args.noextensioncheck, args.label, args.hdf5, log_AudioTypes = True)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
