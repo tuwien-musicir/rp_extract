@@ -439,7 +439,8 @@ if __name__ == '__main__':
 
     print "Extracting features:", feature_types
     print "From files in:", args.input_path
-    print "File types:", audiofile_types
+    print "File types:",
+    print "ALL FILES (NO EXTENSION CHECK)" if args.noextensioncheck else audiofile_types
 
     # BATCH RP FEATURE EXTRACTION:
     extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types,
