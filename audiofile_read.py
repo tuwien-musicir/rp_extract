@@ -127,7 +127,7 @@ def mp3_decode(in_filename, out_filename=None, verbose=True):
     return decode(in_filename, out_filename, verbose)
 
 
-def decode(in_filename, out_filename=None, verbose=True, no_extension_check=False):
+def decode(in_filename, out_filename=None, verbose=True, no_extension_check=False, force_resampling=None):
     ''' calls external decoder to convert an MP3, FLAC, AIF(F) or M4A file to a WAV file
 
     One of the following decoder programs must be installed on the system:
@@ -141,6 +141,8 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
     in_filename: input audio file name to process
     out_filename: output filename after conversion; if omitted, the input filename is used, replacing the extension by .wav
     verbose: print decoding command line information or not
+    no_extension_check: does not check file format extension. means that *first* specified decoder is called on ANY files type
+    force_resampling: force a target sampling rate (provided in Hz) when decoding (works with FFMPEG only!)
     returns: decoder command used (without parameters)
     '''
 
@@ -156,12 +158,16 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
     # cmd_list is a list of commands with their arguments, which will be iterated over to try to find each tool
     # cmd_types is a list of file types supported by each command/tool
 
-    cmd1 = ['ffmpeg','-v','1','-y','-i', in_filename,  out_filename]    # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile above
-    cmd1_types = ('.mp3','.m4a','.aif','.aiff','.flac')
+    cmd1 = ['ffmpeg','-v','1','-y','-i', in_filename] # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile before when passed
+    if force_resampling: cmd1.extend(['-ar',str(force_resampling)])  # add resample option
+    cmd1.append(out_filename)
+    cmd1_types = ['.mp3','.m4a','.aif','.aiff','.flac']
+
     cmd2 = ['mpg123','-q', '-w', out_filename, in_filename]
-    cmd2_types = '.mp3'
+    cmd2_types = ['.mp3']
+
     cmd3 = ['lame','--quiet','--decode', in_filename, out_filename]
-    cmd3_types = '.mp3'
+    cmd3_types = ['.mp3']
 
     cmd_list = [cmd1,cmd2,cmd3]
     cmd_types = [cmd1_types,cmd2_types,cmd3_types]
