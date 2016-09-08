@@ -206,13 +206,13 @@ def extract_all_files_generic(in_path,
         from classes_io import read_filenames
         filelist = read_filenames(in_path)
         in_path = path_prefix # in case path_prefix is passed it is added to files in extract_all_files
-    elif in_path.lower().endswith(audiofile_types): # treat as single audio input file
-        filelist = [in_path]
-        in_path = None # no abs path to add below
     elif os.path.isdir(in_path): # find files in path
         if no_extension_check: audiofile_types = None # override filetypes to include all files (no extension check)
         filelist = find_files(in_path,audiofile_types,relative_path=True)
         # filelist will be relative, so we provide in_path below
+    elif in_path.lower().endswith(audiofile_types) or no_extension_check: # treat as single audio input file
+        filelist = [in_path]
+        in_path = None # no abs path to add below
     else:
         raise ValueError("Cannot not process this kind of input file: " + in_path)
 
