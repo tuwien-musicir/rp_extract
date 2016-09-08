@@ -244,7 +244,7 @@ def mp3_read(filename,normalize=True,verbose=True):
 
 
 
-def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False,no_extension_check=False):
+def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False,no_extension_check=False,force_resampling=None):
     ''' audiofile_read
 
     generic function capable of reading WAV, MP3 and AIF(F) files
@@ -254,6 +254,7 @@ def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False,no
     :param verbose: whether to print a message while decoding files or not
     :param include_decoder: includes a 4th return value: string which decoder has been used to decode the audio file
     :param no_extension_check: does not check file format via extension. means that decoder is called on ALL files.
+    :param force_resampling: force a target sampling rate (provided in Hz) when decoding (works with FFMPEG only!)
     :return: a tuple with 3 or 4 entries: samplerate in Hz (e.g. 44100), samplewidth in bytes (e.g. 2 for 16 bit),
             wavedata (simple array for mono, 2-dim. array for stereo), and optionally a decoder string
 
@@ -279,7 +280,7 @@ def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False,no
     else:
         try: # try to decode
             tempfile = get_temp_filename(suffix='.wav')
-            decoder = decode(filename,tempfile,verbose,no_extension_check)
+            decoder = decode(filename,tempfile,verbose,no_extension_check,force_resampling)
             samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
 
         finally: # delete temp file in any case
