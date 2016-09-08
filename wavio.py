@@ -2,6 +2,8 @@
 # Author: Warren Weckesser
 # License: BSD 3-Clause (http://opensource.org/licenses/BSD-3-Clause)
 
+# TODO: As of 2016, wavio is now available in PiPy. We could remove this file and add it to requirements.txt However the syntax changed and adaptions need to be made
+
 import wave as _wave
 import numpy as _np
 
