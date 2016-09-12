@@ -254,6 +254,8 @@ def extract_all_files(filelist, path,
     # initialize filelist_extracted and dict containing all accumulated feature arrays
     filelist_extracted = []
     feat_array = {}
+    audio_logwriter = None
+    error_logwriter = None
 
     start_time = time.time()
 
@@ -263,6 +265,7 @@ def extract_all_files(filelist, path,
             log_filename = out_file + '.audiotypes.log'
             audio_logfile = open(log_filename, 'w') # TODO allow append mode 'a'
             audio_logwriter = unicsv.UnicodeCSVWriter(audio_logfile) #, quoting=csv.QUOTE_ALL)
+
         if log_Errors:
             log_filename = out_file + '.errors.log'
             error_logfile = open(log_filename, 'w') # TODO allow append mode 'a'
@@ -354,7 +357,7 @@ def extract_all_files(filelist, path,
                 filelist_extracted.append(id)
 
             # write list of analyzed audio files alongsize audio metadata (kHz, bit, etc.)
-            if log_AudioTypes:
+            if audio_logwriter:
                 if n == 1: # write CSV header
                     log_info = ["filename","decoder","samplerate (kHz)","samplewidth (bit)","n channels","n samples"]
                     audio_logwriter.writerow(log_info)
@@ -366,16 +369,16 @@ def extract_all_files(filelist, path,
         except Exception as e:
             print "ERROR analysing file: " + fil + ": " + str(e)
             err += 1
-            if log_Errors:
+            if error_logwriter:
                 error_logwriter.writerow([fil,str(e)])
 
     if out_file:  # close all output files
         FeatureWriter.close()
 
-        if log_AudioTypes:
+        if audio_logwriter:
             audio_logfile.close()
 
-    if log_Errors:
+    if error_logwriter:
         error_logfile.close()
 
     end_time = time.time()
