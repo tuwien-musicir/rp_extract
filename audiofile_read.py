@@ -27,6 +27,11 @@ class DecoderException(Exception):
 
 
 
+def get_audioformat_info(input_file):
+    import magic    # pip install python-magic
+    return magic.from_file(input_file)
+
+
 
 # Normalize integer WAV data to float in range (-1,1)
 # Note that this works fine with Wav files read with Wavio
