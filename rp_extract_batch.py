@@ -182,6 +182,7 @@ def extract_all_files_generic(in_path,
                               audiofile_types=('.wav','.mp3'),
                               path_prefix = None,
                               no_extension_check=False,
+                              force_resampling=None,
                               label=False,
                               out_HDF5 = False,
                               log_AudioTypes = True,
@@ -199,6 +200,7 @@ def extract_all_files_generic(in_path,
     # feature_types: RP feature types to extract. see rp_extract.py
     # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
     # no_extension_check: does not check file format via extension. means that decoder is called on ALL files.
+    # force_resampling: force a target sampling rate (provided in Hz) when decoding (works with FFMPEG only!)
     # out_HDF5: whether to store as HDF5 file format (otherwise CSV)
     """
 
@@ -217,7 +219,7 @@ def extract_all_files_generic(in_path,
         raise ValueError("Cannot not process this kind of input file: " + in_path)
 
     return extract_all_files(filelist, in_path, out_file, feature_types, label,
-                             no_extension_check, out_HDF5, log_AudioTypes, log_Errors, verbose)
+                             no_extension_check, force_resampling, out_HDF5, log_AudioTypes, log_Errors, verbose)
 
 
 
@@ -227,6 +229,7 @@ def extract_all_files(filelist, path,
                               feature_types =['rp','ssd','rh'],
                               label=False,
                               no_extension_check=False,
+                              force_resampling=None,
                               out_HDF5=False,
                               log_AudioTypes=True,
                               log_Errors=True,
@@ -242,6 +245,7 @@ def extract_all_files(filelist, path,
     # feature_types: RP feature types to extract. see rp_extract.py
     # label: use subdirectory name as class label
     # no_extension_check: does not check file format via extension. means that decoder is called on ALL files.
+    # force_resampling: force a target sampling rate (provided in Hz) when decoding (works with FFMPEG only!)
     # out_HDF5: whether to store as HDF5 file format (otherwise CSV)
     """
 
@@ -296,7 +300,7 @@ def extract_all_files(filelist, path,
             print '#',n,'/',n_files,'(ETA: ' + timestr(remain_time) + "):", filename
 
             # read audio file (wav or mp3)
-            samplerate, samplewidth, data, decoder = audiofile_read(filename, include_decoder=True, no_extension_check=no_extension_check)
+            samplerate, samplewidth, data, decoder = audiofile_read(filename, include_decoder=True, no_extension_check=no_extension_check, force_resampling=force_resampling)
 
             # audio file info
             if verbose: print samplerate, "Hz,", data.shape[1], "channel(s),", data.shape[0], "samples"
@@ -405,6 +409,7 @@ if __name__ == '__main__':
 
     argparser.add_argument('-pre','--pathprefix',help='optional path prefix, if input_path is a filelist containing relative paths', default='')
     argparser.add_argument('-noext','--noextensioncheck', action='store_true',help='do not check audio file format via extension; means that decoder is called on ALL files',default=False) # boolean opt
+    argparser.add_argument('-force','--forceresampling', type=int,help='force a target sampling rate (in Hz) for decoding (works with FFMPEG only)',default=None)
 
     argparser.add_argument('-rp',   action='store_true',help='extract Rhythm Patterns (default)',default=False) # boolean opt
     argparser.add_argument('-rh',   action='store_true',help='extract Rhythm Histograms (default)',default=False) # boolean opt
@@ -445,9 +450,11 @@ if __name__ == '__main__':
     print "File types:",
     print "ALL FILES (NO EXTENSION CHECK)" if args.noextensioncheck else audiofile_types
 
+
     # BATCH RP FEATURE EXTRACTION:
     extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types,
-                              args.pathprefix, args.noextensioncheck, args.label, args.hdf5, log_AudioTypes = True)
+                              args.pathprefix, args.noextensioncheck, args.forceresampling,
+                              args.label, args.hdf5, log_AudioTypes = True)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
