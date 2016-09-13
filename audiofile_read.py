@@ -27,11 +27,11 @@ class DecoderException(Exception):
 
 
 
-def get_audioformat_info(input_file, split = True):
+def get_audioformat_info(input_file, split_list = True):
     import magic    # pip install python-magic
     from string import split
     info = magic.from_file(input_file)
-    if split:
+    if split_list:
         info = split(info, ', ')
     return info
 
@@ -168,7 +168,7 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
     # cmd_types is a list of file types supported by each command/tool
 
     cmd1 = ['ffmpeg','-v','1','-y','-i', in_filename] # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile before when passed
-    if force_resampling: cmd1.extend(['-ar',str(force_resampling)])  # add resample option
+    if force_resampling: cmd1.extend(['-ar',str(force_resampling)])  # add resample option (TODO: -ac 1 for mono)
     cmd1.append(out_filename)
     cmd1_types = ['.mp3','.m4a','.aif','.aiff','.flac']
 
