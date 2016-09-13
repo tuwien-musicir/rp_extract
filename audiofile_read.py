@@ -196,7 +196,7 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
 
             except OSError as e:
                 if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
-                    DecoderException("Problem appeared during decoding:" + str(e), command=cmd, orig_error=e)
+                    raise DecoderException("Problem appeared during decoding:" + str(e), command=cmd, orig_error=e)
 
         if success:
             break  # no need to loop further
