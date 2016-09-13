@@ -27,9 +27,13 @@ class DecoderException(Exception):
 
 
 
-def get_audioformat_info(input_file):
+def get_audioformat_info(input_file, split = True):
     import magic    # pip install python-magic
-    return magic.from_file(input_file)
+    from string import split
+    info = magic.from_file(input_file)
+    if split:
+        info = split(info, ', ')
+    return info
 
 
 
@@ -327,6 +331,8 @@ if __name__ == '__main__':
         file = sys.argv[1]
     else:
         file = "music/BoxCat_Games_-_10_-_Epic_Song.mp3"
+
+    #print get_audioformat_info(file)
 
     # import time
     # start = time.time()
