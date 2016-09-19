@@ -35,6 +35,7 @@ class CSVFeatureWriter(FeatureWriter):
 
     def __init__(self):
     #    super(CSVFeatureWriter, self).__init__()
+        self.isopen = False
         self.files = None
         self.writer = None
         self.ext = None  # file extensions i.e. feature types
@@ -60,11 +61,13 @@ class CSVFeatureWriter(FeatureWriter):
             self.files[e] = open(filename, mode)
             self.writer[e] = unicsv.UnicodeCSVWriter(self.files[e]) #, quoting=csv.QUOTE_ALL)
 
+        self.isopen = True
+
     def write_features(self,id,feat,id2=None):
         # id: string id (e.g. filename) of extracted file
         # feat: dict containing 1 entry per feature type (must match file extensions)
         # id2: optional secondary identifier to be stored alongside id
-        if self.writer is None:
+        if self.isopen is False or self.writer=={}:
             raise RuntimeError("File or writer is not open yet. Call open first!")
         # TODO: check if all feat.keys() == self.ext
 
@@ -76,14 +79,16 @@ class CSVFeatureWriter(FeatureWriter):
             self.writer[e].writerow(f)
 
     def close(self):
-        for e in self.ext:
-            self.files[e].close()
-
+        if self.isopen:
+            for e in self.ext:
+                self.files[e].close()
+            self.isopen = False
 
 class HDF5FeatureWriter(FeatureWriter):
 
     def __init__(self,float32=False):
         '''float32: if set to True, 32 bit data is stored, otherwise 64 bit'''
+        self.isopen = False
         self.files = None
         self.h5tables = None
         self.ext = None  # file extensions i.e. feature types
@@ -133,6 +138,8 @@ class HDF5FeatureWriter(FeatureWriter):
             h5table.attrs.vec_dim = vec_dim
             h5table.attrs.vec_type = e.upper()
 
+        self.isopen = True
+
     #def store_attribures(self,attributes):
         # TODO store audio analysis parameters as table attributes
         #for e in ext:
@@ -148,6 +155,10 @@ class HDF5FeatureWriter(FeatureWriter):
         # id: string id (e.g. filename) of extracted file
         # feat: dict containing 1 entry per feature type (must match file extensions)
         # id2: optional secondary identifier to be stored alongside id
+
+        if not self.isopen:
+            raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
+
         for e in feat.keys():
             self.h5tables[e].append(feat[e].reshape((1,-1))) # make it a row vector instead of column
 
@@ -160,12 +171,20 @@ class HDF5FeatureWriter(FeatureWriter):
         # create table in each HDF5 file for storing file_ids
         # table_name: name of table to create in HDF5 file
         # file_ids: list of file ids (one entry per feature entry in vec table created by open and write_features
+
+        if not self.isopen:
+            raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
+
         for e in self.ext:
             shape = (1,len(file_ids))
             table = self.files[e].createCArray(self.files[e].root, table_name, self.string_type, shape)
             table[:] = file_ids
 
     def close(self):
+
+        if not self.isopen:
+            raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
+
         # write file ids before closing into a separate table(s) in same HDF5 file
         if self.file_ids != []:
             self.write_string_ids('file_ids',self.file_ids)
@@ -176,6 +195,7 @@ class HDF5FeatureWriter(FeatureWriter):
             for e in self.ext:
                 self.files[e].close()
 
+        self.isopen = False
 
 
 
