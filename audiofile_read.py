@@ -136,7 +136,7 @@ def mp3_decode(in_filename, out_filename=None, verbose=True):
     return decode(in_filename, out_filename, verbose)
 
 
-def decode(in_filename, out_filename=None, verbose=True, no_extension_check=False, force_resampling=None):
+def decode(in_filename, out_filename=None, verbose=True, no_extension_check=False, force_mono=False, force_resampling=None):
     ''' calls external decoder to convert an MP3, FLAC, AIF(F) or M4A file to a WAV file
 
     One of the following decoder programs must be installed on the system:
@@ -151,6 +151,7 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
     out_filename: output filename after conversion; if omitted, the input filename is used, replacing the extension by .wav
     verbose: print decoding command line information or not
     no_extension_check: does not check file format extension. means that *first* specified decoder is called on ANY files type
+    force_mono: force mono output when decoding (works with FFMPEG only!)
     force_resampling: force a target sampling rate (provided in Hz) when decoding (works with FFMPEG only!)
     returns: decoder command used (without parameters)
     '''
@@ -168,7 +169,8 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
     # cmd_types is a list of file types supported by each command/tool
 
     cmd1 = ['ffmpeg','-v','1','-y','-i', in_filename] # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile before when passed
-    if force_resampling: cmd1.extend(['-ar',str(force_resampling)])  # add resample option (TODO: -ac 1 for mono)
+    if force_resampling: cmd1.extend(['-ar',str(force_resampling)])  # add option to resample to targate Hz
+    if force_mono: cmd1.extend(['-ac','1'])  # add option to force to mono (1 output channel)
     cmd1.append(out_filename)
     cmd1_types = ['.mp3','.m4a','.aif','.aiff','.flac']
 
@@ -196,7 +198,7 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
 
             except OSError as e:
                 if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
-                    raise DecoderException("Problem appeared during decoding:" + str(e), command=cmd, orig_error=e)
+                    raise DecoderException("Problem appeared during decoding: " + str(e), command=cmd, orig_error=e)
 
         if success:
             break  # no need to loop further
@@ -289,7 +291,7 @@ def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False,no
     else:
         try: # try to decode
             tempfile = get_temp_filename(suffix='.wav')
-            decoder = decode(filename,tempfile,verbose,no_extension_check,force_resampling)
+            decoder = decode(filename,tempfile,verbose,no_extension_check,force_resampling=force_resampling)
             samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
 
         finally: # delete temp file in any case
