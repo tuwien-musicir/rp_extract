@@ -631,7 +631,7 @@ def to_dataframe_for_arff(feature_data, attribute_labels=None, ids=None, classes
 
 
 
-def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save_features = False, output_file = None):
+def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save_features = False, output_file = None, verbose=True):
     """convenient function that can either load or freshly extract features
 
     depending if input_path is...
@@ -670,11 +670,12 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
     # if we got a directory, we do analysis, if we got a file of one of the accepted file_types, we load it
     if os.path.isdir(input_path) or input_path.lower().endswith(extract_file_types):  # FRESH ANALYSIS from input path or .txt file
 
-        print "Performing feature extraction from ", input_path
+        if verbose:
+            print "Performing feature extraction from ", input_path
 
         # BATCH RP FEATURE EXTRACTION:
         # if output_file is given, will save features, otherwise not
-        ids, feat = extract_all_files_generic(input_path,output_file,feature_types,audiofile_types=audiofile_types)
+        ids, feat = extract_all_files_generic(input_path,output_file,feature_types,audiofile_types=audiofile_types,verbose=verbose)
 
     else:
         # LOAD features from Feature File
