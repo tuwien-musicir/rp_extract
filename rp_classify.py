@@ -86,8 +86,17 @@ def cross_validate_multiclass(model, features, classes, categories, folds=10, me
             sys.stdout.flush()
         cls = classes[:,c]
         a = cross_validation.cross_val_score(model, features, cls, scoring=measure, cv=folds)
-        mean_acc = np.mean(a)
+        mean_acc = np.mean(a) # a contains the scores per fold, we average over folds
         acc.append(mean_acc)
+
+        # TEST:
+        # other way to do it:
+        #from sklearn import metrics
+        #predicted = cross_validation.cross_val_predict(model, features, cls, cv=folds)
+        #mean_acc2 = metrics.accuracy_score(cls, predicted)
+        #mean_prec = metrics.precision_score(cls, predicted)
+        #print "New Acc/Prec: %s\t%2.2f %%\t%2.2f %%" % (c,mean_acc2*100,mean_prec*100)
+
     if verbose:
         print
         sys.stdout.flush()
@@ -163,6 +172,8 @@ if __name__ == '__main__':
 
     argparser.add_argument('-mot','--multiclasstable',action='store_true',help='write multi-class table instead of list',default=False) # boolean opt
 
+    argparser.add_argument('-strip','--stripfeat',action='store_true',help='strip off file extensions in feature files (to match with classfile)',default=False) # boolean opt
+
     argparser.add_argument('-rh',   action='store_true',help='use Rhythm Histograms (default)',default=False) # boolean opt
     argparser.add_argument('-ssd',  action='store_true',help='use Statistical Spectrum Descriptors (default)',default=False) # boolean opt
     argparser.add_argument('-rp',   action='store_true',help='use Rhythm Patterns',default=False) # boolean opt
@@ -204,13 +215,15 @@ if __name__ == '__main__':
 
         # CLASSES: read from file or derive from sub-path
         if args.classfile or args.multiclassfile:
-            #ids = strip_filenames(ids)  # TODO Temp solution: strip filenames of audio features
+            if args.stripfeat:
+                ids = strip_filenames(ids)  # strip filenames of audio feature files
+
             if args.classfile:
                 class_dict = read_class_file(args.classfile)
             elif args.multiclassfile:
                 class_dict = read_multi_class_file(args.multiclassfile, pos_labels=('x','x ','X/2')) # class_dict here is in fact a dataframe
 
-            feat, ids, class_dict = align_features_and_classes(feat, ids, class_dict)
+            feat, ids, class_dict = align_features_and_classes(feat, ids, class_dict, strip_files=True)
             if len(ids) == 0:
                 raise ValueError("No features could be matched with class file! Cannot proceed.")
         else:
@@ -259,7 +272,7 @@ if __name__ == '__main__':
                 print "Fold " + crossval_measure + ":", acc
                 print "Avg " + crossval_measure + " (%d folds): %2.2f %% (std.dev.: %2.2f)" % (len(acc), (np.mean(acc)*100), np.std(acc)*100)
             else:
-                acc_zip = cross_validate_multiclass(model, features, classes_num, multi_categories, crossval_folds, crossval_measure)
+                acc_zip = cross_validate_multiclass(model, features, classes_num, multi_categories, crossval_folds, crossval_measure, verbose=False)
                 for c, a in acc_zip:
                     print "Class: %s\t%2.2f %%" % (c,a*100)
                 acc_per_class = zip(*acc_zip)[1] # unzip to 2 lists and take second one
