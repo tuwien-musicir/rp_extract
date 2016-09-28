@@ -296,11 +296,11 @@ def extract_all_files(filelist, path,
                 filename = path + os.sep + fil
             else:
                 filename = fil
-            #if verbose:
-            print '#',n,'/',n_files,'(ETA: ' + timestr(remain_time) + "):", filename
+            if verbose:
+                print '#',n,'/',n_files,'(ETA: ' + timestr(remain_time) + "):", filename
 
             # read audio file (wav or mp3)
-            samplerate, samplewidth, data, decoder = audiofile_read(filename, include_decoder=True, no_extension_check=no_extension_check, force_resampling=force_resampling)
+            samplerate, samplewidth, data, decoder = audiofile_read(filename, verbose=verbose, include_decoder=True, no_extension_check=no_extension_check, force_resampling=force_resampling)
 
             # audio file info
             if verbose: print samplerate, "Hz,", data.shape[1], "channel(s),", data.shape[0], "samples"
