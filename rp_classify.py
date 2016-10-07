@@ -221,7 +221,7 @@ if __name__ == '__main__':
             if args.classfile:
                 class_dict = read_class_file(args.classfile)
             elif args.multiclassfile:
-                class_dict = read_multi_class_file(args.multiclassfile, pos_labels=('x','x ','X/2')) # class_dict here is in fact a dataframe
+                class_dict = read_multi_class_file(args.multiclassfile, replace_labels=True, pos_labels=('x','x ','X/2')) # class_dict here is in fact a dataframe
 
             feat, ids, class_dict = align_features_and_classes(feat, ids, class_dict, strip_files=True)
             if len(ids) == 0:

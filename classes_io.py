@@ -47,7 +47,7 @@ def read_class_file(filename, delimiter='\t', as_dict=True, cut_path=False, cut_
     return result
 
 
-def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, pos_labels='x', neg_labels='', verbose=True):
+def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, replace_labels=True, pos_labels='x', neg_labels='', verbose=True):
     '''read multi label class assignment files in the format (with CSV header):
 
     filename    genre1  genre2  genre3
@@ -80,18 +80,19 @@ def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, pos_la
     if verbose:
         print 'Categories in CSV file:', ", ".join(categories)
 
-    # replace positive labels as 1 and negative or empty as 0
-    dataframe.replace(pos_labels, 1, inplace=True)
-    dataframe.replace(neg_labels, 0, inplace=True)
-    dataframe.fillna(0, inplace=True) # treat empty cells as negative
+    if replace_labels:
+        # replace positive labels as 1 and negative or empty as 0
+        dataframe.replace(pos_labels, 1, inplace=True)
+        dataframe.replace(neg_labels, 0, inplace=True)
+        dataframe.fillna(0, inplace=True) # treat empty cells as negative
 
-    # sanity check before we convert to integers
-    wrong_entries = np.where(np.logical_and(dataframe.values != 1, dataframe.values != 0))
-    if len(wrong_entries[0]) > 0:
-        for i,j in zip(wrong_entries[0], wrong_entries[1]):
-            print "Unrecognized entry in row", i+1, ", column", j+1, ":"
-            print dataframe.index[i] + ": '" + dataframe.iloc[i,j] + "'"
-        raise ValueError("CSV contains unrecognized entries. Please correct CSV file or define pos_labels when calling read_multi_class_file function.")
+        # sanity check before we convert to integers
+        wrong_entries = np.where(np.logical_and(dataframe.values != 1, dataframe.values != 0))
+        if len(wrong_entries[0]) > 0:
+            for i,j in zip(wrong_entries[0], wrong_entries[1]):
+                print "Unrecognized entry in row", i+1, ", column", j+1, ":"
+                print dataframe.index[i] + ": '" + dataframe.iloc[i,j] + "'"
+            raise ValueError("CSV contains unrecognized entries. Please correct CSV file or define pos_labels when calling read_multi_class_file function.")
 
     # make an in-place conversion to integer (if not possible, will throw error)
     dataframe = dataframe.astype(int, copy=False)
