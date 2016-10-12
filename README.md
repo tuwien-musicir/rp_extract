@@ -13,6 +13,8 @@ Main Authors: Thomas Lidy (audiofeature), Alexander Schindler (slychief)
 
 ## Installation
 
+[Python 2.7] (https://www.python.org/downloads/release/python-2712/) is required.
+
 ### Operating Systems
 
 Linux, Mac and Windows are supported. We recommend Ubuntu 14.04 or 16.04.
@@ -49,12 +51,12 @@ audio analysis part with `rp_extract.py`, `numpy` and `scipy` are the only requi
 If you want to use MP3, M4A, FLAC or AIF(F) files as input, you need to have one of the following decoders installed in your system:
 (Note: lame and mpg123 only support MP3, ffmpeg supports MP3 and all other formats)
 
-- Linux: install ffmpeg, mpg123, or lame from your Software Install Center or package repository
+- Linux: install `ffmpeg`, `mpg123`, or `lame` from your Software Install Center or package repository (via `sudo apt-get install`)
   - install ffmpeg on Ubuntu 14.04: see http://fcorti.com/2014/04/22/ffmpeg-ubuntu-14-04-lts
   - install ffmpeg on Debian Jessie:
-    sudo echo deb http://ftp.uk.debian.org/debian jessie-backports main > /etc/sources.list.d/ffmpeg.list
-    sudo apt-get update
-    sudo apt-get install ffmpeg
+    `sudo echo deb http://ftp.uk.debian.org/debian jessie-backports main > /etc/sources.list.d/ffmpeg.list;
+    sudo apt-get update;
+    sudo apt-get install ffmpeg`
 - Mac: FFMPeg for Mac: http://ffmpegmac.net or Lame for Mac: http://www.thalictrum.com/en/products/lame.html
 - Windows: FFMpeg.exe is already included (nothing to install)
 
