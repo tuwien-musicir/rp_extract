@@ -9,10 +9,10 @@ TU Wien<br>
 Institute of Software Technology and Interactive Systems<br>
 Vienna University of Technology, Austria
 
-RP_extract is a python library to extract semantic features (so called audio descriptors) from audio files (WAV, MP3, ...)
-which can be used in tasks such as finding similar sounding music, creating playlists or recommender systems, and
-categorizing music into a custom set of categories such as genres, or detecting concepts such as moods and emotions in music.
-Most of these tasks are achieved through emplyoing Machine Learning, example implementations are provided in this
+RP_extract is a Python library to extract semantic features (so called audio descriptors) from audio files (WAV, MP3, ...)
+which can be used in tasks such as finding similar sounding music, creating playlists or recommender systems,
+categorizing music into a custom set of categories such as genres, and detecting concepts such as moods and emotions in music.
+Most of these tasks are achieved through employing Machine Learning, example implementations are provided in this
 repository and the tutorials included.
 
 Main Authors: Thomas Lidy (audiofeature), Alexander Schindler (slychief)
