@@ -74,7 +74,7 @@ def wav_read(filename,normalize=True,verbose=True,auto_resample=True):
         to_samplerate = 22050 if samplerate < 22050 else 44100
         filename2 = resample(filename, to_samplerate, normalize=True, verbose=verbose)
         samplerate, samplewidth, wavedata = wavio.readwav(filename2)
-        #os.remove(filename2) # delete temp file
+        os.remove(filename2) # delete temp file
 
     if (normalize):
         wavedata = normalize_wav(wavedata,samplewidth)
@@ -192,7 +192,8 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
             try:
                 return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
 
-                if return_code != 0: raise DecoderException("Problem appeared during executing decoder. Return_code: " + str(return_code), command=cmd)
+                if return_code != 0:
+                    raise DecoderException("Problem appeared during executing decoder. Return_code: " + str(return_code), command=cmd)
                 if verbose: print 'Decoded', ext, 'with:', " ".join(cmd)
                 success = True
 
