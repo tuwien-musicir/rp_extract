@@ -161,6 +161,7 @@ class HDF5FeatureWriter(FeatureWriter):
 
         for e in feat.keys():
             self.h5tables[e].append(feat[e].reshape((1,-1))) # make it a row vector instead of column
+            self.files[e].flush() # flush file after writing, otherwise data is not written until termination of program
 
         # ids are stored until the end and written at close() time
         self.file_ids.append(id)
