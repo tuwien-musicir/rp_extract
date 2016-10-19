@@ -9,9 +9,17 @@ TU Wien<br>
 Institute of Software Technology and Interactive Systems<br>
 Vienna University of Technology, Austria
 
+RP_extract is a Python library to extract semantic features (so called audio descriptors) from audio files (WAV, MP3, ...)
+which can be used in tasks such as finding similar sounding music, creating playlists or recommender systems,
+categorizing music into a custom set of categories such as genres, and detecting concepts such as moods and emotions in music.
+Most of these tasks are achieved through employing Machine Learning, example implementations are provided in this
+repository and the tutorials included.
+
 Main Authors: Thomas Lidy (audiofeature), Alexander Schindler (slychief)
 
 ## Installation
+
+[Python 2.7] (https://www.python.org/downloads/release/python-2712/) is required.
 
 ### Operating Systems
 
@@ -49,12 +57,12 @@ audio analysis part with `rp_extract.py`, `numpy` and `scipy` are the only requi
 If you want to use MP3, M4A, FLAC or AIF(F) files as input, you need to have one of the following decoders installed in your system:
 (Note: lame and mpg123 only support MP3, ffmpeg supports MP3 and all other formats)
 
-- Linux: install ffmpeg, mpg123, or lame from your Software Install Center or package repository
+- Linux: install `ffmpeg`, `mpg123`, or `lame` from your Software Install Center or package repository (via `sudo apt-get install`)
   - install ffmpeg on Ubuntu 14.04: see http://fcorti.com/2014/04/22/ffmpeg-ubuntu-14-04-lts
   - install ffmpeg on Debian Jessie:
-    sudo echo deb http://ftp.uk.debian.org/debian jessie-backports main > /etc/sources.list.d/ffmpeg.list
-    sudo apt-get update
-    sudo apt-get install ffmpeg
+    `sudo echo deb http://ftp.uk.debian.org/debian jessie-backports main > /etc/sources.list.d/ffmpeg.list;
+    sudo apt-get update;
+    sudo apt-get install ffmpeg`
 - Mac: FFMPeg for Mac: http://ffmpegmac.net or Lame for Mac: http://www.thalictrum.com/en/products/lame.html
 - Windows: FFMpeg.exe is already included (nothing to install)
 
@@ -73,7 +81,7 @@ sudo apt-get install libhdf5-serial-dev python-tables
 ```
 
 Mac OS X:
-(homebrew must be installed first)
+([homebrew](http://brew.sh) must be installed first)
 ```
 brew tap homebrew/science
 brew install hdf5
