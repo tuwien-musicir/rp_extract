@@ -273,8 +273,8 @@ def extract_all_files(filelist, path,
             audio_logwriter = unicsv.UnicodeCSVWriter(audio_logfile) #, quoting=csv.QUOTE_ALL)
 
         if log_Errors:
-            log_filename = out_file + '.errors.log'
-            error_logfile = open(log_filename, 'w') # TODO allow append mode 'a'
+            err_log_filename = out_file + '.errors.log'
+            error_logfile = open(err_log_filename, 'w') # TODO allow append mode 'a'
             error_logwriter = unicsv.UnicodeCSVWriter(error_logfile) #, quoting=csv.QUOTE_ALL)
 
         if out_HDF5:
@@ -400,7 +400,11 @@ def extract_all_files(filelist, path,
     if verbose:
         print "FEATURE EXTRACTION FINISHED.", n, "file(s) processed,", n_extracted, "successful. Duration:", timestr(end_time-start_time)
         if err > 0:
-            print err, "file(s) had ERRORs during feature extraction."
+            print err, "file(s) had ERRORs during feature extraction.",
+            if log_Errors:
+                print "See", err_log_filename
+            else:
+                print
         if out_file:
             opt_ext = '.h5' if out_HDF5 else ''
             print "Feature file(s):", out_file + "." + str(ext) + opt_ext
