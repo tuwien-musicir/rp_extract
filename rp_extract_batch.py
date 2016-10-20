@@ -251,7 +251,8 @@ def extract_all_files(filelist, path,
 
     ext = feature_types
 
-    n = 0   # counting the files that were actually analyzed
+    n = 0   # counting the files being processed
+    n_extracted = 0   # counting the files that were actually analyzed
     err = 0 # counting errors
     n_files = len(filelist)
 
@@ -260,6 +261,7 @@ def extract_all_files(filelist, path,
     feat_array = {}
     audio_logwriter = None
     error_logwriter = None
+    audio_logwriter_wrote_header = False
 
     start_time = time.time()
 
@@ -340,7 +342,7 @@ def extract_all_files(filelist, path,
                 if label:
                     id2 = id.replace("\\","/").split("/")[-2].strip()
 
-                if out_HDF5 and n==1:
+                if out_HDF5 and n_extracted==0:
                     # for HDF5 we need to know the vector dimension
                     # thats why we cannot open the file earlier
                     FeatureWriter.open(out_file,ext,feat)
@@ -360,11 +362,15 @@ def extract_all_files(filelist, path,
 
                 filelist_extracted.append(id)
 
+            n_extracted += 1
+
             # write list of analyzed audio files alongsize audio metadata (kHz, bit, etc.)
             if audio_logwriter:
-                if n == 1: # write CSV header
+                if not audio_logwriter_wrote_header: # write CSV header
                     log_info = ["filename","decoder","samplerate (kHz)","samplewidth (bit)","n channels","n samples"]
                     audio_logwriter.writerow(log_info)
+                    audio_logwriter_wrote_header = True
+
                 log_info = [filename,decoder,samplerate,samplewidth*8,data.shape[1],data.shape[0]]
                 audio_logwriter.writerow(log_info)
 
@@ -388,9 +394,9 @@ def extract_all_files(filelist, path,
     end_time = time.time()
 
     if verbose:
-        print "FEATURE EXTRACTION FINISHED.", n, "file(s), duration:", timestr(end_time-start_time)
+        print "FEATURE EXTRACTION FINISHED.", n, "file(s) processed,", n_extracted, "successful. Duration:", timestr(end_time-start_time)
         if err > 0:
-            print err, "files had ERRORs during feature extraction."
+            print err, "file(s) had ERRORs during feature extraction."
         if out_file:
             opt_ext = '.h5' if out_HDF5 else ''
             print "Feature file(s):", out_file + "." + str(ext) + opt_ext
