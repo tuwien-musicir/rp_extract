@@ -63,7 +63,7 @@ class CSVFeatureWriter(FeatureWriter):
 
         self.isopen = True
 
-    def write_features(self,id,feat,id2=None):
+    def write_features(self,id,feat,id2=None,flush=True):
         # id: string id (e.g. filename) of extracted file
         # feat: dict containing 1 entry per feature type (must match file extensions)
         # id2: optional secondary identifier to be stored alongside id
@@ -77,6 +77,9 @@ class CSVFeatureWriter(FeatureWriter):
             if id2 is not None: # add secondary identifier
                 f.insert(1,id2)
             self.writer[e].writerow(f)
+
+            if flush:
+                self.files[e].flush()  # flush file after writing, otherwise data is not written until termination of program
 
     def close(self):
         if self.isopen:
@@ -151,7 +154,7 @@ class HDF5FeatureWriter(FeatureWriter):
             #h5table.attrs.transform = transform
             #h5table.attrs.log_transform = log_transform
 
-    def write_features(self,id,feat,id2=None):
+    def write_features(self,id,feat,id2=None,flush=True):
         # id: string id (e.g. filename) of extracted file
         # feat: dict containing 1 entry per feature type (must match file extensions)
         # id2: optional secondary identifier to be stored alongside id
@@ -161,7 +164,8 @@ class HDF5FeatureWriter(FeatureWriter):
 
         for e in feat.keys():
             self.h5tables[e].append(feat[e].reshape((1,-1))) # make it a row vector instead of column
-            self.files[e].flush() # flush file after writing, otherwise data is not written until termination of program
+            if flush:
+                self.files[e].flush() # flush file after writing, otherwise data is not written until termination of program
 
         # ids are stored until the end and written at close() time
         self.file_ids.append(id)
