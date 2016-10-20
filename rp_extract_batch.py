@@ -382,14 +382,18 @@ def extract_all_files(filelist, path,
             if error_logwriter:
                 error_logwriter.writerow([fil,str(e)])
 
-    if out_file:  # close all output files
-        FeatureWriter.close()
+    try:
+        if out_file:  # close all output files
+            FeatureWriter.close()
 
-        if audio_logwriter:
-            audio_logfile.close()
+            if audio_logwriter:
+                audio_logfile.close()
 
-    if error_logwriter:
-        error_logfile.close()
+        if error_logwriter:
+            error_logfile.close()
+
+    except Exception as e:
+        print "ERROR closing the output or log files: " + str(e)
 
     end_time = time.time()
 
