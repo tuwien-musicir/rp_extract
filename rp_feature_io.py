@@ -420,9 +420,11 @@ def load_hdf5_features(hdf_filename, verbose=True):
 
     # just for info purposes
     if verbose and hdf5_file.root.vec.attrs.__contains__('vec_type'):
-        print "HDF5 Feature Type:", hdf5_file.root.vec.attrs.vec_type
+        print "Feature type attribute:", hdf5_file.root.vec.attrs.vec_type
+    if verbose and hdf5_file.root.vec.attrs.__contains__('vec_dim'):
+        print "Feature dimension attribute:", hdf5_file.root.vec.attrs.vec_dim
 
-    if  hdf5_file.root.__contains__('file_ids'):
+    if hdf5_file.root.__contains__('file_ids'):
         # slicing [:] and getting the first column [0] to a list
         ids = hdf5_file.root.file_ids[:][0].tolist() # file id table is called 'file_ids' in HDF5FeatureWriter() class
         # TODO check if length matches feat shape 0
