@@ -64,9 +64,12 @@ class CSVFeatureWriter(FeatureWriter):
         self.isopen = True
 
     def write_features(self,id,feat,id2=None,flush=True):
-        # id: string id (e.g. filename) of extracted file
-        # feat: dict containing 1 entry per feature type (must match file extensions)
-        # id2: optional secondary identifier to be stored alongside id
+        '''
+        id: string id (e.g. filename) of extracted file
+        feat: dict containing 1 entry per feature type (must match file extensions)
+        id2: optional secondary identifier to be stored alongside id
+        flush: flush data to disk after every write (i.e. prevent data loss in case of premature termination)
+        '''
         if self.isopen is False or self.writer=={}:
             raise RuntimeError("File or writer is not open yet. Call open first!")
         # TODO: check if all feat.keys() == self.ext
@@ -94,16 +97,17 @@ class HDF5FeatureWriter(FeatureWriter):
         self.isopen = False
         self.files = None
         self.h5tables = None
+        self.idtables = None
+        self.idtables2 = None
         self.ext = None  # file extensions i.e. feature types
-        self.file_ids = []
-        self.file_ids2 = []
 
-        import tables # define data types to store in HDF5
+        import tables  # pytables HDF5 library (installed via pip install tables)
+        # define data types to store in HDF5
         self.data_type = tables.Float32Atom() if float32 else tables.Float64Atom()
         # alternative: derive from np array: tables.Atom.from_dtype(myarray.dtype)
         self.string_type = tables.StringAtom(itemsize=256)
-        # NOTE: not nice: character limit of 256 chars for file path
-        # solution for avoiding String limit is:
+        # NOTE: hard-coded character limit of 256 chars for file ids (can be increased if needed)
+        # alternative solution for avoiding String limit is:
         #class FileInfo(tables.IsDescription):
         #    file_id = tables.StringCol(256)
         #    seg_pos = tables.IntCol()
@@ -118,30 +122,57 @@ class HDF5FeatureWriter(FeatureWriter):
         append: whether to append to existing feature files (or overwrite) (not implemented)
         '''
 
-        import tables  # pytables HDF5 library (installed via pip install tables)
-        #from tables.exceptions import HDF5ExtError
+        import tables
 
         if append:
             raise NotImplementedError("Appending not yet implemented for HDF5 files!")
 
         self.ext = ext   # keep extensions
         self.files = {}  # files is a dict of one file handle per extension
-        self.h5tables = {} # writer is a dict of one file writer per extension
+        self.h5tables = {} # dict of 1 vector table per extension
+        self.idtables = {} # dict of 1 file_id table per extension
+        self.idtables2 = {} # dict of 1 secondary file_id table per extension
 
         for e in ext:
-            vec_dim = len(feat[e])
-            shape=(0,vec_dim) # define feature dimension but not yet number of instances
-
-            # create file and table
+            # create file
             outfile = base_filename + '.' + e + '.h5'
             h5file = tables.openFile(outfile, 'w')
             self.files[e] = h5file
+
+            # create table for vectors
+            vec_dim = len(feat[e])
+            shape=(0,vec_dim) # define feature dimension but not yet number of instances (0)
             h5table = h5file.createEArray(h5file.root, 'vec', self.data_type, shape)
-            self.h5tables[e] = h5table
             h5table.attrs.vec_dim = vec_dim
             h5table.attrs.vec_type = e.upper()
+            self.h5tables[e] = h5table
+
+            # create table for file_ids (strings)
+            shape = (0,) # growing dimension 0, undefined other dimension
+            self.idtables[e] = h5file.createEArray(h5file.root, 'file_ids', self.string_type, shape)
+            self.idtables2[e] = h5file.createEArray(h5file.root, 'file_ids2', self.string_type, shape)
 
         self.isopen = True
+
+    def write_features(self,id,feat,id2=None,flush=True):
+        '''
+        id: string id (e.g. filename) of extracted file
+        feat: dict containing 1 entry per feature type (must match file extensions)
+        id2: optional secondary identifier to be stored alongside id
+        flush: flush data to disk after every write (i.e. prevent data loss in case of premature termination)
+        '''
+        if not self.isopen:
+            raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
+
+        for e in feat.keys():
+            # write features and file_ids
+            self.h5tables[e].append(feat[e].reshape((1,-1))) # make it a row vector instead of column
+            self.idtables[e].append([id])  # it's important to have the list brackets here
+            if id2 is not None:
+                self.idtables[e].append([id2])
+
+            if flush:
+                self.files[e].flush() # flush file after writing, otherwise data is not written until termination of program
 
     #def store_attribures(self,attributes):
         # TODO store audio analysis parameters as table attributes
@@ -154,54 +185,11 @@ class HDF5FeatureWriter(FeatureWriter):
             #h5table.attrs.transform = transform
             #h5table.attrs.log_transform = log_transform
 
-    def write_features(self,id,feat,id2=None,flush=True):
-        # id: string id (e.g. filename) of extracted file
-        # feat: dict containing 1 entry per feature type (must match file extensions)
-        # id2: optional secondary identifier to be stored alongside id
-
-        if not self.isopen:
-            raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
-
-        for e in feat.keys():
-            self.h5tables[e].append(feat[e].reshape((1,-1))) # make it a row vector instead of column
-            if flush:
-                self.files[e].flush() # flush file after writing, otherwise data is not written until termination of program
-
-        # ids are stored until the end and written at close() time
-        self.file_ids.append(id)
-        if id2 is not None:
-            self.file_ids2.append(id2)
-
-    def write_string_ids(self,table_name,file_ids):
-        # create table in each HDF5 file for storing file_ids
-        # table_name: name of table to create in HDF5 file
-        # file_ids: list of file ids (one entry per feature entry in vec table created by open and write_features
-
-        if not self.isopen:
-            raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
-
-        for e in self.ext:
-            shape = (1,len(file_ids))
-            table = self.files[e].createCArray(self.files[e].root, table_name, self.string_type, shape)
-            table[:] = file_ids
-
     def close(self):
-
-        if not self.isopen:
-            raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
-
-        # write file ids before closing into a separate table(s) in same HDF5 file
-        if self.file_ids != []:
-            self.write_string_ids('file_ids',self.file_ids)
-        if self.file_ids2 != []:
-            self.write_string_ids('file_ids2',self.file_ids2)
-
-        if self.ext is not None: # if its None, files are not open yet
+        if self.isopen and self.ext is not None: # if its None, files are not open yet
             for e in self.ext:
                 self.files[e].close()
-
         self.isopen = False
-
 
 
 
@@ -437,11 +425,13 @@ def load_hdf5_features(hdf_filename, verbose=True):
     if  hdf5_file.root.__contains__('file_ids'):
         # slicing [:] and getting the first column [0] to a list
         ids = hdf5_file.root.file_ids[:][0].tolist() # file id table is called 'file_ids' in HDF5FeatureWriter() class
+        # TODO check if length matches feat shape 0
     else:
         ids = None
 
     if hdf5_file.root.__contains__('file_ids2'): # check if file_ids2 is present and also read and return
         ids2 = hdf5_file.root.file_ids2[:][0].tolist()
+        # TODO check if length matches feat shape 0
         hdf5_file.close()
         return ids, feat, ids2
     else:
