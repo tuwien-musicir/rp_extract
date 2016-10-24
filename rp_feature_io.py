@@ -432,18 +432,20 @@ def load_hdf5_features(hdf_filename, verbose=True, return_id2=False):
     ids = ids2 = None # default
 
     if hdf5_file.root.__contains__('file_ids'):
-        # ids = hdf5_file.root.file_ids[:][0].tolist()  # old format, before HDF5FeatureWriter() was changed to write file_ids consecutively
+        #ids = hdf5_file.root.file_ids[:][0].tolist()  # old format, before HDF5FeatureWriter() was changed to write file_ids consecutively
         ids = hdf5_file.root.file_ids[:].tolist()  # [:] = slicing
         if len(ids) != feat.shape[0]:  # check if length matches feat shape 0
             hdf5_file.close() # close before raising error
-            raise ValueError("Number of file ids in file_ids table does not match number of features in vec table.")
+            raise ValueError("Number of file ids in file_ids table (" + str(len(ids)) + ") does not match number of features in vec table (" +
+                             str(feat.shape[0]) + ").")
 
     if hdf5_file.root.__contains__('file_ids2'): # check if file_ids2 is present and also read and return
         #ids2 = hdf5_file.root.file_ids2[:][0].tolist()  # old format, before HDF5FeatureWriter() was changed to write file_ids consecutively
         ids2 = hdf5_file.root.file_ids2[:].tolist()
         if len(ids2) != feat.shape[0] and len(ids2) != 0:  # check if length matches feat shape 0 (we accept 0 for empty table here)
             hdf5_file.close()  # close before raising error
-            raise ValueError("Number of file ids in file_ids2 table does not match number of features in vec table.")
+            raise ValueError("Number of file ids in file_ids2 table (" + str(len(ids2)) + ") does not match number of features in vec table (" +
+                             str(feat.shape[0]) + ").")
         if len(ids2) == 0:
             ids2 = None
 
