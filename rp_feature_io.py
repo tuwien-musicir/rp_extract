@@ -246,7 +246,7 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
     feat = dataframe.as_matrix(columns=None)
 
     if separate_ids:
-        ids = feat[:,id_column]
+        ids = feat[:,id_column] # TODO convert to list
         feat = np.delete(feat,id_column,1).astype(np.float) # delete id columns and return feature vectors as float type
         return ids, feat
     else:
@@ -421,11 +421,12 @@ def load_hdf5_features(hdf_filename, verbose=True, return_id2=False):
     feat = hdf5_file.root.vec[:]
 
     if verbose: # just for info purposes
-        print "Read", feat.shape[0], "features with dimension", feat.shape[1]
+        print "Read", feat.shape[0], "features with dimension", feat.shape[1],
         if hdf5_file.root.vec.attrs.__contains__('vec_type'):
-            print "Feature type attribute:", hdf5_file.root.vec.attrs.vec_type
+            print "type", hdf5_file.root.vec.attrs.vec_type,
         if hdf5_file.root.vec.attrs.__contains__('vec_dim'):
-            print "Feature dimension attribute:", hdf5_file.root.vec.attrs.vec_dim
+            print "dim", hdf5_file.root.vec.attrs.vec_dim,
+        print
 
     # check if we also have file_ids or file_ids2 tables (see HDF5FeatureWriter() class)
     ids = ids2 = None # default
@@ -452,6 +453,17 @@ def load_hdf5_features(hdf_filename, verbose=True, return_id2=False):
         return ids, feat, ids2
     else:
         return ids, feat
+
+
+def load_multiple_hdf5_feature_files(filename_stub, feature_types, h5ext='h5', verbose=True): # , return_id2=False
+    '''load multiple hdf5 feature files into dicts of features and ids'''
+    # create result dicts
+    feat = {}
+    ids = {}
+    for e in feature_types:
+        filename = filename_stub + '.' + e + '.' + h5ext
+        ids[e], feat[e] = load_hdf5_features(filename, verbose, return_id2=False) # return_id2=False hardcoded; enable as param if needed
+    return ids, feat
 
 
 def load_hdf5_pandas(hdf_filename):
@@ -688,16 +700,23 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
         ids, feat = extract_all_files_generic(input_path,output_file,feature_types,audiofile_types=audiofile_types,verbose=verbose)
 
     else:
-        # LOAD features from Feature File
+        # LOAD features from feature file(s)         # TODO: add reading NPZ files
+        ids = None
 
-        # TODO glob to detect if .h5 or .hdf5 present
+        # check if we have HDF5 files
+        import glob
+        h5extensions = ['h5','hdf5','H5','HDF5']
+        for h5ext in h5extensions:
+            if len(glob.glob(input_path + ".*." + h5ext)) > 0:
+                ids, feat = load_multiple_hdf5_feature_files(input_path, feature_types, h5ext=h5ext)
+                break
 
-        ids, feat = read_csv_features(input_path,feature_types,error_on_duplicates=False)
+        # otherwise try to read in CSV format
+        if ids == None:
+            ids, feat = read_csv_features(input_path,feature_types,error_on_duplicates=False)
 
-        # from the ids dict, we take only the first entry and convert numpy array to list
-        ids = ids.values()[0].tolist()
-
-        # TODO: add reading .npz,
+        # from the ids dict, we take only the first entry
+        ids = ids.values()[0] #.tolist()
 
     return ids, feat
 
@@ -730,18 +749,16 @@ if __name__ == '__main__':
         csv2arff(args.input_path,out_filenamestub,feature_types)
 
     else:
-        print "Reading ", args.input_path
+        print "Reading", args.input_path
 
         if args.arff: # try to load ARFF
-            features, classes  = load_arff(args.input_path)
+            features, classes = load_arff(args.input_path)
             print "classes:" , classes.shape
-
-        if args.csv: # try to load HDF5
-            ids, features = read_csv_features1(args.input_path)
-            print "number of files:", len(ids)
-
-        if args.hdf5: # try to load HDF5
+        elif args.hdf5: # try to load HDF5
             ids, features = load_hdf5_features(args.input_path)
+            print "number of files:", len(ids)
+        else: # if args.csv: # try to load CSV
+            ids, features = read_csv_features1(args.input_path)
             print "number of files:", len(ids)
 
         print "feature dimensions:", features.shape
