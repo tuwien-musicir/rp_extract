@@ -246,7 +246,7 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
     feat = dataframe.as_matrix(columns=None)
 
     if separate_ids:
-        ids = feat[:,id_column] # TODO convert to list
+        ids = feat[:,id_column].tolist()
         feat = np.delete(feat,id_column,1).astype(np.float) # delete id columns and return feature vectors as float type
         return ids, feat
     else:
@@ -299,18 +299,17 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,single_id_l
             if not len(ids[ext[0]]) == len(ids[e]):
                 raise ValueError("Feature files have different number of entries! " +
                                  ", ".join([e + ': ' + str(len(ids[e])) for e in ext]) )
-            if not all(ids[ext[0]] == ids[e]):
+            if not ids[ext[0]] == ids[e]:
                 raise ValueError("Ids not matching across feature files!")
 
         # once consistent, check for duplicates
-        check_duplicates(ids[ext[0]].tolist(),raise_error=error_on_duplicates)
+        check_duplicates(ids[ext[0]],raise_error=error_on_duplicates)
 
         if single_id_list:
-            # from the ids dict, we take only the first entry and convert the NumPy array to a list
-            ids = ids.values()[0].tolist()
+            # from the ids dict, we take only the first entry
+            ids = ids.values()[0]
 
-        return(ids,feat)
-
+        return ids, feat
     else:
         return feat
 
@@ -718,7 +717,7 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
             ids, feat = read_csv_features(input_path,feature_types,error_on_duplicates=False)
 
         # from the ids dict, we take only the first entry
-        ids = ids.values()[0] #.tolist()
+        ids = ids.values()[0]
 
     return ids, feat
 
