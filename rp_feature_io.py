@@ -212,7 +212,7 @@ def check_duplicates(file_ids,raise_error=True):
             warnings.warn(message)
 
 
-def read_csv_features1(filename,separate_ids=True,id_column=0):
+def read_csv_features1(filename,separate_ids=True,id_column=0,sep=',',as_dataframe=False,ids_only=False):
     ''' Read_CSV_features1
 
     read features (and optionally one or more ids) from a CSV file
@@ -227,6 +227,9 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
     :param separate_ids: will split off the id column(s) from the features (containing eg. and index or filename string)
     :param id_column: specify which is/are the id column(s) as integer or list, e.g. 0 (= first column) or [0,1] (= first two columns)
             negative integers identify the columns backwards, i.e. -1 is the last column, -2 the second last column, and so on
+    :param sep: separator in CSV file (default: ',')
+    :param as_dataframe: returns Pandas dataframe, otherwise returns Numpy matrix and ids optionally separately
+    :param ids_only: return only Id column(s)
     :return: if separate_ids is True, it will return a tuple (ids, features)
              with ids containing usually identifiers as list of strings and features the numeric data as numpy array;
              if separate_ids is False, just the features array will returned (containing everything read from the CSV)
@@ -237,16 +240,25 @@ def read_csv_features1(filename,separate_ids=True,id_column=0):
 
     # we use pandas to import CSV as pandas dataframe,
     # because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
-    dataframe = pd.read_csv(filename, sep=',',header=None)
+    # the id_column will be made directly the database index if it is a simple one (otherwise it will be split off from matrix below)
+    index_col = id_column if isinstance(id_column, int) else None
+    dataframe = pd.read_csv(filename, sep=sep, header=None, index_col=index_col)
 
-    # future option: this would be a way to set the file ids as index in the dataframe
-    # dataframe = pd.read_csv(filename, sep=',',header=None,index_col=0) # index_col=0 makes 1st column the rowname (index)
+    if as_dataframe:
+        if ids_only: return dataframe.index.tolist()
+        return dataframe
 
     # convert to numpy matrix/array
     feat = dataframe.as_matrix(columns=None)
 
-    if separate_ids:
-        ids = feat[:,id_column].tolist()
+    if index_col is not None:
+        ids = dataframe.index.tolist()
+    else:
+        ids = feat[:, id_column].tolist()
+
+    if ids_only:
+        return ids
+    elif separate_ids:
         feat = np.delete(feat,id_column,1).astype(np.float) # delete id columns and return feature vectors as float type
         return ids, feat
     else:
@@ -739,6 +751,7 @@ if __name__ == '__main__':
 
     argparser.add_argument('-arff',   action='store_true',help='test loading of ARFF file',default=False) # boolean opt
     argparser.add_argument('-csv',   action='store_true',help='test loading of CSV file',default=False) # boolean opt
+    argparser.add_argument('-test',   action='store_true',help='test some custom stuff',default=False) # boolean opt
     argparser.add_argument('-csv2arff', action='store_true',help='convert CSV file to ARFF file',default=False) # boolean opt
     argparser.add_argument('-h5','--hdf5', action='store_true',help='test loading of HDF5 file',default=False) # boolean opt
 
@@ -760,14 +773,14 @@ if __name__ == '__main__':
 
         if args.arff: # try to load ARFF
             features, classes = load_arff(args.input_path)
-            print "classes:" , classes.shape
+            print "Classes:" , classes.shape
         elif args.hdf5: # try to load HDF5
             ids, features = load_hdf5_features(args.input_path)
-            print "number of files:", len(ids)
+            print "Number of file ids:", len(ids)
         else: # if args.csv: # try to load CSV
             ids, features = read_csv_features1(args.input_path)
-            print "number of files:", len(ids)
+            print "Number of file ids:", len(ids)
 
-        print "feature dimensions:", features.shape
+        print "Feature dimensions:", features.shape
         #print features
         #print ids
