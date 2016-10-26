@@ -581,22 +581,28 @@ def csv2hdf5(csv_filename,hdf_filename,chunk_size=1000,verbose=True):
 
 def concatenate_features(feat, feature_types = ('ssd', 'rh')):
     ''' concatenate features vectors of various feature types together
-    (all entries in feature dictionary  must have same number of instances, but can have different dimensions
+
+    All entries in feature dictionary MUST have the same number of instances, but may have different dimensions.
+
     feat: feature dictionary, containing np.arrays for various feature types (named 'ssd', 'rh', etc.)
-    feature_types: tuple of strings with the names of feature types to concatenate (1 entry tuple or string is
-        allowed, will return this feature type only, without concatenation)
+    feature_types: tuple or list of strings with the names of feature types to concatenate. also allowed:
+        - 1 entry tuple or single feature type as string: will return this feature type only, without concatenation
+        - string with +, e.g. "rp+ssd" to define which features shall be combined
     '''
     import numpy as np
 
-    # in case only 1 feature type instad of tuple was passed
     if isinstance(feature_types, str):
-        new_feat = feat[feature_types]
-    else:
-        # take the first feature type
-        new_feat = feat[feature_types[0]]
-        # and iteratively horizontally stack the remaining feature types
-        for e in feature_types[1:]:
-            new_feat = np.hstack((new_feat, feat[e]))
+        if '+' in feature_types:  # we allow something like "rp+ssd"
+            feature_types = feature_types.split('+')
+        else: # in case only 1 string was passed instead of tuple or list we return directly
+            return feat[feature_types]
+
+    # stack the features:
+    # take the first feature type
+    new_feat = feat[feature_types[0]]
+    # and iteratively horizontally stack the remaining feature types
+    for e in feature_types[1:]:
+        new_feat = np.hstack((new_feat, feat[e]))
     return new_feat
 
 
