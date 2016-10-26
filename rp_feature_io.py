@@ -211,6 +211,18 @@ def check_duplicates(file_ids,raise_error=True):
             import warnings
             warnings.warn(message)
 
+def check_id_consistency(ids):
+    '''check for ID consistency
+    ids: dict containing multiple lists of ids, which should all be the same
+    '''
+    ext = ids.keys()
+    for e in ext[1:]:
+        if not len(ids[ext[0]]) == len(ids[e]):
+            raise ValueError("Feature files have different number of entries! " +
+                             ", ".join([e + ': ' + str(len(ids[e])) for e in ext]))
+        if not ids[ext[0]] == ids[e]:
+            raise ValueError("Ids not matching across feature files!")
+
 
 def read_csv_features1(filename,separate_ids=True,id_column=0,sep=',',as_dataframe=False,ids_only=False):
     ''' Read_CSV_features1
@@ -265,20 +277,21 @@ def read_csv_features1(filename,separate_ids=True,id_column=0,sep=',',as_datafra
         return feat
 
 
-def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,single_id_list=False,
-                      error_on_duplicates=True,verbose=True):
+def read_csv_features(filenamestub,ext=('rh','ssd','rp'),separate_ids=True,id_column=0,single_id_list=False,
+                      as_dataframe=False,ids_only=False,error_on_duplicates=True,verbose=True):
     ''' Read_CSV_features:
 
     read pre-analyzed features from multiple CSV files (with feature name extensions)
 
     Parameters:
     # filenamestub: full path to feature file name WITHOUT .extension
-    # ext: a list of file .extensions (e.g. 'rh','ssd','rp') to be read in
+    # ext: a tuple or list of file .extensions (e.g. ('rh','ssd','rp')) to be read in
     # separate_ids: if False, it will return a single matrix containing the id column
     #               if True, it will return a tuple: (ids, features) separating the id column from the features
     # id_column: which of the CSV columns contains the ids (default = 0, i.e. first column)
     # single_id_list: if separate_ids and single_id_list are True, this will return a single id list instead of a dictionary
-    #
+    :param as_dataframe: returns Pandas dataframe, otherwise returns Numpy matrix and ids optionally separately
+    :param ids_only: return only Id column(s)
     # returns:  if separate_ids == False:
                     a Python dict containing one entry per feature extension (ext), which is
                     a NumPy matrix containing all data including ids
@@ -297,30 +310,32 @@ def read_csv_features(filenamestub,ext,separate_ids=True,id_column=0,single_id_l
     for e in ext:
         filename = filenamestub + "." + e
 
-        if separate_ids:
+        if separate_ids and not as_dataframe:
             ids[e], feat[e] = read_csv_features1(filename,separate_ids,id_column)
+            check_id_consistency(ids)
+            # TODO check consistency also in dataframes
         else:
-            feat[e] = read_csv_features1(filename,separate_ids,id_column)
+            feat[e] = read_csv_features1(filename,separate_ids,id_column,as_dataframe=as_dataframe)
 
         if verbose: print "Read:", e + ":\t", feat[e].shape[0], "audio file vectors,", feat[e].shape[1], "dimensions"
 
-    if separate_ids:
-        # check for ID consistency
-        ext = ids.keys()
-        for e in ext[1:]:
-            if not len(ids[ext[0]]) == len(ids[e]):
-                raise ValueError("Feature files have different number of entries! " +
-                                 ", ".join([e + ': ' + str(len(ids[e])) for e in ext]) )
-            if not ids[ext[0]] == ids[e]:
-                raise ValueError("Ids not matching across feature files!")
-
-        # once consistent, check for duplicates
+    # check if we have duplicates in the ids
+    if separate_ids and not as_dataframe:
         check_duplicates(ids[ext[0]],raise_error=error_on_duplicates)
+    elif as_dataframe:
+        ids = feat[ext[0]].index.tolist() # take index of first entry in feature dict
+        check_duplicates(ids, raise_error=error_on_duplicates)
+    # if we dont have separate ids we cant check duplicates as of now
 
-        if single_id_list:
-            # from the ids dict, we take only the first entry
-            ids = ids.values()[0]
+    if separate_ids and single_id_list:
+        # from the ids dict, we take only the first entry
+        ids = ids[ext[0]]
 
+    if ids_only:
+        if as_dataframe:
+            ids = feat[ext[0]].index.tolist() # take index of first entry in feature dict
+        return ids
+    if separate_ids and not as_dataframe:
         return ids, feat
     else:
         return feat
@@ -777,6 +792,10 @@ if __name__ == '__main__':
         elif args.hdf5: # try to load HDF5
             ids, features = load_hdf5_features(args.input_path)
             print "Number of file ids:", len(ids)
+        elif args.test: # testing some stuff
+            ids = read_csv_features(args.input_path, ids_only=True, single_id_list=True)
+            print ids
+            sys.exit()
         else: # if args.csv: # try to load CSV
             ids, features = read_csv_features1(args.input_path)
             print "Number of file ids:", len(ids)
