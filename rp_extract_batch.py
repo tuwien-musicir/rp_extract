@@ -180,10 +180,11 @@ def extract_all_files_generic(in_path,
                               out_file = None,
                               feature_types = ['rp','ssd','rh'],
                               audiofile_types=('.wav','.mp3'),
-                              path_prefix = None,
+                              path_prefix=None,
+                              label=False,
+                              append=False,
                               no_extension_check=False,
                               force_resampling=None,
-                              label=False,
                               out_HDF5 = False,
                               log_AudioTypes = True,
                               log_Errors = True,
@@ -218,22 +219,24 @@ def extract_all_files_generic(in_path,
     else:
         raise ValueError("Cannot not process this kind of input file: " + in_path)
 
-    return extract_all_files(filelist, in_path, out_file, feature_types, label,
+    return extract_all_files(filelist, in_path, out_file, feature_types, label, append,
                              no_extension_check, force_resampling, out_HDF5, log_AudioTypes, log_Errors, verbose)
 
 
 
 
-def extract_all_files(filelist, path,
-                              out_file=None,
-                              feature_types =['rp','ssd','rh'],
-                              label=False,
-                              no_extension_check=False,
-                              force_resampling=None,
-                              out_HDF5=False,
-                              log_AudioTypes=True,
-                              log_Errors=True,
-                              verbose=True):
+def extract_all_files(filelist,
+                      path,
+                      out_file=None,
+                      feature_types =['rp','ssd','rh'],
+                      label=False,
+                      append=False,
+                      no_extension_check=False,
+                      force_resampling=None,
+                      out_HDF5=False,
+                      log_AudioTypes=True,
+                      log_Errors=True,
+                      verbose=True):
     """
     finds all files of a certain type (e.g. .wav and/or .mp3) in a path and all sub-directories in it
     extracts selected RP feature types
@@ -281,7 +284,7 @@ def extract_all_files(filelist, path,
             FeatureWriter = HDF5FeatureWriter()
         else:
             FeatureWriter = CSVFeatureWriter()
-            FeatureWriter.open(out_file,ext)
+            FeatureWriter.open(out_file,ext,append=append)
     
 
     for fil in filelist:  # iterate over all files
@@ -345,7 +348,7 @@ def extract_all_files(filelist, path,
                 if out_HDF5 and n_extracted==0:
                     # for HDF5 we need to know the vector dimension
                     # thats why we cannot open the file earlier
-                    FeatureWriter.open(out_file,ext,feat)
+                    FeatureWriter.open(out_file,ext,feat,append=append) # append not working for now but possibly in future
 
                 FeatureWriter.write_features(id,feat,id2)
             else:
@@ -433,6 +436,7 @@ if __name__ == '__main__':
     argparser.add_argument('-mvd',  action='store_true',help='extract Modulation Frequency Variance Descriptors',default=False) # boolean opt
     argparser.add_argument('-a','--all', action='store_true',help='extract ALL of the aforementioned features',default=False) # boolean opt
 
+    argparser.add_argument('-ap', '--append', action='store_true', help='append new features to existing output file(s)', default=False)  # boolean opt
     argparser.add_argument('-h5','--hdf5', action='store_true',help='store output to HDF5 files instead of CSV',default=False) # boolean opt
 
     argparser.add_argument('-label',action='store_true',help='use subdirectory name as class label',default=False) # boolean opt
@@ -467,8 +471,8 @@ if __name__ == '__main__':
 
     # BATCH RP FEATURE EXTRACTION:
     extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types,
-                              args.pathprefix, args.noextensioncheck, args.forceresampling,
-                              args.label, args.hdf5, log_AudioTypes = True)
+                              args.pathprefix, args.label, args.append, args.noextensioncheck, args.forceresampling,
+                              args.hdf5, log_AudioTypes = True)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
     #ids, features = read_feature_files(args.output_filename,feature_types)
