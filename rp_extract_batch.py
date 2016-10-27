@@ -19,7 +19,7 @@ import argparse
 import numpy as np
 
 from audiofile_read import * # reading wav and mp3 files
-from rp_feature_io import CSVFeatureWriter, HDF5FeatureWriter
+from rp_feature_io import CSVFeatureWriter, HDF5FeatureWriter, read_csv_features
 import rp_extract as rp # Rhythm Pattern extractor
 
 
@@ -183,6 +183,7 @@ def extract_all_files_generic(in_path,
                               path_prefix=None,
                               label=False,
                               append=False,
+                              append_diff=False,
                               no_extension_check=False,
                               force_resampling=None,
                               out_HDF5 = False,
@@ -200,9 +201,16 @@ def extract_all_files_generic(in_path,
     # out_file: output file name stub for feature files to write (if omitted, features will be returned from function)
     # feature_types: RP feature types to extract. see rp_extract.py
     # audiofile_types: a string or tuple of suffixes to look for file extensions to consider (include the .)
+    # path_prefix: prefix to be added to relative filenames (used typically together with .txt input files)
+    # label:
+    # append: append features to existing feature files
+    # append_diff: append new features to existing output file(s) only if they are not in it/them yet
     # no_extension_check: does not check file format via extension. means that decoder is called on ALL files.
     # force_resampling: force a target sampling rate (provided in Hz) when decoding (works with FFMPEG only!)
     # out_HDF5: whether to store as HDF5 file format (otherwise CSV)
+    # log_AudioTypes: creates a log file with audio format info
+    # log_Errors: creates an error log file collecting all errors that appeared during feature extraction
+    # verbose: verbose output or not
     """
 
     if in_path.lower().endswith('.txt'):  # treat as input file list
@@ -218,6 +226,19 @@ def extract_all_files_generic(in_path,
         in_path = None # no abs path to add below
     else:
         raise ValueError("Cannot not process this kind of input file: " + in_path)
+
+    if append_diff:
+        if not out_HDF5:
+            filelist_previous = read_csv_features(out_file, ids_only=True, single_id_list=True)
+        else:
+            raise NotImplementedError("Append_diff not yet implemented for HDF5 files!")
+        if verbose:
+            print "Filelist has", len(filelist), "entries, found", len(
+                filelist_previous), "previously analyzed files in feature file(s)."
+        filelist = list(set(filelist) - set(filelist_previous))
+        if verbose:
+            print "Analyzing only", len(filelist), "new files."
+        append = True
 
     return extract_all_files(filelist, in_path, out_file, feature_types, label, append,
                              no_extension_check, force_resampling, out_HDF5, log_AudioTypes, log_Errors, verbose)
@@ -437,6 +458,7 @@ if __name__ == '__main__':
     argparser.add_argument('-a','--all', action='store_true',help='extract ALL of the aforementioned features',default=False) # boolean opt
 
     argparser.add_argument('-ap', '--append', action='store_true', help='append new features to existing output file(s)', default=False)  # boolean opt
+    argparser.add_argument('-adiff', '--appenddiff', action='store_true', help='append new features to existing output file(s) only if they are not in it yet', default=False)  # boolean opt
     argparser.add_argument('-h5','--hdf5', action='store_true',help='store output to HDF5 files instead of CSV',default=False) # boolean opt
 
     argparser.add_argument('-label',action='store_true',help='use subdirectory name as class label',default=False) # boolean opt
@@ -471,7 +493,7 @@ if __name__ == '__main__':
 
     # BATCH RP FEATURE EXTRACTION:
     extract_all_files_generic(args.input_path,args.output_filename,feature_types, audiofile_types,
-                              args.pathprefix, args.label, args.append, args.noextensioncheck, args.forceresampling,
+                              args.pathprefix, args.label, args.append, args.appenddiff, args.noextensioncheck, args.forceresampling,
                               args.hdf5, log_AudioTypes = True)
 
     # EXAMPLE ON HOW TO READ THE FEATURE FILES
