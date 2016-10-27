@@ -275,18 +275,22 @@ def read_csv_features1(filename,separate_ids=True,id_column=0,sep=',',as_datafra
     # convert to numpy matrix/array
     feat = dataframe.as_matrix(columns=None)
 
-    if index_col is not None:
-        ids = dataframe.index.tolist()
-    else:
-        ids = feat[:, id_column].tolist()
+    if separate_ids or ids_only:
+        if index_col is not None:
+            ids = dataframe.index.tolist()
+        else:
+            ids = feat[:, id_column].tolist() # TODO tolist() will not make sense when multiple columns are chosen
 
-    if ids_only:
-        return ids
-    elif separate_ids:
-        feat = np.delete(feat,id_column,1).astype(np.float) # delete id columns and return feature vectors as float type
+        if ids_only:
+            return ids
+
+        if index_col is None:
+            # this means we still have the id column in the feature matrix and need to remove it
+            feat = np.delete(feat, id_column, 1).astype(np.float)   # convert feature vectors to float type
         return ids, feat
-    else:
-        return feat
+
+    # in all other cases we return the raw feature matrix
+    return feat
 
 
 def read_csv_features(filenamestub,ext=('rh','ssd','rp'),separate_ids=True,id_column=0,single_id_list=False,
