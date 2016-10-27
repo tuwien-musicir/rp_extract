@@ -53,7 +53,7 @@ class CSVFeatureWriter(FeatureWriter):
         self.files = {}  # files is a dict of one file handle per extension
         self.writer = {} # writer is a dict of one file writer per extension
 
-        # append write new (will overwrite)
+        # append or write new (will overwrite)
         mode = 'a' if append else 'w'
 
         for e in ext:
@@ -124,9 +124,6 @@ class HDF5FeatureWriter(FeatureWriter):
 
         import tables
 
-        if append:
-            raise NotImplementedError("Appending not yet implemented for HDF5 files!")
-
         self.ext = ext   # keep extensions
         self.files = {}  # files is a dict of one file handle per extension
         self.h5tables = {} # dict of 1 vector table per extension
@@ -136,21 +133,36 @@ class HDF5FeatureWriter(FeatureWriter):
         for e in ext:
             # create file
             outfile = base_filename + '.' + e + '.h5'
-            h5file = tables.openFile(outfile, 'w')
+
+            mode = 'r+' if append else 'w'   #'r+' is similar to 'a', but the file must already exist
+
+            h5file = tables.openFile(outfile, mode)
             self.files[e] = h5file
 
-            # create table for vectors
-            vec_dim = len(feat[e])
-            shape=(0,vec_dim) # define feature dimension but not yet number of instances (0)
-            h5table = h5file.createEArray(h5file.root, 'vec', self.data_type, shape)
-            h5table.attrs.vec_dim = vec_dim
-            h5table.attrs.vec_type = e.upper()
-            self.h5tables[e] = h5table
+            if not append:
+                # create table for vectors
+                vec_dim = len(feat[e])
+                shape=(0,vec_dim) # define feature dimension but not yet number of instances (0)
+                h5table = h5file.createEArray(h5file.root, 'vec', self.data_type, shape)
+                h5table.attrs.vec_dim = vec_dim
+                h5table.attrs.vec_type = e.upper()
+                self.h5tables[e] = h5table
 
-            # create table for file_ids (strings)
-            shape = (0,) # growing dimension 0, undefined other dimension
-            self.idtables[e] = h5file.createEArray(h5file.root, 'file_ids', self.string_type, shape)
-            self.idtables2[e] = h5file.createEArray(h5file.root, 'file_ids2', self.string_type, shape)
+                # create table for file_ids (strings)
+                shape = (0,) # growing dimension 0, undefined other dimension
+                self.idtables[e] = h5file.createEArray(h5file.root, 'file_ids', self.string_type, shape)
+                self.idtables2[e] = h5file.createEArray(h5file.root, 'file_ids2', self.string_type, shape)
+            else:
+                if h5file.root.__contains__('vec'):
+                    self.h5tables[e] = h5file.root.vec
+                else:
+                    raise AttributeError("HDF5 file does not contain 'vec' table! Cannot append.")
+                if h5file.root.__contains__('file_ids'):
+                    self.idtables[e] = h5file.root.file_ids
+                else:
+                    raise AttributeError("HDF5 file does not contain 'file_ids' table! Cannot append.")
+                if h5file.root.__contains__('file_ids2'):
+                    self.idtables2[e] = h5file.root.file_ids2
 
         self.isopen = True
 
@@ -186,7 +198,7 @@ class HDF5FeatureWriter(FeatureWriter):
             #h5table.attrs.log_transform = log_transform
 
     def close(self):
-        if self.isopen and self.ext is not None: # if its None, files are not open yet
+        if self.isopen and self.ext is not None: # if it's None, files are not open yet
             for e in self.ext:
                 self.files[e].close()
         self.isopen = False
