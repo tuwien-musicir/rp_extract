@@ -453,22 +453,23 @@ def save_arff(filename,dataframe,relation_name=None):
 # == HDF5 ==
 
 
-def load_hdf5_features(hdf_filename, verbose=True, return_id2=False):
+def load_hdf5_features(hdf_filename, verbose=True, ids_only=False, return_id2=False):
     '''read HFD5 file written with HDF5FeatureWriter() class'''
     import tables  # pytables HDF5 library (installed via pip install tables)
     hdf5_file = tables.openFile(hdf_filename, mode='r')
 
-    # feature vector table is called 'vec' in HDF5FeatureWriter() class
-    # we slice [:] all the data back into memory, then operate on it
-    feat = hdf5_file.root.vec[:]
+    if not ids_only:
+        # feature vector table is called 'vec' in HDF5FeatureWriter() class
+        # we slice [:] all the data back into memory
+        feat = hdf5_file.root.vec[:]
 
-    if verbose: # just for info purposes
-        print "Read", feat.shape[0], "features with dimension", feat.shape[1],
-        if hdf5_file.root.vec.attrs.__contains__('vec_type'):
-            print "type", hdf5_file.root.vec.attrs.vec_type,
-        if hdf5_file.root.vec.attrs.__contains__('vec_dim'):
-            print "dim", hdf5_file.root.vec.attrs.vec_dim,
-        print
+        if verbose: # just for info purposes
+            print "Read", feat.shape[0], "features with dimension", feat.shape[1],
+            if hdf5_file.root.vec.attrs.__contains__('vec_type'):
+                print "type", hdf5_file.root.vec.attrs.vec_type,
+            if hdf5_file.root.vec.attrs.__contains__('vec_dim'):
+                print "dim", hdf5_file.root.vec.attrs.vec_dim,
+            print
 
     # check if we also have file_ids or file_ids2 tables (see HDF5FeatureWriter() class)
     ids = ids2 = None # default
@@ -476,7 +477,7 @@ def load_hdf5_features(hdf_filename, verbose=True, return_id2=False):
     if hdf5_file.root.__contains__('file_ids'):
         #ids = hdf5_file.root.file_ids[:][0].tolist()  # old format, before HDF5FeatureWriter() was changed to write file_ids consecutively
         ids = hdf5_file.root.file_ids[:].tolist()  # [:] = slicing
-        if len(ids) != feat.shape[0]:  # check if length matches feat shape 0
+        if not ids_only and len(ids) != feat.shape[0]:  # check if length matches feat shape 0
             hdf5_file.close() # close before raising error
             raise ValueError("Number of file ids in file_ids table (" + str(len(ids)) + ") does not match number of features in vec table (" +
                              str(feat.shape[0]) + ").")
@@ -484,7 +485,7 @@ def load_hdf5_features(hdf_filename, verbose=True, return_id2=False):
     if hdf5_file.root.__contains__('file_ids2'): # check if file_ids2 is present and also read and return
         #ids2 = hdf5_file.root.file_ids2[:][0].tolist()  # old format, before HDF5FeatureWriter() was changed to write file_ids consecutively
         ids2 = hdf5_file.root.file_ids2[:].tolist()
-        if len(ids2) != feat.shape[0] and len(ids2) != 0:  # check if length matches feat shape 0 (we accept 0 for empty table here)
+        if not ids_only and len(ids2) != feat.shape[0] and len(ids2) != 0:  # check if length matches feat shape 0 (we accept 0 for empty table here)
             hdf5_file.close()  # close before raising error
             raise ValueError("Number of file ids in file_ids2 table (" + str(len(ids2)) + ") does not match number of features in vec table (" +
                              str(feat.shape[0]) + ").")
@@ -492,6 +493,12 @@ def load_hdf5_features(hdf_filename, verbose=True, return_id2=False):
             ids2 = None
 
     hdf5_file.close()
+
+    if ids_only:
+        if return_id2:
+            return ids, ids2
+        else:
+            return ids
 
     if return_id2:
         return ids, feat, ids2
@@ -809,7 +816,7 @@ if __name__ == '__main__':
             ids, features = load_hdf5_features(args.input_path)
             print "Number of file ids:", len(ids)
         elif args.test: # testing some stuff
-            ids = read_csv_features(args.input_path, ids_only=True, single_id_list=True)
+            ids = load_hdf5_features(args.input_path, verbose=True, ids_only=True, return_id2=False)
             print ids
             sys.exit()
         else: # if args.csv: # try to load CSV
