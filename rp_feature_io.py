@@ -509,14 +509,24 @@ def load_hdf5_features(hdf_filename, verbose=True, ids_only=False, return_id2=Fa
         return ids, feat
 
 
-def load_multiple_hdf5_feature_files(filename_stub, feature_types, h5ext='h5', verbose=True): # , return_id2=False
+def load_multiple_hdf5_feature_files(filename_stub, feature_types, h5ext='h5', ids_only=False, verbose=True): # , return_id2=False
     '''load multiple hdf5 feature files into dicts of features and ids'''
     # create result dicts
     feat = {}
     ids = {}
     for e in feature_types:
         filename = filename_stub + '.' + e + '.' + h5ext
-        ids[e], feat[e] = load_hdf5_features(filename, verbose, return_id2=False) # return_id2=False hardcoded; enable as param if needed
+        result = load_hdf5_features(filename, verbose, ids_only, return_id2=False) # return_id2=False hardcoded; enable as param if needed
+        if ids_only:
+            ids[e] = result
+        else:
+            ids[e], feat[e] = result
+
+    # TODO check ids for consistency
+
+    if ids_only:
+        return ids[feature_types[0]]
+
     return ids, feat
 
 
@@ -798,12 +808,12 @@ if __name__ == '__main__':
 
     args = argparser.parse_args()
 
+    feature_types = ['rp', 'ssd', 'rh'] #, 'mvd']
+
     if args.csv2arff: # test CSV to ARFF
 
         out_path = './feat' # TODO make parameter
         filenamestub = 'GTZAN.python' # TODO make parameter
-
-        feature_types = ['rp','ssd','rh','mvd']
 
         out_filenamestub = out_path + os.sep + filenamestub
 
@@ -819,7 +829,8 @@ if __name__ == '__main__':
             ids, features = load_hdf5_features(args.input_path)
             print "Number of file ids:", len(ids)
         elif args.test: # testing some stuff
-            ids = load_hdf5_features(args.input_path, verbose=True, ids_only=True, return_id2=False)
+            #ids, feat = load_hdf5_features(args.input_path, verbose=True, ids_only=False, return_id2=False)
+            ids = load_multiple_hdf5_feature_files(args.input_path, feature_types, verbose=True, ids_only=True)
             print ids
             sys.exit()
         else: # if args.csv: # try to load CSV
