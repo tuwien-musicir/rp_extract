@@ -19,7 +19,7 @@ import argparse
 import numpy as np
 
 from audiofile_read import * # reading wav and mp3 files
-from rp_feature_io import CSVFeatureWriter, HDF5FeatureWriter, read_csv_features
+from rp_feature_io import CSVFeatureWriter, HDF5FeatureWriter, read_csv_features, load_multiple_hdf5_feature_files
 import rp_extract as rp # Rhythm Pattern extractor
 
 
@@ -228,13 +228,16 @@ def extract_all_files_generic(in_path,
         raise ValueError("Cannot not process this kind of input file: " + in_path)
 
     if append_diff:
-        if not out_HDF5:
-            filelist_previous = read_csv_features(out_file, ids_only=True, single_id_list=True)
-        else:
-            raise NotImplementedError("Append_diff not yet implemented for HDF5 files!")
+        # TODO check if files exist, otherwise skip all of this
         if verbose:
-            print "Filelist has", len(filelist), "entries, found", len(
-                filelist_previous), "previously analyzed files in feature file(s)."
+            print "Trying to append to existing feature files. Checking existing file ids ..."
+        if not out_HDF5:
+            filelist_previous = read_csv_features(out_file, feature_types, ids_only=True, single_id_list=True)
+        else:
+            #filelist_previous = load_hdf5_features(out_file, ids_only=True)
+            filelist_previous = load_multiple_hdf5_feature_files(out_file, feature_types, verbose=verbose, ids_only=True)
+        if verbose:
+            print "Filelist has", len(filelist), "entries, found", len(filelist_previous), "previously analyzed files in feature file(s)."
         filelist = list(set(filelist) - set(filelist_previous))
         if verbose:
             print "Analyzing only", len(filelist), "new files."
