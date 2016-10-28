@@ -475,8 +475,9 @@ def load_hdf5_features(hdf_filename, verbose=True, ids_only=False, return_id2=Fa
     ids = ids2 = None # default
 
     if hdf5_file.root.__contains__('file_ids'):
-        #ids = hdf5_file.root.file_ids[:][0].tolist()  # old format, before HDF5FeatureWriter() was changed to write file_ids consecutively
         ids = hdf5_file.root.file_ids[:].tolist()  # [:] = slicing
+        if len(ids) == 1 and isinstance(ids[0],list):
+            ids = ids[0]  # compatibility to older format where ids were stored in batch as hdf5_file.root.file_ids[:][0].tolist()
         if not ids_only and len(ids) != feat.shape[0]:  # check if length matches feat shape 0
             hdf5_file.close() # close before raising error
             raise ValueError("Number of file ids in file_ids table (" + str(len(ids)) + ") does not match number of features in vec table (" +
@@ -485,6 +486,8 @@ def load_hdf5_features(hdf_filename, verbose=True, ids_only=False, return_id2=Fa
     if hdf5_file.root.__contains__('file_ids2'): # check if file_ids2 is present and also read and return
         #ids2 = hdf5_file.root.file_ids2[:][0].tolist()  # old format, before HDF5FeatureWriter() was changed to write file_ids consecutively
         ids2 = hdf5_file.root.file_ids2[:].tolist()
+        if len(ids2) == 1 and isinstance(ids2[0],list):
+            ids2 = ids2[0]  # compatibility to older format where ids were stored in batch as hdf5_file.root.file_ids[:][0].tolist()
         if not ids_only and len(ids2) != feat.shape[0] and len(ids2) != 0:  # check if length matches feat shape 0 (we accept 0 for empty table here)
             hdf5_file.close()  # close before raising error
             raise ValueError("Number of file ids in file_ids2 table (" + str(len(ids2)) + ") does not match number of features in vec table (" +
