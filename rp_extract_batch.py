@@ -228,25 +228,38 @@ def extract_all_files_generic(in_path,
         raise ValueError("Cannot not process this kind of input file: " + in_path)
 
     if append_diff:
-        # TODO check if files exist, otherwise skip all of this
-        if verbose:
-            print "Trying to append to existing feature files. Checking existing file ids ..."
-        if not out_HDF5:
-            filelist_previous = read_csv_features(out_file, feature_types, ids_only=True, single_id_list=True)
-        else:
-            #filelist_previous = load_hdf5_features(out_file, ids_only=True)
-            filelist_previous = load_multiple_hdf5_feature_files(out_file, feature_types, verbose=verbose, ids_only=True)
-        if verbose:
-            print "Filelist has", len(filelist), "entries, found", len(filelist_previous), "previously analyzed files in feature file(s)."
-        filelist = list(set(filelist) - set(filelist_previous))
-        if verbose:
-            print "Analyzing only", len(filelist), "new files."
+        # get differential filelist to extract only new feature files
+        filelist = get_diff_filelist(out_file, filelist, feature_types, out_HDF5)
         append = True
 
     return extract_all_files(filelist, in_path, out_file, feature_types, label, append,
                              no_extension_check, force_resampling, out_HDF5, log_AudioTypes, log_Errors, verbose)
 
 
+def get_diff_filelist(feature_filename, filelist, feature_types, useHDF5=False, verbose=True):
+    '''from a filelist to extract features, check if we previously have extracted features from these files before and
+    return only subset of filelist containing files we haven't analyzed yet'''
+
+    # check if file exists, otherwise we do not append
+    check_filename = feature_filename + '.' + feature_types[0] # check just the first feature type, assuming the others will exist too
+    if useHDF5: check_filename += '.h5'
+    if not os.path.isfile(check_filename):
+        if verbose:
+            print "WARNING: No previous feature file " + check_filename + " found. Will create new feature files."
+        return filelist # unchanged, as is
+
+    if not useHDF5:
+        filelist_previous = read_csv_features(feature_filename, feature_types, ids_only=True, single_id_list=True)
+    else:
+        filelist_previous = load_multiple_hdf5_feature_files(feature_filename, feature_types, verbose=verbose, ids_only=True)
+
+    filelist_diff = list(set(filelist) - set(filelist_previous))
+
+    if verbose:
+        print "Filelist has", len(filelist), "entries, found", len(filelist_previous), "previously analyzed files in feature file(s)."
+        print "Analyzing only", len(filelist_diff), "new files."
+
+    return filelist_diff
 
 
 def extract_all_files(filelist,
