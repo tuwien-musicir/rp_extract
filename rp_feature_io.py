@@ -136,6 +136,11 @@ class HDF5FeatureWriter(FeatureWriter):
 
             mode = 'r+' if append else 'w'   #'r+' is similar to 'a', but the file must already exist
 
+            if append and not os.path.isfile(outfile):
+                # fallback: if file is not existing we cannot append and create new file + tables
+                mode = 'w'
+                append = False
+
             h5file = tables.openFile(outfile, mode)
             self.files[e] = h5file
 
