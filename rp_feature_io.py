@@ -686,7 +686,7 @@ def sorted_feature_subset(features, ids_orig, ids_select):
     for e in features.keys():
         if isinstance(features[e], pd.core.frame.DataFrame):
             # if features are already in a dataframe we just subindex
-            new_feat[e] = dataframe.ix[ids_select]
+            new_feat[e] = features[e].ix[ids_select]
         else:
             # otherwise we create dataframe, subindex and return just values
             dataframe = pd.DataFrame(features[e], index = ids_orig)
