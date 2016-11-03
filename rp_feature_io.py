@@ -677,15 +677,20 @@ def concatenate_features(feat, feature_types = ('ssd', 'rh')):
 def sorted_feature_subset(features, ids_orig, ids_select):
     '''
     selects a (sorted) subset of the original features array
-    features: a feature dictionary, containing multiple np.arrays one for each feature type ('rh', 'ssd', etc.)
-    ids_orig: original labels/ids for the featurs, MUST be same length AND order as feature arrays
+    features: a feature dictionary, containing multiple Numpy arrays or Pandas dataframes, one for each feature type ('rh', 'ssd', etc.)
+    ids_orig: original labels/ids for the features, MUST be same length AND order as feature arrays (if Numpy arrays are used)
     ids_select: set of ids in different order or subset of ids to be selected from original feature arrays
     returns: sorted subset of the original features array
     '''
     new_feat = {}
     for e in features.keys():
-        dataframe = pd.DataFrame(features[e], index = ids_orig)
-        new_feat[e] = dataframe.ix[ids_select].values
+        if isinstance(features[e], pd.core.frame.DataFrame):
+            # if features are already in a dataframe we just subindex
+            new_feat[e] = dataframe.ix[ids_select]
+        else:
+            # otherwise we create dataframe, subindex and return just values
+            dataframe = pd.DataFrame(features[e], index = ids_orig)
+            new_feat[e] = dataframe.ix[ids_select].values
     return new_feat
 
 
