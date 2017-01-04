@@ -47,6 +47,14 @@ def read_class_file(filename, delimiter='\t', as_dict=True, cut_path=False, cut_
     return result
 
 
+def read_class_file_as_dataframe(filename, delimiter='\t', cut_path=False, cut_ext=False):
+    import pandas as pd
+    dataframe = pd.read_csv(filename, sep=delimiter, index_col=0, header=None)
+    if cut_path or cut_ext:
+        dataframe.index = strip_filenames(dataframe.index, cut_path, cut_ext)
+    return dataframe
+
+
 def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, replace_labels=True, pos_labels='x', neg_labels='', verbose=True):
     '''read multi label class assignment files in the format (with CSV header):
 
