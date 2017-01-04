@@ -14,6 +14,8 @@
 
 import os
 import sys
+import pandas as pd
+
 
 # --- READ AND WRITE ---
 
@@ -48,7 +50,6 @@ def read_class_file(filename, delimiter='\t', as_dict=True, cut_path=False, cut_
 
 
 def read_class_file_as_dataframe(filename, delimiter='\t', cut_path=False, cut_ext=False):
-    import pandas as pd
     dataframe = pd.read_csv(filename, sep=delimiter, index_col=0, header=None)
     dataframe.columns = ['class']
     if cut_path or cut_ext:
@@ -77,7 +78,7 @@ def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, replac
 
     # we use pandas to import CSV as pandas dataframe, because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
     import numpy as np
-    import pandas as pd
+
     dataframe = pd.read_csv(filename, sep=delimiter, index_col=0)
 
     # CSV file is supposed to have file names without extension. otherwise do:
@@ -124,7 +125,6 @@ def write_class_dict(filename, class_dict, delimiter='\t'):
 
 
 def write_multi_class_table(filename, ids, predictions, class_columns, pos_label='x', neg_label=''):
-        import pandas as pd
         pred_df = pd.DataFrame(predictions, index=ids, columns=class_columns)
         pred_df.replace(0, neg_label, inplace=True)
         pred_df.replace(1, pos_label, inplace=True)
@@ -352,7 +352,6 @@ def align_features_and_classes(features, feature_ids, class_data, strip_files=Fa
     lower: whether or not to lower-case all characters before matching
     verbose: output statistics how many are being matched and the list of non-matched files
     '''
-    import pandas as pd # only for multi-class files stored as dataframe
     from rp_feature_io import sorted_feature_subset
 
     if isinstance(class_data, dict):
