@@ -473,15 +473,23 @@ def reduce_class_dict_min_instances(class_dict, min_instances=2, raiseError=Fals
     return new_class_dict
 
 
-def get_class_counts(class_dict,printit=False):
-    '''print number of instances per class in a class_dict'''
-    classes = class_dict.values()
+def get_class_counts(class_data, printit=False):
+    '''print number of instances per class in class assignments (groundtruth)
+
+       class_data must be passed Python dict or Pandas dataframe'''
+
+    if isinstance(class_data, dict):
+        classes = class_data.values()
+    elif isinstance(class_data, pd.DataFrame):
+        classes = class_data.ix[:, 0].tolist()
+    else:
+        raise ValueError("Class data must be passed as Python dict or Pandas dataframe!")
+
     class_stats = {c: classes.count(c) for c in set(classes)}
     if (printit):
         for key, val in class_stats.iteritems():
-            print key+":",val
+            print key + ":", val
     return class_stats
-
 
 
 def get_filenames_for_class(class_dict,classname):
@@ -497,14 +505,16 @@ def get_filenames_for_class(class_dict,classname):
     return key_list
 
 
-def get_baseline(class_dict, printit = True):
+def get_baseline(class_data, printit=True):
     '''Print classification baseline according to class with maximum instances
-    '''
-    class_counts = get_class_counts(class_dict)
-    #print "Class counts:", class_counts
+
+       class_data must be passed Python dict or Pandas dataframe'''
+
+    class_counts = get_class_counts(class_data)
+    # print "Class counts:", class_counts
     max_class = max(class_counts.values())
-    baseline = max_class * 1.0 / len(class_dict)
-    if printit: print "Baseline: %.2f %% (max class=%d/%d)" % ((baseline * 100), max_class, len(class_dict))
+    baseline = max_class * 1.0 / len(class_data)
+    if printit: print "Baseline: %.2f %% (max class=%d/%d)" % ((baseline * 100), max_class, len(class_data))
     return baseline
 
 
