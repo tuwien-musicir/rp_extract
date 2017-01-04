@@ -50,6 +50,7 @@ def read_class_file(filename, delimiter='\t', as_dict=True, cut_path=False, cut_
 def read_class_file_as_dataframe(filename, delimiter='\t', cut_path=False, cut_ext=False):
     import pandas as pd
     dataframe = pd.read_csv(filename, sep=delimiter, index_col=0, header=None)
+    dataframe.columns = ['class']
     if cut_path or cut_ext:
         dataframe.index = strip_filenames(dataframe.index, cut_path, cut_ext)
     return dataframe
