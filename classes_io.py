@@ -14,6 +14,8 @@
 
 import os
 import sys
+import pandas as pd
+
 
 # --- READ AND WRITE ---
 
@@ -47,6 +49,14 @@ def read_class_file(filename, delimiter='\t', as_dict=True, cut_path=False, cut_
     return result
 
 
+def read_class_file_as_dataframe(filename, delimiter='\t', cut_path=False, cut_ext=False):
+    dataframe = pd.read_csv(filename, sep=delimiter, index_col=0, header=None)
+    dataframe.columns = ['class']
+    if cut_path or cut_ext:
+        dataframe.index = strip_filenames(dataframe.index, cut_path, cut_ext)
+    return dataframe
+
+
 def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, replace_labels=True, pos_labels='x', neg_labels='', verbose=True):
     '''read multi label class assignment files in the format (with CSV header):
 
@@ -68,7 +78,7 @@ def read_multi_class_file(filename, delimiter='\t', stripfilenames=False, replac
 
     # we use pandas to import CSV as pandas dataframe, because it handles quoted filenames (containing ,) well (by contrast to other CSV readers)
     import numpy as np
-    import pandas as pd
+
     dataframe = pd.read_csv(filename, sep=delimiter, index_col=0)
 
     # CSV file is supposed to have file names without extension. otherwise do:
@@ -115,7 +125,6 @@ def write_class_dict(filename, class_dict, delimiter='\t'):
 
 
 def write_multi_class_table(filename, ids, predictions, class_columns, pos_label='x', neg_label=''):
-        import pandas as pd
         pred_df = pd.DataFrame(predictions, index=ids, columns=class_columns)
         pred_df.replace(0, neg_label, inplace=True)
         pred_df.replace(1, pos_label, inplace=True)
@@ -343,7 +352,6 @@ def align_features_and_classes(features, feature_ids, class_data, strip_files=Fa
     lower: whether or not to lower-case all characters before matching
     verbose: output statistics how many are being matched and the list of non-matched files
     '''
-    import pandas as pd # only for multi-class files stored as dataframe
     from rp_feature_io import sorted_feature_subset
 
     if isinstance(class_data, dict):
@@ -464,15 +472,23 @@ def reduce_class_dict_min_instances(class_dict, min_instances=2, raiseError=Fals
     return new_class_dict
 
 
-def get_class_counts(class_dict,printit=False):
-    '''print number of instances per class in a class_dict'''
-    classes = class_dict.values()
+def get_class_counts(class_data, printit=False):
+    '''print number of instances per class in class assignments (groundtruth)
+
+       class_data must be passed Python dict or Pandas dataframe'''
+
+    if isinstance(class_data, dict):
+        classes = class_data.values()
+    elif isinstance(class_data, pd.DataFrame):
+        classes = class_data.ix[:, 0].tolist()
+    else:
+        raise ValueError("Class data must be passed as Python dict or Pandas dataframe!")
+
     class_stats = {c: classes.count(c) for c in set(classes)}
     if (printit):
         for key, val in class_stats.iteritems():
-            print key+":",val
+            print key + ":", val
     return class_stats
-
 
 
 def get_filenames_for_class(class_dict,classname):
@@ -488,14 +504,16 @@ def get_filenames_for_class(class_dict,classname):
     return key_list
 
 
-def get_baseline(class_dict, printit = True):
+def get_baseline(class_data, printit=True):
     '''Print classification baseline according to class with maximum instances
-    '''
-    class_counts = get_class_counts(class_dict)
-    #print "Class counts:", class_counts
+
+       class_data must be passed Python dict or Pandas dataframe'''
+
+    class_counts = get_class_counts(class_data)
+    # print "Class counts:", class_counts
     max_class = max(class_counts.values())
-    baseline = max_class * 1.0 / len(class_dict)
-    if printit: print "Baseline: %.2f %% (max class=%d/%d)" % ((baseline * 100), max_class, len(class_dict))
+    baseline = max_class * 1.0 / len(class_data)
+    if printit: print "Baseline: %.2f %% (max class=%d/%d)" % ((baseline * 100), max_class, len(class_data))
     return baseline
 
 
