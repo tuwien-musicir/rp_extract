@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 ''' RP_Extract_Batch
 
 (c) 2015 by Thomas Lidy
