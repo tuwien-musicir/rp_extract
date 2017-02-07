@@ -45,14 +45,13 @@ def plotrh(hist,showbpm=True):
     xrange = range(0, hist.shape[0])
     plt.bar(xrange, hist)  # 50, normed=1, facecolor='g', alpha=0.75)
 
-    #plt.ylabel('Probability')
     plt.title('Rhythm Histogram')
     if showbpm:
         mod_freq_res = 1.0 / (2**18/44100.0)
-        #print type(xrange)
-        plotrange = range(1, hist.shape[0]+1, 5) # 5 = step
-        bpm = np.around(np.array(plotrange) * mod_freq_res * 60.0, 0)
-        plt.xticks(plotrange, bpm)
+        plot_index = range(0, hist.shape[0] + 1, 5)  # 5 = step for xticks
+        plot_base = np.array(plot_index) + 1  # + 1 otherwise we start we 0 bpm
+        bpm = np.around(plot_base * mod_freq_res * 60, 0)
+        plt.xticks(plot_index, bpm)
         plt.xlabel('bpm')
     else:
         plt.xlabel('Mod. Frequency Index')
