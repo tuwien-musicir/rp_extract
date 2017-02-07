@@ -328,6 +328,10 @@ def read_csv_features(filenamestub,ext=('rh','ssd','rp'),separate_ids=True,id_co
     feat = {}
     ids = {}
 
+    # make list if only 1 string is passed
+    if isinstance(ext, str):
+        ext = [ext]
+
     for e in ext:
         filename = filenamestub + "." + e
 
