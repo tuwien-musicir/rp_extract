@@ -552,6 +552,30 @@ def load_hdf5_pandas(hdf_filename):
 # == GENERIC LOAD FUNCTIONS ==
 
 
+def load_features(input_path, feature_types):
+    '''Generic load function for loading features from CSV or HDF5 files'''
+    ids = None
+
+    # 1) check if we have HDF5 files
+    import glob
+    h5extensions = ['h5', 'hdf5', 'H5', 'HDF5']
+    for h5ext in h5extensions:
+        if len(glob.glob(input_path + ".*." + h5ext)) > 0:
+            ids, feat = load_multiple_hdf5_feature_files(input_path, feature_types, h5ext=h5ext)
+            break
+
+    # TODO: add reading NPZ files
+
+    # 2) otherwise try to read in CSV format
+    if ids == None:
+        ids, feat = read_csv_features(input_path, feature_types, error_on_duplicates=False)
+
+    # from the ids dict, we take only the first entry
+    ids = ids.values()[0]
+    return ids, feat
+
+
+
 def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save_features = False, output_file = None, verbose=True):
     """convenient function that can either load or freshly extract features
 
@@ -599,23 +623,8 @@ def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save
         ids, feat = extract_all_files_generic(input_path,output_file,feature_types,audiofile_types=audiofile_types,verbose=verbose)
 
     else:
-        # LOAD features from feature file(s)         # TODO: add reading NPZ files
-        ids = None
-
-        # check if we have HDF5 files
-        import glob
-        h5extensions = ['h5','hdf5','H5','HDF5']
-        for h5ext in h5extensions:
-            if len(glob.glob(input_path + ".*." + h5ext)) > 0:
-                ids, feat = load_multiple_hdf5_feature_files(input_path, feature_types, h5ext=h5ext)
-                break
-
-        # otherwise try to read in CSV format
-        if ids == None:
-            ids, feat = read_csv_features(input_path,feature_types,error_on_duplicates=False)
-
-        # from the ids dict, we take only the first entry
-        ids = ids.values()[0]
+        # LOAD features from feature file(s) (can be standard CSV files or HDF5 files)
+        ids, feat = load_features(input_path, feature_types)
 
     return ids, feat
 
