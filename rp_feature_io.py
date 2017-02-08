@@ -213,7 +213,7 @@ class HDF5FeatureWriter(FeatureWriter):
 # === PART 2: old individual functions for reading/writing features ===
 
 
-# == CSV ==
+# == Helper Functions ==
 
 
 def check_duplicates(file_ids,raise_error=True):
@@ -239,6 +239,9 @@ def check_id_consistency(ids):
                              ", ".join([e + ': ' + str(len(ids[e])) for e in ext]))
         if not ids[ext[0]] == ids[e]:
             raise ValueError("Ids not matching across feature files!")
+
+
+# == CSV ==
 
 
 def read_csv_features1(filename,separate_ids=True,id_column=0,sep=',',as_dataframe=False,ids_only=False):
@@ -370,7 +373,7 @@ def read_multiple_feature_files(list_of_filenames, common_path = '', feature_typ
     '''Reads multiple feature input files and appends them to make a single feature matrix per feature type
     and a single list of file ids.
 
-    list_of_filenames: Python list with file names (without extension) of multiple feature files (absolute or relative path)
+    list_of_filenames: Python list with filenames (without extension) of multiple feature files (absolute or relative path)
     common_path: will be added at the beginning of each file name, unless it is '' (default), then file names are treated as absolulte
     feature_types: feature types (i.e. file extensions) to be read in
     returns: tuple of (ids, features), where ids is a list of filenames that belong to the feature vects,
@@ -455,8 +458,6 @@ def save_arff(filename,dataframe,relation_name=None):
     out_file.close()
     
     
-# == NPZ (Numpy Pickle) ==
-
 
 
 # == HDF5 ==
@@ -546,6 +547,79 @@ def load_hdf5_pandas(hdf_filename):
     data = store['data'].as_matrix(columns=None)
     store.close()
     return(data)
+
+
+# == GENERIC LOAD FUNCTIONS ==
+
+
+def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save_features = False, output_file = None, verbose=True):
+    """convenient function that can either load or freshly extract features
+
+    depending if input_path is...
+    a) a path: will recursively look for .wav and .mp3 files in path and freshly extract features
+    b) a .txt file: will take a list of filenames (one per line) and freshly extract features
+    c) a .wav, .mp3, flac or .aif(f) file: will freshly extract features from that file
+    d) a set of *.h5 or *.hdf5: will load features in HDF5 format (from multiple files)
+    e) another file: will try to load features in multiple csv file feature format
+    TODO: .npz
+    e) a .npz, .h5 or .hdf5 file: will load the features from that file
+
+    TODO: The audio analysis parameters of this function call are only needed when features are to be freshly extracted.
+
+    :param input_path:
+    :return:
+    """
+    from rp_extract_batch import extract_all_files_generic
+
+    # not possible because of omitted file extensions in read_csv_features below
+    #    if not os.path.exists(input_path):
+    #        raise NameError("File or path does not exist: " + input_path)
+
+    if save_features and output_file is None:
+        raise ValueError("output_file must be specified if save_features is set to True!")
+
+
+    # we accept and check for all audio file types supported
+    from audiofile_read import get_supported_audio_formats
+    audiofile_types = get_supported_audio_formats()
+
+    # these file times mean fresh extract
+    extract_file_types = list(audiofile_types)
+    extract_file_types.append('.txt')
+    extract_file_types = tuple(extract_file_types)
+
+    # if we got a directory, we do analysis, if we got a file of one of the accepted file_types, we load it
+    if os.path.isdir(input_path) or input_path.lower().endswith(extract_file_types):  # FRESH ANALYSIS from input path or .txt file
+
+        if verbose:
+            print "Performing feature extraction from ", input_path
+
+        # BATCH RP FEATURE EXTRACTION:
+        # if output_file is given, will save features, otherwise not
+        ids, feat = extract_all_files_generic(input_path,output_file,feature_types,audiofile_types=audiofile_types,verbose=verbose)
+
+    else:
+        # LOAD features from feature file(s)         # TODO: add reading NPZ files
+        ids = None
+
+        # check if we have HDF5 files
+        import glob
+        h5extensions = ['h5','hdf5','H5','HDF5']
+        for h5ext in h5extensions:
+            if len(glob.glob(input_path + ".*." + h5ext)) > 0:
+                ids, feat = load_multiple_hdf5_feature_files(input_path, feature_types, h5ext=h5ext)
+                break
+
+        # otherwise try to read in CSV format
+        if ids == None:
+            ids, feat = read_csv_features(input_path,feature_types,error_on_duplicates=False)
+
+        # from the ids dict, we take only the first entry
+        ids = ids.values()[0]
+
+    return ids, feat
+
+
 
 
 # == CONVERSION ==
@@ -735,74 +809,6 @@ def to_dataframe_for_arff(feature_data, attribute_labels=None, ids=None, classes
 
     return dataframe
 
-
-
-def load_or_analyze_features(input_path, feature_types = ['rp','ssd','rh'], save_features = False, output_file = None, verbose=True):
-    """convenient function that can either load or freshly extract features
-
-    depending if input_path is...
-    a) a path: will recursively look for .wav and .mp3 files in path and freshly extract features
-    b) a .txt file: will take a list of filenames (one per line) and freshly extract features
-    c) a .wav, .mp3, flac or .aif(f) file: will freshly extract features from that file
-    d) a set of *.h5 or *.hdf5: will load features in HDF5 format (from multiple files)
-    e) another file: will try to load features in multiple csv file feature format
-    TODO: .npz
-    e) a .npz, .h5 or .hdf5 file: will load the features from that file
-
-    TODO: The audio analysis parameters of this function call are only needed when features are to be freshly extracted.
-
-    :param input_path:
-    :return:
-    """
-    from rp_extract_batch import extract_all_files_generic
-
-    # not possible because of omitted file extensions in read_csv_features below
-    #    if not os.path.exists(input_path):
-    #        raise NameError("File or path does not exist: " + input_path)
-
-    if save_features and output_file is None:
-        raise ValueError("output_file must be specified if save_features is set to True!")
-
-
-    # we accept and check for all audio file types supported
-    from audiofile_read import get_supported_audio_formats
-    audiofile_types = get_supported_audio_formats()
-
-    # these file times mean fresh extract
-    extract_file_types = list(audiofile_types)
-    extract_file_types.append('.txt')
-    extract_file_types = tuple(extract_file_types)
-
-    # if we got a directory, we do analysis, if we got a file of one of the accepted file_types, we load it
-    if os.path.isdir(input_path) or input_path.lower().endswith(extract_file_types):  # FRESH ANALYSIS from input path or .txt file
-
-        if verbose:
-            print "Performing feature extraction from ", input_path
-
-        # BATCH RP FEATURE EXTRACTION:
-        # if output_file is given, will save features, otherwise not
-        ids, feat = extract_all_files_generic(input_path,output_file,feature_types,audiofile_types=audiofile_types,verbose=verbose)
-
-    else:
-        # LOAD features from feature file(s)         # TODO: add reading NPZ files
-        ids = None
-
-        # check if we have HDF5 files
-        import glob
-        h5extensions = ['h5','hdf5','H5','HDF5']
-        for h5ext in h5extensions:
-            if len(glob.glob(input_path + ".*." + h5ext)) > 0:
-                ids, feat = load_multiple_hdf5_feature_files(input_path, feature_types, h5ext=h5ext)
-                break
-
-        # otherwise try to read in CSV format
-        if ids == None:
-            ids, feat = read_csv_features(input_path,feature_types,error_on_duplicates=False)
-
-        # from the ids dict, we take only the first entry
-        ids = ids.values()[0]
-
-    return ids, feat
 
 
 
