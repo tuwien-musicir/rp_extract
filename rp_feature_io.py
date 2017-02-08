@@ -521,6 +521,11 @@ def load_hdf5_features(hdf_filename, verbose=True, ids_only=False, return_id2=Fa
 
 def load_multiple_hdf5_feature_files(filename_stub, feature_types, h5ext='h5', ids_only=False, verbose=True): # , return_id2=False
     '''load multiple hdf5 feature files into dicts of features and ids'''
+
+    # make list if only 1 string is passed
+    if isinstance(feature_types, str):
+        feature_types = [feature_types]
+
     # create result dicts
     feat = {}
     ids = {}
