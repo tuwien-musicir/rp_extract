@@ -173,6 +173,8 @@ class HDF5FeatureWriter(FeatureWriter):
 
     def write_features(self,id,feat,id2=None,flush=True):
         '''
+        write a single feature vector (for each file type, to multiple feature files)
+
         id: string id (e.g. filename) of extracted file
         feat: dict containing 1 entry per feature type (must match file extensions)
         id2: optional secondary identifier to be stored alongside id
@@ -186,7 +188,7 @@ class HDF5FeatureWriter(FeatureWriter):
             self.h5tables[e].append(feat[e].reshape((1,-1))) # make it a row vector instead of column
             self.idtables[e].append([id])  # it's important to have the list brackets here
             if id2 is not None:
-                self.idtables[e].append([id2])
+                self.idtables2[e].append([id2])
 
             if flush:
                 self.files[e].flush() # flush file after writing, otherwise data is not written until termination of program
@@ -201,6 +203,30 @@ class HDF5FeatureWriter(FeatureWriter):
             #h5table.attrs.Bark = useBark
             #h5table.attrs.transform = transform
             #h5table.attrs.log_transform = log_transform
+
+
+    def write_features_batch(self,ids,feat,ids2=None,flush=True):
+        '''
+        write multiple feature vectors (+ ids) in a batch (for each file type, to multiple feature files)
+
+        ids: list of string ids (e.g. filename) of analyzed files
+        feat: dict containing 1 entry per feature type (must match file extensions) with multiple feature vectors
+        id2: optional secondary identifier list to be stored alongside id
+        flush: flush data to disk after every write (i.e. prevent data loss in case of premature termination)
+        '''
+        if not self.isopen:
+            raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
+
+        for e in feat.keys():
+            # write features and file_ids
+            self.h5tables[e].append(feat[e]) # no reshape here
+            self.idtables[e].append(ids)  # assumed to be list already
+            if ids2 is not None:
+                self.idtables2[e].append(ids2) # assumed to be list already
+
+            if flush:
+                self.files[e].flush() # flush file after writing, otherwise data is not written until termination of program
+
 
     def close(self):
         if self.isopen and self.ext is not None: # if it's None, files are not open yet
