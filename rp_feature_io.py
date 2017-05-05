@@ -881,27 +881,37 @@ if __name__ == '__main__':
     import argparse
     argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
-    argparser.add_argument('input_path', help='input file path to search for wav/mp3 files to analyze') # nargs='?' to make it optional
-    #argparser.add_argument('output_filename', nargs='?', help='output path + filename for feature file (without extension) [default: features/features]', default='features/features') # nargs='?' to make it optional
+    argparser.add_argument('input_path', help='input feature file or file path to search for wav/mp3 files to analyze')
+    argparser.add_argument('output_filestub', nargs='?', help='output path + filename stub for output feature file (without extension)', default=None) # nargs='?' to make it optional
 
+    # test loading
     argparser.add_argument('-arff',   action='store_true',help='test loading of ARFF file',default=False) # boolean opt
     argparser.add_argument('-csv',   action='store_true',help='test loading of CSV file',default=False) # boolean opt
-    argparser.add_argument('-test',   action='store_true',help='test some custom stuff',default=False) # boolean opt
-    argparser.add_argument('-csv2arff', action='store_true',help='convert CSV file to ARFF file',default=False) # boolean opt
     argparser.add_argument('-h5','--hdf5', action='store_true',help='test loading of HDF5 file',default=False) # boolean opt
+    argparser.add_argument('-test',   action='store_true',help='test some custom stuff',default=False) # boolean opt
+
+    # converters
+    argparser.add_argument('-csv2arff', action='store_true',help='convert CSV file to ARFF file',default=False) # boolean opt
+    argparser.add_argument('-hdf2csv', action='store_true',help='convert HDF5 files to CSV files',default=False) # boolean opt
+
 
     args = argparser.parse_args()
 
     feature_types = ['rp', 'ssd', 'rh'] #, 'mvd']
 
-    if args.csv2arff: # test CSV to ARFF
+    if args.csv2arff: # CSV to ARFF converter
 
-        out_path = './feat' # TODO make parameter
-        filenamestub = 'GTZAN.python' # TODO make parameter
+        if args.output_filestub is None:
+            raise ValueError("Need output_filestub defined on command line for target file.")
 
-        out_filenamestub = out_path + os.sep + filenamestub
+        csv2arff(args.input_path,args.output_filestub,feature_types)
 
-        csv2arff(args.input_path,out_filenamestub,feature_types)
+    elif args.hdf2csv:  # HDF5 to CSV converter
+
+        if args.output_filestub is None:
+            raise ValueError("Need output_filestub defined on command line for target file.")
+
+        hdf2csv(args.input_path, args.output_filestub, feature_types)
 
     else:
         print "Reading", args.input_path
