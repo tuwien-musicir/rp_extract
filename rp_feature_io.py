@@ -426,6 +426,26 @@ def read_multiple_feature_files(list_of_filenames, common_path = '', feature_typ
     return ids_out, feat_out
 
 
+def write_features_csv_batch(ids, feat, out_path, verbose=True):
+    '''write entire feature matrices to multiple feature files in CSV file format'''
+
+    for ft in feat.keys():
+
+        if isinstance(ids, list):
+            ids_df = ids  # one single list with filenames
+        else:  # dict
+            ids_df = ids[ft]
+
+        # create pandas dataframe for each feature type
+        dataframe = pd.DataFrame(feat[ft], index=ids_df)
+
+        # write to output CSV
+        outfile = out_path + '.' + ft  # + '.csv'
+        if verbose:
+            print "Writing", outfile
+        dataframe.to_csv(outfile, header=None)
+
+
 # == ARFF ==
 
 # load_arff
@@ -777,14 +797,9 @@ def hdf2csv(in_path, out_path, feature_types, verbose=True):
     # read HDF5 files into dict of feature_types
     ids, feat = load_multiple_hdf5_feature_files(in_path, feature_types)
 
-    for ft in feature_types:
-        # create pandas dataframe for each feature type
-        dataframe = pd.DataFrame(feat[ft], index=ids[ft])
+    # write in a batch manner to CSV files
+    write_features_csv_batch(ids, feat, out_path, verbose)
 
-        # write to output CSV
-        outfile = out_path + '.' + ft #+ '.csv'
-        if verbose: print "Writing", outfile
-        dataframe.to_csv(outfile, header=None)
 
 
 # == FEATURE MANIPULATION ==
