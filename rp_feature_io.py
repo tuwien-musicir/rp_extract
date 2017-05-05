@@ -782,7 +782,7 @@ def hdf2csv(in_path, out_path, feature_types, verbose=True):
         dataframe = pd.DataFrame(feat[ft], index=ids[ft])
 
         # write to output CSV
-        outfile = out_path + '.' + ft + '.csv'
+        outfile = out_path + '.' + ft #+ '.csv'
         if verbose: print "Writing", outfile
         dataframe.to_csv(outfile, header=None)
 
@@ -882,7 +882,7 @@ if __name__ == '__main__':
     argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
     argparser.add_argument('input_path', help='input feature file or file path to search for wav/mp3 files to analyze')
-    argparser.add_argument('output_filestub', nargs='?', help='output path + filename stub for output feature file (without extension)', default=None) # nargs='?' to make it optional
+    argparser.add_argument('-out', '--output_filestub', nargs='?', help='output path + filename stub for output feature file (without extension)', default=None) # nargs='?' to make it optional
 
     # test loading
     argparser.add_argument('-arff',   action='store_true',help='test loading of ARFF file',default=False) # boolean opt
