@@ -446,6 +446,13 @@ def write_features_csv_batch(ids, feat, out_path, verbose=True):
         dataframe.to_csv(outfile, header=None)
 
 
+def concat_multiple_csv_feature_files(list_of_filenames, out_path, feature_types):
+    '''combine multiple feature files in CSV format to a single one (for each feature type)'''
+
+    ids, feat = read_multiple_feature_files(list_of_filenames, '', feature_types, verbose=True)
+    write_features_csv_batch(ids, feat, out_path, verbose=True)
+
+
 # == ARFF ==
 
 # load_arff
@@ -896,6 +903,7 @@ if __name__ == '__main__':
     import argparse
     argparser = argparse.ArgumentParser() #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
+    # TODO add and test nargs="+" option to allow -concat option below
     argparser.add_argument('input_path', help='input feature file or file path to search for wav/mp3 files to analyze')
     argparser.add_argument('-out', '--output_filestub', nargs='?', help='output path + filename stub for output feature file (without extension)', default=None) # nargs='?' to make it optional
 
@@ -906,6 +914,7 @@ if __name__ == '__main__':
     argparser.add_argument('-test',   action='store_true',help='test some custom stuff',default=False) # boolean opt
 
     # converters
+    #argparser.add_argument('-concat', action='store_true',help='concatenate multiple CSV-based feature files to 1 (for each feature type) - specify multiple input_paths',default=False) # boolean opt
     argparser.add_argument('-csv2arff', action='store_true',help='convert CSV file to ARFF file',default=False) # boolean opt
     argparser.add_argument('-hdf2csv', action='store_true',help='convert HDF5 files to CSV files',default=False) # boolean opt
 
