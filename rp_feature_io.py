@@ -767,6 +767,26 @@ def csv2hdf5(csv_filename,hdf_filename,chunk_size=1000,verbose=True):
     if verbose: print "Finished."
 
 
+def hdf2csv(in_path, out_path, feature_types, verbose=True):
+    '''HDF5 to CSV feature file converter
+
+    in_path: input path + filename stub (without extension) to read HDF5 files from (expected: .h5 extension)
+    out_path: input path + filename stub (without extension) to write CSV files to (.type.csv will be added)
+    feature_types: string or list of strings with feature types such as 'rp', 'rh', 'ssd', etc.'''
+
+    # read HDF5 files into dict of feature_types
+    ids, feat = load_multiple_hdf5_feature_files(in_path, feature_types)
+
+    for ft in feature_types:
+        # create pandas dataframe for each feature type
+        dataframe = pd.DataFrame(feat[ft], index=ids[ft])
+
+        # write to output CSV
+        outfile = out_path + '.' + ft + '.csv'
+        if verbose: print "Writing", outfile
+        dataframe.to_csv(outfile, header=None)
+
+
 # == FEATURE MANIPULATION ==
 
 def concatenate_features(feat, feature_types = ('ssd', 'rh')):
