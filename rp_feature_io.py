@@ -732,6 +732,8 @@ def csv2hdf5(csv_filename,hdf_filename,chunk_size=1000,verbose=True):
 
     converting CSV files to HDF5 file format (using Pandas HDFStore)
 
+    # TODO: is not writing audio filenames from CSV file correctly into HDF5
+
     Parameters:
     csv_filename: input filename of file to convert
     hdf_filename: output HDF5 filename
@@ -753,6 +755,8 @@ def csv2hdf5(csv_filename,hdf_filename,chunk_size=1000,verbose=True):
 
     cnt = 0
     csv_reader = pd.read_csv(csv_filename, sep=',',header=None,chunksize=chunk_size)
+
+    # TODO: write audio filenames from CSV file correctly into HDF5
 
     for chunk in csv_reader:
         store.append('data', chunk)
