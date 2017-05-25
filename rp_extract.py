@@ -187,7 +187,7 @@ def calc_spectrogram(wavsegment,fft_window_size,fft_overlap = 0.5,real_values=Tr
     # this would compute the segment length, but it's pre-defined above ...
     # segment_size = fft_window_size + (frames-1) * hop_size
     # ... therefore we convert the formula to give the number of frames needed to iterate over the segment:
-    n_frames = (wavsegment.shape[0] - fft_window_size) / hop_size + 1
+    n_frames = int((wavsegment.shape[0] - fft_window_size) / hop_size + 1)
     # n_frames_old = wavsegment.shape[0] / fft_window_size * 2 - 1  # number of iterations with 50% overlap
 
     # TODO: provide this as parameter for better caching?
