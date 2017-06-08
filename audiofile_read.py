@@ -211,9 +211,59 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
 
     return cmd[0]
 
+def decode_video(in_filename, out_filename=None, verbose=False, no_extension_check=False, force_mono=False):
+    ''' calls external decoder to extract the audio stream from a video file and to store it to a WAV file (works with FFMPEG only!)
+
+    The following decoder program must be installed on the system:
+
+    ffmpeg: for all relevant video formats
+    
+    (consider adding their path  using os.environ['PATH'] += os.pathsep + path )
+
+    in_filename: input video file name to process
+    out_filename: output filename after conversion; if omitted, the input filename is used, replacing the extension by .wav
+    verbose: print decoding command line information or not
+    no_extension_check: does not check file format extension. means that *first* specified decoder is called on ANY files type
+    force_mono: force mono output when decoding 
+    force_resampling: force a target sampling rate (provided in Hz) when decoding 
+    returns: decoder command used (without parameters)
+    '''
+
+    basename, ext = os.path.splitext(in_filename)
+    ext = ext.lower()
+
+    if out_filename == None:
+        out_filename = basename + '.wav'
+
+    # check a number of external MP3 decoder tools whether they are available on the system
+
+    # for subprocess.call, we prepare the commands and the arguments as a list
+    # cmd_list is a list of commands with their arguments, which will be iterated over to try to find each tool
+    # cmd_types is a list of file types supported by each command/tool
+
+    cmd = ['ffmpeg','-i', in_filename,'-acodec','pcm_s16le','-ar','44100'] # -v adjusts log level, -y option overwrites output file, because it has been created already by tempfile before when passed
+    if force_mono: cmd.extend(['-ac','1'])  # add option to force to mono (1 output channel)
+    else: cmd.extend(['-ac','2'])
+    cmd.append(out_filename)
+
+    try:
+        return_code = subprocess.call(cmd)  # subprocess.call takes a list of command + arguments
+
+        if return_code != 0:
+            raise DecoderException("Problem appeared during executing decoder. Return_code: " + str(return_code), command=cmd)
+        if verbose: print 'Decoded', ext, 'with:', " ".join(cmd)
+        success = True
+
+    except OSError as e:
+        if e.errno != 2: #  2 = No such file or directory (i.e. decoder not found, which we want to catch at the end below)
+            raise DecoderException("Problem appeared during decoding: " + str(e), command=cmd, orig_error=e)
+
+    return cmd
+
+
 def get_supported_audio_formats():
     # TODO: update this list here every time a new format is added; to avoid this, make a more elegant solution getting the list of formats from where the commands are defined above
-    return ('.wav','.mp3','.m4a','.aif','.aiff','.flac')
+    return ('.wav','.mp3','.m4a','.aif','.aiff','.flac','.au')
 
 
 # testing decoding to memory instead of file: did NOT bring any speedup!
@@ -254,6 +304,51 @@ def mp3_read(filename,normalize=True,verbose=True):
 
     return (samplerate, samplewidth, wavedata)
 
+
+def videofile_read(filename,normalize=True,verbose=False,include_decoder=False,no_extension_check=False):
+    ''' audiofile_read
+
+    generic function capable of reading audio from video files
+
+    :param filename: file name path to video file
+    :param normalize: normalize to (-1,1) if True (default), or keep original values (16 bit, 24 bit or 32 bit)
+    :param verbose: whether to print a message while decoding files or not
+    :param include_decoder: includes a 4th return value: string which decoder has been used to decode the audio file
+    :param no_extension_check: does not check file format via extension. means that decoder is called on ALL files.
+    :param force_resampling: force a target sampling rate (provided in Hz) when decoding (works with FFMPEG only!)
+    :return: a tuple with 3 or 4 entries: samplerate in Hz (e.g. 44100), samplewidth in bytes (e.g. 2 for 16 bit),
+            wavedata (simple array for mono, 2-dim. array for stereo), and optionally a decoder string
+
+    Example:
+    >>> samplerate, samplewidth, wavedata = videofile_read("music/BoxCat_Games_-_10_-_Epic_Song.mp4",verbose=False)
+    >>> print samplerate, "Hz,", samplewidth*8, "bit,", wavedata.shape[1], "channels,", wavedata.shape[0], "samples"
+    44100 Hz, 16 bit, 2 channels, 2421504 samples
+
+    '''
+
+    # check if file exists or has 0 bytes
+    if not os.path.exists(filename):
+        raise NameError("File does not exist: " + filename)
+    if os.path.getsize(filename) == 0:
+        raise ValueError("File has 0 bytes: " + filename)
+
+    basename, ext = os.path.splitext(filename)
+    ext = ext.lower()
+
+
+    try: # try to decode
+        tempfile = get_temp_filename(suffix='.wav')
+        decoder  = decode_video(filename,tempfile,verbose,no_extension_check)
+        samplerate, samplewidth, wavedata = wav_read(tempfile,normalize,verbose)
+
+    finally: # delete temp file in any case
+        if os.path.exists(tempfile):
+            os.remove(tempfile)
+
+    if include_decoder:
+        return samplerate, samplewidth, wavedata, decoder
+    else:
+        return samplerate, samplewidth, wavedata
 
 
 def audiofile_read(filename,normalize=True,verbose=True,include_decoder=False,no_extension_check=False,force_resampling=None):
