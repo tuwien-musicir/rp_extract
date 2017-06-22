@@ -141,7 +141,8 @@ class HDF5FeatureWriter(FeatureWriter):
                 mode = 'w'
                 append = False
 
-            h5file = tables.openFile(outfile, mode)
+            #h5file = tables.openFile(outfile, mode) # tables <= 3.1.1
+            h5file = tables.open_file(outfile, mode) # tables >= 3.2
             self.files[e] = h5file
 
             if not append:
@@ -519,7 +520,8 @@ def save_arff(filename,dataframe,relation_name=None):
 def load_hdf5_features(hdf_filename, verbose=True, ids_only=False, return_id2=False):
     '''read HFD5 file written with HDF5FeatureWriter() class'''
     import tables  # pytables HDF5 library (installed via pip install tables)
-    hdf5_file = tables.openFile(hdf_filename, mode='r')
+    #hdf5_file = tables.openFile(hdf_filename, mode='r') # tables <= 3.1.1
+    hdf5_file = tables.open_file(hdf_filename, mode='r') # tables >= 3.2
 
     if not ids_only:
         # feature vector table is called 'vec' in HDF5FeatureWriter() class
