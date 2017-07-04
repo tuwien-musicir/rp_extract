@@ -637,6 +637,27 @@ def load_hdf5_pandas(hdf_filename):
     return(data)
 
 
+def combine_multiple_hdf5_files(input_filelist_stubs, output_filestub, feature_types):
+    hdf_writer = HDF5FeatureWriter()
+    hdf_writer.open(output_filestub,feature_types)
+
+    for i, filename in enumerate(input_filelist_stubs):
+        print "Reading file", filename
+        ids, feat = load_multiple_hdf5_feature_files(filename, feature_types)
+
+        # check ids for consistency
+        check_id_consistency(ids)
+
+        # if ok, collapse to just 1 ids list
+        ids = ids[feature_types[0]]
+
+        print "Writing part", i + 1, "..."
+        hdf_writer.write_features_batch(ids,feat)
+
+    hdf_writer.close()
+    print "DONE:", output_filestub + ".*"
+
+
 # == GENERIC LOAD FUNCTIONS ==
 
 
