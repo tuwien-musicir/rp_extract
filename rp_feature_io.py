@@ -186,8 +186,14 @@ class HDF5FeatureWriter(FeatureWriter):
 
                 # create table for file_ids (strings)
                 shape = (0,)  # growing dimension 0, undefined other dimension
-                self.idtables[e] = h5file.createEArray(h5file.root, 'file_ids', self.string_type, shape)
-                self.idtables2[e] = h5file.createEArray(h5file.root, 'file_ids2', self.string_type, shape)
+
+                if hasattr(h5file, "createEArray"):  # tables 2.x to 3.1
+                    self.idtables[e] = h5file.createEArray(h5file.root, 'file_ids', self.string_type, shape)
+                    self.idtables2[e] = h5file.createEArray(h5file.root, 'file_ids2', self.string_type, shape)
+                elif hasattr(h5file, "create_earray"): # tables >= 3.2
+                    self.idtables[e] = h5file.create_earray(h5file.root, 'file_ids', self.string_type, shape)
+                    self.idtables2[e] = h5file.create_earray(h5file.root, 'file_ids2', self.string_type, shape)
+
 
     #def store_attribures(self,attributes):
         # TODO store audio analysis parameters as table attributes
