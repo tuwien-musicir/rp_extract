@@ -124,14 +124,12 @@ class HDF5FeatureWriter(FeatureWriter):
         '''
 
         import tables
-
         self.ext = ext   # keep extensions
         self.files = {}  # files is a dict of one file handle per extension
 
         for e in ext:
             # create file
             outfile = base_filename + '.' + e + '.h5'
-
             mode = 'r+' if append else 'w'   #'r+' is similar to 'a', but the file must already exist
 
             if append and not os.path.isfile(outfile):
@@ -139,9 +137,8 @@ class HDF5FeatureWriter(FeatureWriter):
                 mode = 'w'
                 append = False
 
-            #h5file = tables.openFile(outfile, mode) # tables <= 3.1.1
-            h5file = tables.open_file(outfile, mode) # tables >= 3.2
-            self.files[e] = h5file
+            #self.files[e] =  = tables.openFile(outfile, mode) # tables <= 3.1.1
+            self.files[e] = tables.open_file(outfile, mode) # tables >= 3.2
 
         self.append = append
         self.isopen = True
@@ -175,7 +172,14 @@ class HDF5FeatureWriter(FeatureWriter):
                 # create table for vectors
                 vec_dim = len(feat[e]) if feat[e].ndim == 1 else feat[e].shape[1]
                 shape = (0, vec_dim)  # define feature dimension but not yet number of instances (0)
-                h5table = h5file.createEArray(h5file.root, 'vec', self.data_type, shape)
+
+                if hasattr(h5file, "createEArray"):    # tables 2.x to 3.1
+                    h5table = h5file.createEArray(h5file.root, 'vec', self.data_type, shape)
+                elif hasattr(h5file, "create_earray"): # tables >= 3.2
+                    h5table = h5file.create_earray(h5file.root, 'vec', self.data_type, shape)
+                else:
+                    raise ValueError("No method createEArray or create_earray in PyTables!")
+
                 h5table.attrs.vec_dim = vec_dim
                 h5table.attrs.vec_type = e.upper()
                 self.h5tables[e] = h5table
