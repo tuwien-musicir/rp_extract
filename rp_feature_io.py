@@ -126,7 +126,6 @@ class HDF5FeatureWriter(FeatureWriter):
         import tables
 
         self.ext = ext   # keep extensions
-        self.append = append
         self.files = {}  # files is a dict of one file handle per extension
 
         for e in ext:
@@ -144,6 +143,7 @@ class HDF5FeatureWriter(FeatureWriter):
             h5file = tables.open_file(outfile, mode) # tables >= 3.2
             self.files[e] = h5file
 
+        self.append = append
         self.isopen = True
 
     def _init_tables(self, feat):
@@ -159,7 +159,6 @@ class HDF5FeatureWriter(FeatureWriter):
 
         for e in self.ext:
             h5file = self.files[e]
-            vec_dim = len(feat[e]) if feat[e].ndim == 1 else feat[e].shape[1]
 
             if self.append:
                 if h5file.root.__contains__('vec'):
@@ -174,6 +173,7 @@ class HDF5FeatureWriter(FeatureWriter):
                     self.idtables2[e] = h5file.root.file_ids2
             else:
                 # create table for vectors
+                vec_dim = len(feat[e]) if feat[e].ndim == 1 else feat[e].shape[1]
                 shape = (0, vec_dim)  # define feature dimension but not yet number of instances (0)
                 h5table = h5file.createEArray(h5file.root, 'vec', self.data_type, shape)
                 h5table.attrs.vec_dim = vec_dim
