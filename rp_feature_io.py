@@ -95,6 +95,7 @@ class HDF5FeatureWriter(FeatureWriter):
     def __init__(self,float32=False):
         '''float32: if set to True, 32 bit data is stored, otherwise 64 bit'''
         self.isopen = False
+        self.append = False
         self.files = None
         self.h5tables = None
         self.idtables = None
@@ -113,22 +114,20 @@ class HDF5FeatureWriter(FeatureWriter):
         #    seg_pos = tables.IntCol()
         #table = h5file.create_table(h5file.root, 'file_ids_table', FileInfo)
 
-    def open(self,base_filename,ext,feat,append=False):
+    def open(self,base_filename,ext,feat=None,append=False):
         '''
         base_filename: path and filename that will be extended by . and feature extension and .h5
         ext: list of file extensions i.e. feature types to open files for
-        feat: an example feature vector dict containing 1 entry of a feature vector per feature type
-              the vectors are not written here, just used to determine their dimensions
+        feat: (deprecated, not needed anymore) an example feature vector dict containing 1 entry of a feature vector per
+            feature type the vectors are not written here, just used to determine their dimensions
         append: whether to append to existing feature files (or overwrite) (not implemented)
         '''
 
         import tables
 
         self.ext = ext   # keep extensions
+        self.append = append
         self.files = {}  # files is a dict of one file handle per extension
-        self.h5tables = {} # dict of 1 vector table per extension
-        self.idtables = {} # dict of 1 file_id table per extension
-        self.idtables2 = {} # dict of 1 secondary file_id table per extension
 
         for e in ext:
             # create file
@@ -145,20 +144,24 @@ class HDF5FeatureWriter(FeatureWriter):
             h5file = tables.open_file(outfile, mode) # tables >= 3.2
             self.files[e] = h5file
 
-            if not append:
-                # create table for vectors
-                vec_dim = len(feat[e])
-                shape=(0,vec_dim) # define feature dimension but not yet number of instances (0)
-                h5table = h5file.createEArray(h5file.root, 'vec', self.data_type, shape)
-                h5table.attrs.vec_dim = vec_dim
-                h5table.attrs.vec_type = e.upper()
-                self.h5tables[e] = h5table
+        self.isopen = True
 
-                # create table for file_ids (strings)
-                shape = (0,) # growing dimension 0, undefined other dimension
-                self.idtables[e] = h5file.createEArray(h5file.root, 'file_ids', self.string_type, shape)
-                self.idtables2[e] = h5file.createEArray(h5file.root, 'file_ids2', self.string_type, shape)
-            else:
+    def _init_tables(self, feat):
+        '''initalize HDF5 tables: means to create them (in case of a new file) or read the root of the tables
+        (in case of appending). for new creation we need a vector example to create the tables with proper vector dimensions.
+
+        feat: an example feature vector dict containing 1 entry of a feature vector per feature type
+              the vectors are not written here, just used to determine their dimensions
+        '''
+        self.h5tables = {} # dict of 1 vector table per extension
+        self.idtables = {} # dict of 1 file_id table per extension
+        self.idtables2 = {} # dict of 1 secondary file_id table per extension
+
+        for e in self.ext:
+            h5file = self.files[e]
+            vec_dim = len(feat[e]) if feat[e].ndim == 1 else feat[e].shape[1]
+
+            if self.append:
                 if h5file.root.__contains__('vec'):
                     self.h5tables[e] = h5file.root.vec
                 else:
@@ -169,8 +172,29 @@ class HDF5FeatureWriter(FeatureWriter):
                     raise AttributeError("HDF5 file does not contain 'file_ids' table! Cannot append.")
                 if h5file.root.__contains__('file_ids2'):
                     self.idtables2[e] = h5file.root.file_ids2
+            else:
+                # create table for vectors
+                shape = (0, vec_dim)  # define feature dimension but not yet number of instances (0)
+                h5table = h5file.createEArray(h5file.root, 'vec', self.data_type, shape)
+                h5table.attrs.vec_dim = vec_dim
+                h5table.attrs.vec_type = e.upper()
+                self.h5tables[e] = h5table
 
-        self.isopen = True
+                # create table for file_ids (strings)
+                shape = (0,)  # growing dimension 0, undefined other dimension
+                self.idtables[e] = h5file.createEArray(h5file.root, 'file_ids', self.string_type, shape)
+                self.idtables2[e] = h5file.createEArray(h5file.root, 'file_ids2', self.string_type, shape)
+
+    #def store_attribures(self,attributes):
+        # TODO store audio analysis parameters as table attributes
+        #for e in ext:
+            #table = self.h5tables[e]
+            #h5table.attrs.bands = n_bands
+            #h5table.attrs.frames = frames
+            #h5table.attrs.Mel = useMel
+            #h5table.attrs.Bark = useBark
+            #h5table.attrs.transform = transform
+            #h5table.attrs.log_transform = log_transform
 
     def write_features(self,id,feat,id2=None,flush=True):
         '''
@@ -184,6 +208,9 @@ class HDF5FeatureWriter(FeatureWriter):
         if not self.isopen:
             raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
 
+        if self.h5tables is None:
+            self._init_tables(feat)
+
         for e in feat.keys():
             # write features and file_ids
             self.h5tables[e].append(feat[e].reshape((1,-1))) # make it a row vector instead of column
@@ -193,18 +220,6 @@ class HDF5FeatureWriter(FeatureWriter):
 
             if flush:
                 self.files[e].flush() # flush file after writing, otherwise data is not written until termination of program
-
-    #def store_attribures(self,attributes):
-        # TODO store audio analysis parameters as table attributes
-        #for e in ext:
-            #table = self.h5tables[e]
-            #h5table.attrs.bands = n_bands
-            #h5table.attrs.frames = frames
-            #h5table.attrs.Mel = useMel
-            #h5table.attrs.Bark = useBark
-            #h5table.attrs.transform = transform
-            #h5table.attrs.log_transform = log_transform
-
 
     def write_features_batch(self,ids,feat,ids2=None,flush=True):
         '''
@@ -217,6 +232,9 @@ class HDF5FeatureWriter(FeatureWriter):
         '''
         if not self.isopen:
             raise RuntimeError("HDF5FeatureWriter is not open yet. Call open first!")
+
+        if self.h5tables is None:
+            self._init_tables(feat)
 
         for e in feat.keys():
             # write features and file_ids
