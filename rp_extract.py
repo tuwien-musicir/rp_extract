@@ -509,7 +509,6 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
     features = {}
 
     ssd_list = []
-    sh_list = []
     rh_list  = []
     rh2_list = []
     rp_list  = []
@@ -628,7 +627,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         # FEATURES: now we got a Sonogram and extract statistical features
     
         # SSD: Statistical Spectrum Descriptors
-        if (extract_ssd or extract_tssd):
+        if extract_ssd or extract_tssd:
             ssd = calc_statistical_features(matrix)
             ssd_list.append(ssd.flatten(FLATTEN_ORDER))
 
@@ -697,14 +696,14 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
             mvd_list.append(mvd.flatten(FLATTEN_ORDER))
 
         # RH: Rhythm Histograms - OPTION 1: before fluctuation_strength_weighting (as in Matlab)
-        if extract_rh:
+        if extract_rh or extract_trh:
             rh = np.sum(np.abs(rhythm_patterns[:,feature_part_xaxis2]),axis=0) #without DC component # verified
             rh_list.append(rh.flatten(FLATTEN_ORDER))
 
         # final steps for RP:
 
         # Fluctuation Strength weighting curve
-        if fluctuation_strength_weighting:
+        if (extract_rp or extract_rh2) and fluctuation_strength_weighting:
 
             # modulation frequency x-axis (after 2nd FFT)
             # mod_freq_res = resolution of modulation frequency axis (0.17 Hz)
@@ -737,7 +736,8 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
             #
             #rp = blur1 * rp * blur2;
 
-        rp_list.append(rp.flatten(FLATTEN_ORDER))
+        if extract_rp:
+            rp_list.append(rp.flatten(FLATTEN_ORDER))
 
         seg_pos = seg_pos + segment_size * step_width
 
@@ -752,7 +752,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         if return_segment_features:
             features["ssd"] = np.array(ssd_list)
         else:
-            features["ssd"]  = np.mean(np.asarray(ssd_list), axis=0)
+            features["ssd"] = np.mean(np.asarray(ssd_list), axis=0)  # MEAN for SSD
         
     if extract_rh:
         if return_segment_features:
@@ -764,7 +764,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         if return_segment_features:
             features["mvd"] = np.array(mvd_list)
         else:
-            features["mvd"]  = np.mean(np.asarray(mvd_list), axis=0)
+            features["mvd"] = np.mean(np.asarray(mvd_list), axis=0)
 
     # NOTE: no return_segment_features for temporal features as they measure variation of features over time
 
@@ -772,7 +772,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         features["tssd"] = calc_statistical_features(np.asarray(ssd_list).transpose()).flatten(FLATTEN_ORDER)
 
     if extract_trh:
-        features["trh"]  = calc_statistical_features(np.asarray(rh_list).transpose()).flatten(FLATTEN_ORDER)
+        features["trh"] = calc_statistical_features(np.asarray(rh_list).transpose()).flatten(FLATTEN_ORDER)
 
     if return_segment_features:
         # also include the segment positions in the result
@@ -822,8 +822,10 @@ if __name__ == '__main__':
                           samplerate,
                           extract_rp=True,
                           extract_ssd=True,
-                          extract_tssd=False,
                           extract_rh=True,
+                          extract_mvd=False,
+                          extract_tssd=False,
+                          extract_trh=False,
                           n_bark_bands=bark_bands,
                           spectral_masking=True,
                           transform_db=True,
@@ -841,9 +843,12 @@ if __name__ == '__main__':
         print e
         exit()
 
+    # example print of first extracted feature vector
+    keys = feat.keys()
+    k = keys[0]
 
-    print "Rhythm Histogram feature vector:"
-    print feat["rh"]
+    print k.upper, " feature vector:"
+    print feat[k]
 
     # EXAMPLE on how to plot the features
     do_plots = False
