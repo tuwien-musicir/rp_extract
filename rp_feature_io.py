@@ -396,9 +396,11 @@ def read_csv_features(filenamestub,ext=('rh','ssd','rp'),separate_ids=True,id_co
         if separate_ids and not as_dataframe:
             ids[e], feat[e] = read_csv_features1(filename,separate_ids,id_column)
             check_id_consistency(ids)
-            # TODO check consistency also in dataframes
         else:
             feat[e] = read_csv_features1(filename,separate_ids,id_column,as_dataframe=as_dataframe)
+            # TODO check consistency also in dataframes
+            # ids[e] = dataframe.index.tolist()
+            # AFTER FOR LOOP: check_id_consistency(ids)
 
         if verbose: print "Read:", e + ":\t", feat[e].shape[0], "audio file vectors,", feat[e].shape[1], "dimensions"
 
