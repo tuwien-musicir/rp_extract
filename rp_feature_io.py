@@ -290,10 +290,10 @@ def check_id_consistency(ids):
     ext = ids.keys()
     for e in ext[1:]:
         if not len(ids[ext[0]]) == len(ids[e]):
-            raise ValueError("Feature files have different number of entries! " +
+            raise ValueError("Feature files have different number of ID entries! " +
                              ", ".join([e + ': ' + str(len(ids[e])) for e in ext]))
         if not ids[ext[0]] == ids[e]:
-            raise ValueError("Ids not matching across feature files!")
+            raise ValueError("IDs not matching across feature files!")
 
 
 # == CSV ==
@@ -622,7 +622,8 @@ def load_multiple_hdf5_feature_files(filename_stub, feature_types, h5ext='h5', i
         else:
             ids[e], feat[e] = result
 
-    # TODO check ids for consistency
+    # check ids for consistency
+    check_id_consistency(ids)
 
     if ids_only:
         return ids[feature_types[0]]
