@@ -604,7 +604,7 @@ def load_hdf5_features(hdf_filename, verbose=True, ids_only=False, return_id2=Fa
         return ids, feat
 
 
-def load_multiple_hdf5_feature_files(filename_stub, feature_types, h5ext='h5', ids_only=False, verbose=True): # , return_id2=False
+def load_multiple_hdf5_feature_files(filename_stub, feature_types, h5ext='h5', as_dataframe=False, ids_only=False, verbose=True): # , return_id2=False
     '''load multiple hdf5 feature files into dicts of features and ids'''
 
     # make list if only 1 string is passed
@@ -621,6 +621,9 @@ def load_multiple_hdf5_feature_files(filename_stub, feature_types, h5ext='h5', i
             ids[e] = result
         else:
             ids[e], feat[e] = result
+
+            if as_dataframe:
+                feat[e] = pd.DataFrame(feat[e], index=ids[e])
 
     # check ids for consistency
     check_id_consistency(ids)
@@ -664,7 +667,7 @@ def combine_multiple_hdf5_files(input_filelist_stubs, output_filestub, feature_t
 # == GENERIC LOAD FUNCTIONS ==
 
 
-def load_features(input_path, feature_types, verbose=True):
+def load_features(input_path, feature_types, as_dataframe=False, verbose=True):
     '''Generic load function for loading features from CSV or HDF5 files'''
     ids = None
 
@@ -673,14 +676,14 @@ def load_features(input_path, feature_types, verbose=True):
     h5extensions = ['h5', 'hdf5', 'H5', 'HDF5']
     for h5ext in h5extensions:
         if len(glob.glob(input_path + ".*." + h5ext)) > 0:
-            ids, feat = load_multiple_hdf5_feature_files(input_path, feature_types, h5ext=h5ext, verbose=verbose)
+            ids, feat = load_multiple_hdf5_feature_files(input_path, feature_types, as_dataframe=as_dataframe, h5ext=h5ext, verbose=verbose)
             break
 
     # TODO: add reading NPZ files
 
     # 2) otherwise try to read in CSV format
     if ids == None:
-        ids, feat = read_csv_features(input_path, feature_types, error_on_duplicates=False, verbose=verbose)
+        ids, feat = read_csv_features(input_path, feature_types, as_dataframe=as_dataframe, error_on_duplicates=False, verbose=verbose)
 
     # from the ids dict, we take only the first entry
     ids = ids.values()[0]
