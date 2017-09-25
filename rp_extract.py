@@ -782,6 +782,10 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
     return features
 
 
+def available_feature_types():
+    '''list all available feature types to be extracted by rp_extract'''
+    return ['rp','ssd','rh','tssd','trh','mvd']
+
 
 # function to self test rp_extract if working properly
 def self_test():
