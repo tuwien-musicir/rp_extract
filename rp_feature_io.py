@@ -402,7 +402,8 @@ def read_csv_features(filenamestub,ext=('rh','ssd','rp'),separate_ids=True,id_co
             # ids[e] = dataframe.index.tolist()
             # AFTER FOR LOOP: check_id_consistency(ids)
 
-        if verbose: print "Read:", e + ":\t", feat[e].shape[0], "audio file vectors,", feat[e].shape[1], "dimensions"
+        if verbose:
+            print "Read", feat[e].shape[0], "feature vectors with dimension", feat[e].shape[1], ", type " + e.upper()
 
     # check if we have duplicates in the ids
     if separate_ids and not as_dataframe:
