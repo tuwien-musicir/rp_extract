@@ -1,8 +1,6 @@
 numpy>=1.8.2,<1.12
 scipy>=0.13.3
-argparse>=1.2.1
 unicsv==1.0.0
 pandas>=0.13.1
 scikit-learn==0.17
 matplotlib==1.3.1
-pylab==0.1.3
