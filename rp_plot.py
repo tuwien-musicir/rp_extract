@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 def plotmatrix(features,xlabel=None,ylabel=None):
     plt.figure()
-    plt.imshow(features, origin='lower', aspect='auto', interpolation='nearest')
+    plt.imshow(features, origin='lower', aspect='auto', interpolation='nearest', cmap='jet')
     if xlabel: plt.xlabel(xlabel)
     if ylabel: plt.ylabel(ylabel)
     plt.show()
@@ -35,7 +35,7 @@ def plotssd(features, reshape=True, rows=24, cols=7):
         features = features.reshape(rows, cols, order='F')
 
     plt.figure()
-    plt.imshow(features, origin='lower', aspect='auto', interpolation='nearest')
+    plt.imshow(features, origin='lower', aspect='auto', interpolation='nearest', cmap='jet')
     plt.xticks(range(0, cols), ['mean', 'var', 'skew', 'kurt', 'median', 'min', 'max'])
     plt.ylabel('Frequency [Bark]')
     plt.show()
