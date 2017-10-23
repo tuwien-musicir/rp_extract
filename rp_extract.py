@@ -294,7 +294,7 @@ def transform2bark(matrix, freq_axis, max_bands=None):
 
     matrix_out = np.zeros((max_band,matrix.shape[1]),dtype=matrix.dtype)
 
-    for b in range(max_band-1):
+    for b in range(max_band):
         # consider (and sum up) those frequencies that lie between the defined bark band limits
         freq_range_bool = (freq_axis >= barks[b]) & (freq_axis < barks[b + 1])
         # debug print
