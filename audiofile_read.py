@@ -172,7 +172,7 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
     if force_resampling: cmd1.extend(['-ar',str(force_resampling)])  # add option to resample to targate Hz
     if force_mono: cmd1.extend(['-ac','1'])  # add option to force to mono (1 output channel)
     cmd1.append(out_filename)
-    cmd1_types = ['.mp3','.m4a','.aif','.aiff','.flac']
+    cmd1_types = ['.mp2','.mp3','.m4a','.aif','.aiff','.flac']
 
     cmd2 = ['mpg123','-q', '-w', out_filename, in_filename]
     cmd2_types = ['.mp3']
@@ -206,7 +206,7 @@ def decode(in_filename, out_filename=None, verbose=True, no_extension_check=Fals
 
     if not success:
         commands = ", ".join( c[0] for c in cmd_list)
-        raise OSError("No appropriate decoder found for" + ext + " file. Check if any of these programs is on your system path: " + commands + \
+        raise OSError("No appropriate decoder found for " + ext + " file. Check if any of these programs is on your system path: " + commands + \
                        ". Otherwise install one of these and/or add them to the path using os.environ['PATH'] += os.pathsep + path.")
 
     return cmd[0]
@@ -263,7 +263,7 @@ def decode_video(in_filename, out_filename=None, verbose=False, no_extension_che
 
 def get_supported_audio_formats():
     # TODO: update this list here every time a new format is added; to avoid this, make a more elegant solution getting the list of formats from where the commands are defined above
-    return ('.wav','.mp3','.m4a','.aif','.aiff','.flac','.au')
+    return ('.wav','.mp2','.mp3','.m4a','.aif','.aiff','.flac','.au')
 
 
 # testing decoding to memory instead of file: did NOT bring any speedup!
