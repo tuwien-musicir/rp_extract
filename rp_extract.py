@@ -209,7 +209,7 @@ def calc_spectrogram(wavsegment,fft_window_size,fft_overlap = 0.5,real_values=Tr
 
     if real_values: spectrogram = np.abs(spectrogram)
 
-    return (spectrogram)
+    return spectrogram
 
 
 # FEATURE FUNCTIONS
@@ -273,13 +273,14 @@ def transform2mel(spectrogram,samplerate,fft_window_size,n_mel_bands = 80,freq_m
     # multiply the mel filter of each band with the spectogram frame (dot product executes it on all frames)
     # filter will be adapted in a way so that frequencies beyond freq_max will be discarded
     mel_spectrogram = np.dot(mel_basis,spectrogram[0:freq_bin_max,:])
-    return (mel_spectrogram)
+    return mel_spectrogram
 
 
 
 
 # Bark Transform: Convert Spectrogram to Bark Scale
-# matrix: Spectrogram values as returned from periodogram function
+# matrix: Spectrogram values as returned from periodogram function (see calc_spectrogram) - but only relevant part:
+# i.e. n_frequencies / 2 + 1 (equals fft_window_size / 2 + 1)
 # freq_axis: array of frequency values along the frequency axis
 # max_bands: limit number of Bark bands (1...24) (counting from lowest band)
 def transform2bark(matrix, freq_axis, max_bands=None):
@@ -294,10 +295,14 @@ def transform2bark(matrix, freq_axis, max_bands=None):
     matrix_out = np.zeros((max_band,matrix.shape[1]),dtype=matrix.dtype)
 
     for b in range(max_band-1):
-        # TODO: VisibleDeprecationWarning: boolean index did not match indexed array along dimension 0; dimension is 1024 but corresponding boolean dimension is 513
-        matrix_out[b] = np.sum(matrix[((freq_axis >= barks[b]) & (freq_axis < barks[b+1]))], axis=0)
+        # consider (and sum up) those frequencies that lie between the defined bark band limits
+        freq_range_bool = (freq_axis >= barks[b]) & (freq_axis < barks[b + 1])
+        # debug print
+        #print "Analyzing Bark", b, "from", barks[b], "to", barks[b + 1], \
+        #    "Hz (frequency bands", freq_axis[freq_range_bool][0], "to", freq_axis[freq_range_bool][-1], "Hz)"
+        matrix_out[b] = np.sum(matrix[freq_range_bool], axis=0)
 
-    return(matrix_out)
+    return matrix_out
 
 # Spectral Masking (assumes values are arranged in <=24 Bark bands)
 def do_spectral_masking(matrix):
@@ -314,7 +319,7 @@ def transform2db(matrix):
     '''Map to Decibel Scale'''
     matrix[np.where(matrix < 1)] = 1
     matrix = 10 * np.log10(matrix)
-    return(matrix)
+    return matrix
 
 # Transform to Phon (assumes matrix is in dB scale)
 def transform2phon(matrix):
@@ -461,9 +466,11 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
     
     # calculate frequency values on y-axis (for Bark scale calculation):
     # freq_axis = float(samplerate)/fft_window_size * np.arange(0,(fft_window_size/2) + 1)
-    # linear space from 0 to samplerate/2 in (fft_window_size/2+1) steps
-    freq_axis = np.linspace(0, float(samplerate)/2, int(fft_window_size//2) + 1, endpoint=True)
+    # the spectrum result of an FFT is mirrored, so we take only half of its bins + 1 int account:
+    n_freq = int(fft_window_size//2) + 1
 
+    # linear space from 0 to samplerate/2 in (fft_window_size/2+1) steps
+    freq_axis = np.linspace(0, float(samplerate)/2, n_freq, endpoint=True)
 
     # CONVERT STEREO TO MONO: Average the channels
     if wavedata.ndim > 1:                    # if we have more than 1 dimension
@@ -550,7 +557,19 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
         #Matlab:   0,01528259     0,49653179    73,32978523   85,38774541   2,00416767    3,36618763   97416,24267209     23239,84650814      2677,01521862     30460,9231041364
         #      :  84,73805309    57,84524803  1263,40594029  235,62185973  85,13826606   97,61122652  214078,02415144   3571346,74831746   2303286,74666381   1680967,41922679
         #      : 170,15377915  1500,98052242  3744,98456435  154,14108817  36,69362260  177,48982263  238812,02171250   3064642,99278220   5501230,26588318   4172058,72803277
-        #
+
+        # NOTE that after FFT, the spectrogram contains typically 1024 frequency bands on y-axis
+        # but the spectrum is mirrored, so we typically take only (n_fft / 2) + 1 bands (see n_freq above)
+        # freq_axis already takes this into account and therefore before calling transform2bark
+        # we cut only the relevant half (+1) from the returned spectrogram (before that, we make a double check if the spectrums size)
+
+        if (matrix.shape[0] // 2) + 1 != n_freq:
+            raise ValueError(
+                "Result shape of returned spectrogram " + str((matrix.shape[0] // 2) + 1) + " does not match " +
+                "predefined frequency axis length of " + str(n_freq) + " bins")
+
+        # from the mirrored Spectrum cut only one half + 1 bin
+        matrix = matrix[0:n_freq, :]
 
         # PSYCHO-ACOUSTIC TRANSFORMS
 
