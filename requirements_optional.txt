@@ -1,3 +1,4 @@
-matplotlib==1.3.1 # for plotting
-tables>=3.2 # for HDF5 read/write
-librosa # for transform2mel in rp_extract.py
+matplotlib==1.3.1  # for plotting (rp_plot.py)
+tables>=3.2        # for HDF5 read/write
+librosa  # for transform2mel in rp_extract.py
+magic    # for get_audioformat_info() in audiofile_read.py
