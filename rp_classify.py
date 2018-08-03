@@ -62,9 +62,9 @@ def train_model(train_data, train_classes, print_accuracy = True): # with_probab
 def classify(model, features, labelencoder = None):
     pred = model.predict(features)
     if labelencoder:
-        return(labelencoder.inverse_transform(pred))
+        return labelencoder.inverse_transform(pred)
     else:
-        return(pred)
+        return pred
 
 # CROSS VALIDATION
 def cross_validate(model, features, classes, folds=10, measure='accuracy'):
