@@ -162,8 +162,8 @@ if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='Classification of music files into genre, mood or other categories (with optional training of own models).') #formatter_class=argparse.ArgumentDefaultsHelpFormatter) # formatter_class adds the default values to print output
 
     argparser.add_argument('input_path', help='input file path to search for wav/mp3/m4a/aif(f) files')
-    argparser.add_argument('model_file', nargs='?', help='model file name (input for predictions, or to write after training)')
-    argparser.add_argument('output_filename', nargs='?', help='filename for predictions to write (if omitted, will print output') # nargs='?' to make it optional
+    argparser.add_argument('model_file', nargs='?', help='model file name (input filename for predictions (if omitted, default in models folder is used), or output file to write after training)')
+    argparser.add_argument('output_filename', nargs='?', help='filename for predictions to write (if omitted, will print predictions to stdout)') # nargs='?' to make it optional
 
     argparser.add_argument('-t','--train',action='store_true',help='train a model with the input data',default=False) # boolean opt
     argparser.add_argument('-c', '--classfile', help='single label class file for training and/or cross-validation (format: <filename>TAB<class_string>)',default=None)
