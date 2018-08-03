@@ -15,6 +15,10 @@ import numpy as np
 from sklearn import preprocessing, svm
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
+# sklearn <= 0.17
+#from sklearn.cross_validation import cross_val_score
+# sklearn >= 0.18
+from sklearn.model_selection import cross_val_score
 
 from rp_feature_io import load_or_analyze_features, concatenate_features
 from classes_io import *
@@ -68,8 +72,7 @@ def classify(model, features, labelencoder = None):
 
 # CROSS VALIDATION
 def cross_validate(model, features, classes, folds=10, measure='accuracy'):
-    from sklearn import cross_validation
-    return cross_validation.cross_val_score(model, features, classes, scoring=measure, cv=folds)
+    return cross_val_score(model, features, classes, scoring=measure, cv=folds)
     # scoring value: Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro',
     # 'f1_micro', 'f1_samples', 'f1_weighted', 'log_loss', 'mean_absolute_error', 'mean_squared_error',
     # 'median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted',
@@ -78,7 +81,6 @@ def cross_validate(model, features, classes, folds=10, measure='accuracy'):
 
 # CROSS VALIDATION (for multi-class predictions)
 def cross_validate_multiclass(model, features, classes, categories, folds=10, measure='accuracy', verbose=True):
-    from sklearn import cross_validation
     acc = [] # empty list
     # we iterate over the categories in class file columns here
     for c in range(len(categories)):
@@ -86,14 +88,14 @@ def cross_validate_multiclass(model, features, classes, categories, folds=10, me
             print '.',
             sys.stdout.flush()
         cls = classes[:,c]
-        a = cross_validation.cross_val_score(model, features, cls, scoring=measure, cv=folds)
+        a = cross_val_score(model, features, cls, scoring=measure, cv=folds)
         mean_acc = np.mean(a) # a contains the scores per fold, we average over folds
         acc.append(mean_acc)
 
         # TEST:
         # other way to do it:
         #from sklearn import metrics
-        #predicted = cross_validation.cross_val_predict(model, features, cls, cv=folds)
+        #predicted = cross_val_predict(model, features, cls, cv=folds)
         #mean_acc2 = metrics.accuracy_score(cls, predicted)
         #mean_prec = metrics.precision_score(cls, predicted)
         #print "New Acc/Prec: %s\t%2.2f %%\t%2.2f %%" % (c,mean_acc2*100,mean_prec*100)
