@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 '''
 Classification of Music into Genres, Moods or other categories
 using the Rhythm Pattern audio analyzer (rp_extract.py)
@@ -9,7 +11,6 @@ import os.path
 import argparse
 import cPickle
 import numpy as np
-import sys
 
 from sklearn import preprocessing, svm
 from sklearn.multiclass import OneVsRestClassifier
