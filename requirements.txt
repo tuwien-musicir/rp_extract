@@ -1,3 +1,7 @@
+# restrict numpy version:
+# numpy 1.15 in conjunction with scipy/scikit-learn triggers:
+# RuntimeWarning: numpy.dtype size changed, may indicate binary incompatibility. Expected 96, got 88
+numpy>=1.8.2,<=1.14.5
 numpy>=1.8.2
 scipy>=0.13.3
 unicsv==1.0.0
