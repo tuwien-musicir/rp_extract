@@ -17,6 +17,7 @@ Note: All required functions are provided by the two main scientific libraries n
 Note: In case you alter the code to use transform2mel, librosa needs to be installed: pip install librosa
 '''
 
+from __future__ import print_function
 
 import numpy as np
 
@@ -404,7 +405,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
                 #blurring                       = True  # [R3] Gradient+Gauss filter # TODO: not yet implemented
 
                 return_segment_features = False,     # this will return features per each analyzed segment instead of aggregated ones
-                verbose = True                       # print messages whats going on
+                verbose = False                      # print messages whats going on
                 ):
 
     '''Rhythm Pattern Feature Extraction
@@ -497,7 +498,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
             step_width = 1
             skip_seg   = 0
             # TODO: do this as a warning?
-            if verbose: print "Duration < 45 seconds: setting step_width to 1 and skip_leadin_fadeout to 0."
+            if verbose: print("Duration < 45 seconds: setting step_width to 1 and skip_leadin_fadeout to 0.")
 
         else:
             # advance by number of skip_seg segments (i.e. skip lead_in)
@@ -505,7 +506,7 @@ def rp_extract( wavedata,                          # pcm (wav) signal data norma
     
     # calculate number of segments
     n_segments = int(np.floor( (np.floor( (wavedata.shape[0] - (skip_seg*2*segment_size)) / segment_size ) - 1 ) / step_width ) + 1)
-    if verbose: print "Analyzing", n_segments, "segments"
+    if verbose: print("Analyzing", n_segments, "segments")
 
     if n_segments == 0:
         raise ValueError("Not enough data to analyze! Minimum sample length needs to be " +
@@ -822,7 +823,7 @@ if __name__ == '__main__':
     # process file given on command line or default song (included)
     if len(sys.argv) > 1:
         if sys.argv[1] == '-test': # RUN DOCSTRING SELF TEST
-            print "Doing self test. If nothing is printed, it is ok."
+            print("Doing self test. If nothing is printed, it is ok.")
             import doctest
             doctest.run_docstring_examples(rp_extract, globals()) #, verbose=True)
             exit()   # Note: no output means that everything went fine
@@ -860,18 +861,18 @@ if __name__ == '__main__':
                           mod_ampl_limit=mod_ampl_limit)
 
         # feat is a dict containing arrays for different feature sets
-        print "Successfully extracted features:" , feat.keys()
+        print("Successfully extracted features:" , feat.keys())
 
-    except ValueError, e:
-        print e
+    except ValueError as e:
+        print(e)
         exit()
 
     # example print of first extracted feature vector
     keys = feat.keys()
     k = keys[0]
 
-    print k.upper, " feature vector:"
-    print feat[k]
+    print(k.upper, " feature vector:")
+    print(feat[k])
 
     # EXAMPLE on how to plot the features
     do_plots = False
